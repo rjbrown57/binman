@@ -43,6 +43,13 @@ type GHBMRelease struct {
 	Version         string `yaml:"version,omitempty"` // Stub
 }
 
+// set project and org vars
+func (r *GHBMRelease) getOR() {
+	n := strings.Split(r.Repo, "/")
+	r.Org = n[0]
+	r.Project = n[1]
+}
+
 // Helper method to set paths for a requested release object
 func (r *GHBMRelease) setPaths(ReleasePath string, tag string) {
 
@@ -85,7 +92,7 @@ func newGHBMConfig(configPath string) *GHBMConfig {
 	return config
 }
 
-// setReleaseDefaults will populate defaults, and required values
+// setDefaults will populate defaults, and required values
 func (config *GHBMConfig) setDefaults() {
 
 	if config.Config.TokenVar == "" {
@@ -95,9 +102,10 @@ func (config *GHBMConfig) setDefaults() {
 
 	log.Debugf("OS = %s Arch = %s", runtime.GOOS, runtime.GOARCH)
 
-	for k, _ := range config.Releases {
+	for k := range config.Releases {
 
-		config.Releases[k].Org, config.Releases[k].Project = getOR(config.Releases[k].Repo)
+		// set project/org variables
+		config.Releases[k].getOR()
 
 		if config.Releases[k].Os == "" {
 			config.Releases[k].Os = strings.ToLower(runtime.GOOS)

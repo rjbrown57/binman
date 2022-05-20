@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rjbrown57/binman/pkg/gh"
 	"github.com/sirupsen/logrus"
 )
 
@@ -37,7 +38,7 @@ func Main(configFile string, debug bool, jsonLog bool) {
 
 	log.Debugf("Process %v Releases", len(config.Releases))
 
-	ghClient := GetGHCLient(config.Config.TokenVar)
+	ghClient := gh.GetGHCLient(config.Config.TokenVar)
 
 	log.Debugf("config = %+v", config)
 
@@ -70,7 +71,7 @@ func Main(configFile string, debug bool, jsonLog bool) {
 		// Try to find the requested asset
 		// User can provide an exact asset name via releaseFilename
 		// GHbinman will try to find the release via fileType,Arch
-		assetName, dlUrl := getAsset(rel, release.Assets)
+		assetName, dlUrl := gh.GetAsset(rel.ReleaseFileName, rel.FileType, rel.Arch, rel.Os, release.Assets)
 		if dlUrl == "" {
 			log.Warnf("Target release asset not found for %s", rel.Repo)
 			continue

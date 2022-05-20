@@ -1,0 +1,38 @@
+config:
+  releasepath: /Users/lookfar/binMan
+  #tokenvar: GH_TOKEN # GITHUB API TOKEN
+defaults:
+  checksum: false
+  filetype: tar.gz # choose tar.gz or binary
+releases:
+  - repo: anchore/syft
+    #os: linux  # OS + arch will be detected by default. You can supply them if for some reason you want a different arch/os then you are running
+    #arch: amd64
+  - repo: anchore/grype
+  - repo: google/go-containerregistry
+    arch: x86_64
+    filename: crane # specific file name within a tar.gz
+  - repo: GoogleContainerTools/container-structure-test
+    releasefilename: container-structure-test-darwin-amd64 # specific release file name
+  - repo: GoogleContainerTools/container-diff
+    releasefilename: container-diff-darwin-amd64 
+  - repo: kubernetes-sigs/kind
+    releasefilename: kind-darwin-amd64
+  - repo: moby/buildkit
+    arch: darwin-amd64
+    filename: bin/buildctl
+  - repo: securego/gosec
+  - repo: sigstore/cosign
+    releasefilename: cosign-darwin-amd64 # This the asset file name 
+  - repo: wagoodman/dive
+  - repo: dundee/gdu
+    releasefilename: gdu_darwin_amd64
+    filetype: tgz
+  - repo: goreleaser/goreleaser
+    arch: x86_64
+  - repo: rjbrown57/binman
+  - repo: rjbrown57/binextractor
+  - repo: jesseduffield/lazygit
+    arch: x86_64
+
+    
