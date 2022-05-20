@@ -34,7 +34,6 @@ func handleTar(publishDir string, tarpath string) error {
 			return nil
 		case nil:
 			break
-			os.Exit(0)
 		default:
 			log.Warnf("Error on %s - %v", tarpath, err)
 
