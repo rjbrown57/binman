@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
+	"regexp"
 	"time"
 
 	"github.com/rjbrown57/binman/pkg/gh"
@@ -71,7 +71,14 @@ func Main(configFile string, debug bool, jsonLog bool) {
 		// Try to find the requested asset
 		// User can provide an exact asset name via releaseFilename
 		// GHbinman will try to find the release via fileType,Arch
-		assetName, dlUrl := gh.GetAsset(rel.ReleaseFileName, rel.FileType, rel.Arch, rel.Os, release.Assets)
+		var assetName, dlUrl string
+		if rel.ReleaseFileName != "" {
+			assetName, dlUrl = gh.GetAssetbyName(rel.ReleaseFileName, release.Assets)
+		} else {
+			fmt.Printf("%s-%s-%s\n", rel.FileType, rel.Arch, rel.Os)
+			assetName, dlUrl = gh.GetAssetbyType(rel.FileType, rel.Arch, rel.Os, release.Assets)
+		}
+
 		if dlUrl == "" {
 			log.Warnf("Target release asset not found for %s", rel.Repo)
 			continue
@@ -94,8 +101,7 @@ func Main(configFile string, debug bool, jsonLog bool) {
 		}
 
 		// untar file
-		if strings.HasSuffix(filePath, "tar.gz") || strings.HasSuffix(filePath, "tar") || strings.HasSuffix(filePath, "tgz") {
-			//err = unTar(rel.PublishPath, filePath)
+		if testTar, _ := regexp.MatchString(TarRegEx, filePath); testTar {
 			log.Debug("extract start")
 			err = handleTar(rel.PublishPath, filePath)
 			if err != nil {

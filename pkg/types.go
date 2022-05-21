@@ -5,11 +5,15 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
 	"gopkg.in/yaml.v2"
 )
+
+const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
+const x86RegEx = `(amd64|x86_64)`
 
 // GHBMConfigfile contains Global Config Options
 type GHBMConfigFile struct {
@@ -102,20 +106,48 @@ func (config *GHBMConfig) setDefaults() {
 
 	log.Debugf("OS = %s Arch = %s", runtime.GOOS, runtime.GOARCH)
 
+	if config.Defaults.Arch == "" {
+		config.Defaults.Arch = runtime.GOARCH
+		if config.Defaults.Arch == "amd64" {
+			config.Defaults.Arch = x86RegEx
+		}
+	}
+
+	if config.Defaults.Os == "" {
+		config.Defaults.Os = runtime.GOOS
+	}
+
+	// Check if a tar was proviided
+	tarTest, err := regexp.MatchString(TarRegEx, config.Defaults.FileType)
+	if err != nil {
+		log.Warn("Unable to test %s against %s --- %v", config.Defaults.FileType, TarRegEx, err)
+	}
+
+	if config.Defaults.FileType == "" || tarTest {
+		config.Defaults.FileType = TarRegEx
+	}
+
 	for k := range config.Releases {
 
 		// set project/org variables
 		config.Releases[k].getOR()
 
 		if config.Releases[k].Os == "" {
-			config.Releases[k].Os = strings.ToLower(runtime.GOOS)
+			config.Releases[k].Os = config.Defaults.Os
 		}
 
 		if config.Releases[k].Arch == "" {
-			config.Releases[k].Arch = strings.ToLower(runtime.GOARCH)
+			config.Releases[k].Arch = config.Defaults.Arch
 		}
 
-		if config.Releases[k].FileType == "" {
+		switch config.Releases[k].FileType {
+		case "":
+			fallthrough
+		case "tar":
+			fallthrough
+		case "tar.gz":
+			fallthrough
+		case "tgz":
 			config.Releases[k].FileType = config.Defaults.FileType
 		}
 
