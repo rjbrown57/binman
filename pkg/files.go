@@ -87,7 +87,7 @@ func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 func createReleaseLink(source string, target string) error {
 
 	// If target exists, remove it
-	if _, err := os.Stat(target); err != os.ErrExist {
+	if _, err := os.Stat(target); err == nil {
 		log.Warnf("Updating %s to %s\n", source, target)
 		err := os.Remove(target)
 		if err != nil {
