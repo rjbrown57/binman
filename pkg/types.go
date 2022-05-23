@@ -35,6 +35,7 @@ type GHBMRelease struct {
 	Os              string `yaml:"os,omitempty"`
 	Arch            string `yaml:"arch,omitempty"`
 	CheckSum        bool   `yaml:"checkSum,omitempty"`
+	ExternalUrl     string `yaml:"url,omitempty"`      // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
 	FileName        string `yaml:"filename,omitempty"` // The file within the release you want
 	FileType        string `yaml:"filetype,omitempty"`
 	ReleaseFileName string `yaml:"releasefilename,omitempty"` // Specifc Release filename to look for. This is useful if a project publishes a binary and not a tarball.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"time"
 
@@ -68,15 +69,22 @@ func Main(configFile string, debug bool, jsonLog bool) {
 			continue
 		}
 
-		// Try to find the requested asset
-		// User can provide an exact asset name via releaseFilename
-		// GHbinman will try to find the release via fileType,Arch
 		var assetName, dlUrl string
-		if rel.ReleaseFileName != "" {
-			assetName, dlUrl = gh.GetAssetbyName(rel.ReleaseFileName, release.Assets)
+
+		// If user has set an external url use that to grab target
+		// Else Try to find the requested asset
+		// User can provide an exact asset name via releaseFilename
+		// binman will try to find the release via fileType,Arch
+		if rel.ExternalUrl != "" {
+			dlUrl = fmt.Sprintf(rel.ExternalUrl, *release.TagName)
+			assetName = filepath.Base(dlUrl)
+
 		} else {
-			fmt.Printf("%s-%s-%s\n", rel.FileType, rel.Arch, rel.Os)
-			assetName, dlUrl = gh.GetAssetbyType(rel.FileType, rel.Arch, rel.Os, release.Assets)
+			if rel.ReleaseFileName != "" {
+				assetName, dlUrl = gh.GetAssetbyName(rel.ReleaseFileName, release.Assets)
+			} else {
+				assetName, dlUrl = gh.GetAssetbyType(rel.FileType, rel.Arch, rel.Os, release.Assets)
+			}
 		}
 
 		if dlUrl == "" {
