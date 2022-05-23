@@ -43,6 +43,7 @@ type GHBMRelease struct {
 	Project         string // Will be provided by constuctor
 	PublishPath     string // Path Release will be set up at
 	ArtifactPath    string // Will be set by GHBMRelease.setPaths
+	LinkName        string `yaml:"linkname,omitempty"` // Set what the final link will be. Defaults to project name.
 	LinkPath        string // Will be set by GHBMRelease.setPaths
 	Version         string `yaml:"version,omitempty"` // Stub
 }
@@ -63,21 +64,31 @@ func (r *GHBMRelease) setPaths(ReleasePath string, tag string) {
 	}
 	r.PublishPath = fmt.Sprintf("%s/repos/%s/%s/%s", ReleasePath, r.Org, r.Project, tag)
 
+	// Allow user to supply the name of the final link
+	// This is nice for projects like lazygit which is simply too much to type
+	// linkname: lg would have lazygit point at lg :)
+	var linkName string
+	if r.LinkName == "" {
+		linkName = r.Project
+	} else {
+		linkName = r.LinkName
+	}
+
 	// If a binary is specified by ReleaseFileName use it for source and project for destination
 	// else if it's a tar but we have specified the inside file use filename for source and destination
 	// else it's a tar and we want default
 	if r.ReleaseFileName != "" {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.ReleaseFileName)
-		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, r.Project)
+		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, linkName)
 		log.Debugf("ReleaseFilenName set %s->%s\n", r.ArtifactPath, r.LinkPath)
 	} else if r.FileName != "" {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.FileName)
 		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, filepath.Base(r.FileName))
-		log.Debugf("Tar with Filename set %s -> %s\n", r.ArtifactPath, r.LinkPath)
+		log.Debugf("Tar with Filename set %s -> %s\n", r.ArtifactPath, filepath.Base(r.FileName))
 	} else {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.Project)
-		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, r.Project)
-		log.Debugf("Default Extraction %s->%s\n", r.ArtifactPath, r.LinkPath)
+		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, linkName)
+		log.Debugf("Default Extraction %s->%s\n", r.ArtifactPath, r.Project)
 	}
 
 }
