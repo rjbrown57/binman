@@ -99,6 +99,15 @@ func newGHBMConfig(configPath string) *GHBMConfig {
 // setDefaults will populate defaults, and required values
 func (config *GHBMConfig) setDefaults() {
 
+	// If user does not supply a ReleasePath var we will use HOMEDIR/binMan
+	if config.Config.ReleasePath == "" {
+		hDir, err := os.UserHomeDir()
+		if err != nil {
+			log.Fatal("Unable to detect home directory %v", err)
+		}
+		config.Config.ReleasePath = hDir + "/binMan"
+	}
+
 	if config.Config.TokenVar == "" {
 		log.Warn("tokenvar is not set at config.tokenvar using anonymous authentication. Please be aware you can quickly be rate limited by github. Instructions here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
 		config.Config.TokenVar = "none"
