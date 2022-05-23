@@ -108,6 +108,11 @@ func Main(configFile string, debug bool, jsonLog bool) {
 			continue
 		}
 
+		// If user has requested download only move to next release
+		if rel.DownloadOnly {
+			continue
+		}
+
 		// untar file
 		if testTar, _ := regexp.MatchString(TarRegEx, filePath); testTar {
 			log.Debug("extract start")
