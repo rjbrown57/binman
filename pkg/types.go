@@ -5,11 +5,15 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
 	"gopkg.in/yaml.v2"
 )
+
+const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
+const x86RegEx = `(amd64|x86_64)`
 
 // GHBMConfigfile contains Global Config Options
 type GHBMConfigFile struct {
@@ -31,6 +35,8 @@ type GHBMRelease struct {
 	Os              string `yaml:"os,omitempty"`
 	Arch            string `yaml:"arch,omitempty"`
 	CheckSum        bool   `yaml:"checkSum,omitempty"`
+	DownloadOnly    bool   `yaml:"downloadonly,omitempty"`
+	ExternalUrl     string `yaml:"url,omitempty"`      // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
 	FileName        string `yaml:"filename,omitempty"` // The file within the release you want
 	FileType        string `yaml:"filetype,omitempty"`
 	ReleaseFileName string `yaml:"releasefilename,omitempty"` // Specifc Release filename to look for. This is useful if a project publishes a binary and not a tarball.
@@ -39,8 +45,16 @@ type GHBMRelease struct {
 	Project         string // Will be provided by constuctor
 	PublishPath     string // Path Release will be set up at
 	ArtifactPath    string // Will be set by GHBMRelease.setPaths
+	LinkName        string `yaml:"linkname,omitempty"` // Set what the final link will be. Defaults to project name.
 	LinkPath        string // Will be set by GHBMRelease.setPaths
 	Version         string `yaml:"version,omitempty"` // Stub
+}
+
+// set project and org vars
+func (r *GHBMRelease) getOR() {
+	n := strings.Split(r.Repo, "/")
+	r.Org = n[0]
+	r.Project = n[1]
 }
 
 // Helper method to set paths for a requested release object
@@ -52,21 +66,31 @@ func (r *GHBMRelease) setPaths(ReleasePath string, tag string) {
 	}
 	r.PublishPath = fmt.Sprintf("%s/repos/%s/%s/%s", ReleasePath, r.Org, r.Project, tag)
 
+	// Allow user to supply the name of the final link
+	// This is nice for projects like lazygit which is simply too much to type
+	// linkname: lg would have lazygit point at lg :)
+	var linkName string
+	if r.LinkName == "" {
+		linkName = r.Project
+	} else {
+		linkName = r.LinkName
+	}
+
 	// If a binary is specified by ReleaseFileName use it for source and project for destination
 	// else if it's a tar but we have specified the inside file use filename for source and destination
 	// else it's a tar and we want default
 	if r.ReleaseFileName != "" {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.ReleaseFileName)
-		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, r.Project)
+		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, linkName)
 		log.Debugf("ReleaseFilenName set %s->%s\n", r.ArtifactPath, r.LinkPath)
 	} else if r.FileName != "" {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.FileName)
 		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, filepath.Base(r.FileName))
-		log.Debugf("Tar with Filename set %s -> %s\n", r.ArtifactPath, r.LinkPath)
+		log.Debugf("Tar with Filename set %s -> %s\n", r.ArtifactPath, filepath.Base(r.FileName))
 	} else {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.Project)
-		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, r.Project)
-		log.Debugf("Default Extraction %s->%s\n", r.ArtifactPath, r.LinkPath)
+		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, linkName)
+		log.Debugf("Default Extraction %s->%s\n", r.ArtifactPath, r.Project)
 	}
 
 }
@@ -85,8 +109,17 @@ func newGHBMConfig(configPath string) *GHBMConfig {
 	return config
 }
 
-// setReleaseDefaults will populate defaults, and required values
+// setDefaults will populate defaults, and required values
 func (config *GHBMConfig) setDefaults() {
+
+	// If user does not supply a ReleasePath var we will use HOMEDIR/binMan
+	if config.Config.ReleasePath == "" {
+		hDir, err := os.UserHomeDir()
+		if err != nil {
+			log.Fatal("Unable to detect home directory %v", err)
+		}
+		config.Config.ReleasePath = hDir + "/binMan"
+	}
 
 	if config.Config.TokenVar == "" {
 		log.Warn("tokenvar is not set at config.tokenvar using anonymous authentication. Please be aware you can quickly be rate limited by github. Instructions here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
@@ -95,19 +128,48 @@ func (config *GHBMConfig) setDefaults() {
 
 	log.Debugf("OS = %s Arch = %s", runtime.GOOS, runtime.GOARCH)
 
-	for k, _ := range config.Releases {
+	if config.Defaults.Arch == "" {
+		config.Defaults.Arch = runtime.GOARCH
+		if config.Defaults.Arch == "amd64" {
+			config.Defaults.Arch = x86RegEx
+		}
+	}
 
-		config.Releases[k].Org, config.Releases[k].Project = getOR(config.Releases[k].Repo)
+	if config.Defaults.Os == "" {
+		config.Defaults.Os = runtime.GOOS
+	}
+
+	// Check if a tar was proviided
+	tarTest, err := regexp.MatchString(TarRegEx, config.Defaults.FileType)
+	if err != nil {
+		log.Warn("Unable to test %s against %s --- %v", config.Defaults.FileType, TarRegEx, err)
+	}
+
+	if config.Defaults.FileType == "" || tarTest {
+		config.Defaults.FileType = TarRegEx
+	}
+
+	for k := range config.Releases {
+
+		// set project/org variables
+		config.Releases[k].getOR()
 
 		if config.Releases[k].Os == "" {
-			config.Releases[k].Os = strings.ToLower(runtime.GOOS)
+			config.Releases[k].Os = config.Defaults.Os
 		}
 
 		if config.Releases[k].Arch == "" {
-			config.Releases[k].Arch = strings.ToLower(runtime.GOARCH)
+			config.Releases[k].Arch = config.Defaults.Arch
 		}
 
-		if config.Releases[k].FileType == "" {
+		switch config.Releases[k].FileType {
+		case "":
+			fallthrough
+		case "tar":
+			fallthrough
+		case "tar.gz":
+			fallthrough
+		case "tgz":
 			config.Releases[k].FileType = config.Defaults.FileType
 		}
 

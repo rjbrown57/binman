@@ -1,0 +1,23 @@
+config:
+  #releasepath: /set/path/heretopublishto/ # Default is homeDirectory/binMan 
+  tokenvar: GH_TOKEN # GITHUB API TOKEN
+defaults:
+  checksum: false
+  filetype: tar.gz # choose tar.gz or binary
+releases:
+  - repo: anchore/syft # Easy mode!
+  - repo: google/go-containerregistry
+    filename: crane # specific file name within a tar.gz
+  - repo: GoogleContainerTools/container-structure-test
+    releasefilename: container-structure-test-darwin-amd64 # specific release file name
+    linkname: cst # Set the link name
+  - repo: helm/helm
+    url: https://get.helm.sh/helm-%s-linux-amd64.tar.gz
+    filename: linux-amd64/helm
+  - repo: GoogleContainerTools/container-diff
+    downloadonly: true # binman will only download the file. You take care of the rest ;)
+    releasefilename: container-diff-darwin-amd64
+  - repo: jesseduffield/lazygit
+    linkname: lzg
+  - repo: jesseduffield/lazydocker
+    linkname: lzd

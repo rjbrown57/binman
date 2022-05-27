@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
+	"path/filepath"
+	"regexp"
 	"time"
 
+	"github.com/rjbrown57/binman/pkg/gh"
 	"github.com/sirupsen/logrus"
 )
 
@@ -37,7 +39,7 @@ func Main(configFile string, debug bool, jsonLog bool) {
 
 	log.Debugf("Process %v Releases", len(config.Releases))
 
-	ghClient := GetGHCLient(config.Config.TokenVar)
+	ghClient := gh.GetGHCLient(config.Config.TokenVar)
 
 	log.Debugf("config = %+v", config)
 
@@ -67,10 +69,24 @@ func Main(configFile string, debug bool, jsonLog bool) {
 			continue
 		}
 
-		// Try to find the requested asset
+		var assetName, dlUrl string
+
+		// If user has set an external url use that to grab target
+		// Else Try to find the requested asset
 		// User can provide an exact asset name via releaseFilename
-		// GHbinman will try to find the release via fileType,Arch
-		assetName, dlUrl := getAsset(rel, release.Assets)
+		// binman will try to find the release via fileType,Arch
+		if rel.ExternalUrl != "" {
+			dlUrl = fmt.Sprintf(rel.ExternalUrl, *release.TagName)
+			assetName = filepath.Base(dlUrl)
+
+		} else {
+			if rel.ReleaseFileName != "" {
+				assetName, dlUrl = gh.GetAssetbyName(rel.ReleaseFileName, release.Assets)
+			} else {
+				assetName, dlUrl = gh.GetAssetbyType(rel.FileType, rel.Arch, rel.Os, release.Assets)
+			}
+		}
+
 		if dlUrl == "" {
 			log.Warnf("Target release asset not found for %s", rel.Repo)
 			continue
@@ -92,9 +108,13 @@ func Main(configFile string, debug bool, jsonLog bool) {
 			continue
 		}
 
+		// If user has requested download only move to next release
+		if rel.DownloadOnly {
+			continue
+		}
+
 		// untar file
-		if strings.HasSuffix(filePath, "tar.gz") || strings.HasSuffix(filePath, "tar") || strings.HasSuffix(filePath, "tgz") {
-			//err = unTar(rel.PublishPath, filePath)
+		if testTar, _ := regexp.MatchString(TarRegEx, filePath); testTar {
 			log.Debug("extract start")
 			err = handleTar(rel.PublishPath, filePath)
 			if err != nil {
