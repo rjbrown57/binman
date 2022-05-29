@@ -116,7 +116,7 @@ func (config *GHBMConfig) setDefaults() {
 	if config.Config.ReleasePath == "" {
 		hDir, err := os.UserHomeDir()
 		if err != nil {
-			log.Fatal("Unable to detect home directory %v", err)
+			log.Fatalf("Unable to detect home directory %v", err)
 		}
 		config.Config.ReleasePath = hDir + "/binMan"
 	}
@@ -142,7 +142,7 @@ func (config *GHBMConfig) setDefaults() {
 	// Check if a tar was proviided
 	tarTest, err := regexp.MatchString(TarRegEx, config.Defaults.FileType)
 	if err != nil {
-		log.Warn("Unable to test %s against %s --- %v", config.Defaults.FileType, TarRegEx, err)
+		log.Warnf("Unable to test %s against %s --- %v", config.Defaults.FileType, TarRegEx, err)
 	}
 
 	if config.Defaults.FileType == "" || tarTest {
