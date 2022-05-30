@@ -19,12 +19,13 @@ func GetAssetbyName(relFileName string, assets []*github.ReleaseAsset) (string, 
 	return "", ""
 }
 
-func GetAssetbyType(relFileType string, relArch string, relOs string, assets []*github.ReleaseAsset) (string, string) {
+// Return first asset that matches our OS and Arch regexes
+func FindAsset(relArch string, relOS string, assets []*github.ReleaseAsset) (string, string) {
 	for _, asset := range assets {
 		an := strings.ToLower(*asset.Name)
-		testArch, _ := regexp.MatchString(relArch, an)
-		testFileType, _ := regexp.MatchString(relFileType, an)
-		if testFileType && testArch && strings.Contains(an, relOs) {
+		testOS, _ := regexp.MatchString(relArch, an)
+		testArch, _ := regexp.MatchString(relOS, an)
+		if testOS && testArch {
 			return *asset.Name, *asset.BrowserDownloadURL
 		}
 	}

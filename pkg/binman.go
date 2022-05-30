@@ -83,7 +83,7 @@ func Main(configFile string, debug bool, jsonLog bool) {
 			if rel.ReleaseFileName != "" {
 				assetName, dlUrl = gh.GetAssetbyName(rel.ReleaseFileName, release.Assets)
 			} else {
-				assetName, dlUrl = gh.GetAssetbyType(rel.FileType, rel.Arch, rel.Os, release.Assets)
+				assetName, dlUrl = gh.FindAsset(rel.Arch, rel.Os, release.Assets)
 			}
 		}
 
