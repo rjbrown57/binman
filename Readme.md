@@ -15,6 +15,8 @@
 
 ```
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/rjbrown57/binman)](https://goreportcard.com/report/github.com/rjbrown57/binman)
+
 github Binary manager. Create a yaml file of releases and locations.
 
 
