@@ -34,7 +34,7 @@ type GHBMRelease struct {
 	CheckSum        bool   `yaml:"checkSum,omitempty"`
 	DownloadOnly    bool   `yaml:"downloadonly,omitempty"`
 	ExternalUrl     string `yaml:"url,omitempty"`             // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
-	FileName        string `yaml:"filename,omitempty"`        // The file within the release you want
+	ExtractFileName string `yaml:"extractfilename,omitempty"` // The file within the release you want
 	ReleaseFileName string `yaml:"releasefilename,omitempty"` // Specifc Release filename to look for. This is useful if a project publishes a binary and not a tarball.
 	Repo            string `yaml:"repo"`                      // The specific repo name in github. e.g achore/syft
 	Org             string // Will be provided by constuctor
@@ -79,10 +79,10 @@ func (r *GHBMRelease) setPaths(ReleasePath string, tag string) {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.ReleaseFileName)
 		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, linkName)
 		log.Debugf("ReleaseFilenName set %s->%s\n", r.ArtifactPath, r.LinkPath)
-	} else if r.FileName != "" {
-		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.FileName)
-		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, filepath.Base(r.FileName))
-		log.Debugf("Tar with Filename set %s -> %s\n", r.ArtifactPath, filepath.Base(r.FileName))
+	} else if r.ExtractFileName != "" {
+		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.ExtractFileName)
+		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, filepath.Base(r.ExtractFileName))
+		log.Debugf("Tar with Filename set %s -> %s\n", r.ArtifactPath, filepath.Base(r.ExtractFileName))
 	} else {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.Project)
 		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, linkName)
