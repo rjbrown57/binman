@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 
@@ -23,11 +22,9 @@ type GHBMConfigFile struct {
 
 // GHBMDefaults contains default config options. If a value is unset in releases array these will be used.
 type GHBMDefaults struct {
-	Os       string `yaml:"os,omitempty"`       //OS architechrue to look for
-	Arch     string `yaml:"arch,omitempty"`     //OS architechrue to look for
-	CheckSum bool   `yaml:"checksum,omitempty"` // Not used not, in theory validate checksums
-	FileType string `yaml:"filetype,omitempty"` // Filetype to find assets by. Typically set to tar.gz
-	Version  string `yaml:"version,omitempty"`  // Stub Version to look for
+	Os      string `yaml:"os,omitempty"`      //OS architechrue to look for
+	Arch    string `yaml:"arch,omitempty"`    //OS architechrue to look for
+	Version string `yaml:"version,omitempty"` // Stub Version to look for
 }
 
 // GHBMRelease contains info on specifc releases to hunt for
@@ -36,9 +33,8 @@ type GHBMRelease struct {
 	Arch            string `yaml:"arch,omitempty"`
 	CheckSum        bool   `yaml:"checkSum,omitempty"`
 	DownloadOnly    bool   `yaml:"downloadonly,omitempty"`
-	ExternalUrl     string `yaml:"url,omitempty"`      // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
-	FileName        string `yaml:"filename,omitempty"` // The file within the release you want
-	FileType        string `yaml:"filetype,omitempty"`
+	ExternalUrl     string `yaml:"url,omitempty"`             // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
+	ExtractFileName string `yaml:"extractfilename,omitempty"` // The file within the release you want
 	ReleaseFileName string `yaml:"releasefilename,omitempty"` // Specifc Release filename to look for. This is useful if a project publishes a binary and not a tarball.
 	Repo            string `yaml:"repo"`                      // The specific repo name in github. e.g achore/syft
 	Org             string // Will be provided by constuctor
@@ -78,15 +74,15 @@ func (r *GHBMRelease) setPaths(ReleasePath string, tag string) {
 
 	// If a binary is specified by ReleaseFileName use it for source and project for destination
 	// else if it's a tar but we have specified the inside file use filename for source and destination
-	// else it's a tar and we want default
+	// else we want default
 	if r.ReleaseFileName != "" {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.ReleaseFileName)
 		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, linkName)
 		log.Debugf("ReleaseFilenName set %s->%s\n", r.ArtifactPath, r.LinkPath)
-	} else if r.FileName != "" {
-		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.FileName)
-		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, filepath.Base(r.FileName))
-		log.Debugf("Tar with Filename set %s -> %s\n", r.ArtifactPath, filepath.Base(r.FileName))
+	} else if r.ExtractFileName != "" {
+		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.ExtractFileName)
+		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, filepath.Base(r.ExtractFileName))
+		log.Debugf("Tar with Filename set %s -> %s\n", r.ArtifactPath, filepath.Base(r.ExtractFileName))
 	} else {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.Project)
 		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, linkName)
@@ -116,7 +112,7 @@ func (config *GHBMConfig) setDefaults() {
 	if config.Config.ReleasePath == "" {
 		hDir, err := os.UserHomeDir()
 		if err != nil {
-			log.Fatal("Unable to detect home directory %v", err)
+			log.Fatalf("Unable to detect home directory %v", err)
 		}
 		config.Config.ReleasePath = hDir + "/binMan"
 	}
@@ -139,16 +135,6 @@ func (config *GHBMConfig) setDefaults() {
 		config.Defaults.Os = runtime.GOOS
 	}
 
-	// Check if a tar was proviided
-	tarTest, err := regexp.MatchString(TarRegEx, config.Defaults.FileType)
-	if err != nil {
-		log.Warn("Unable to test %s against %s --- %v", config.Defaults.FileType, TarRegEx, err)
-	}
-
-	if config.Defaults.FileType == "" || tarTest {
-		config.Defaults.FileType = TarRegEx
-	}
-
 	for k := range config.Releases {
 
 		// set project/org variables
@@ -161,18 +147,6 @@ func (config *GHBMConfig) setDefaults() {
 		if config.Releases[k].Arch == "" {
 			config.Releases[k].Arch = config.Defaults.Arch
 		}
-
-		switch config.Releases[k].FileType {
-		case "":
-			fallthrough
-		case "tar":
-			fallthrough
-		case "tar.gz":
-			fallthrough
-		case "tgz":
-			config.Releases[k].FileType = config.Defaults.FileType
-		}
-
 	}
 }
 
