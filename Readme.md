@@ -36,54 +36,36 @@ Flags:
 
 ```
 config:
-  releasepath: /home/lookfar/binMan/
-  tokenvar: GH_TOKEN # GITHUB API environment variable
+  #releasepath: /set/path/heretopublishto/ # Default is homeDirectory/binMan 
+  tokenvar: GH_TOKEN # GITHUB API TOKEN
 defaults:
   checksum: false
-  filetype: tar.gz # file ending.
-  version: latest # Ignored for now
-  prerelease: false
+  filetype: tar.gz # choose tar.gz or binary
 releases:
-  - repo: anchore/syft
-  - repo: anchore/grype
- ```
-
-## Types of releases currently handled
-
-tarball where binary is at root of tarball and binary matches repo name.
-
-```
-releases:
-  - repo: anchore/syft
-```
-
-A published binary. releasefilename is set to the exact name of the published binary to grab.
-```
-releases:
-  - repo: GoogleContainerTools/container-structure-test
-    releasefilename: container-structure-test-linux-amd64 
-
-```
-
-A tarball with a filename different than the repo and a specified Arch to look for.
-```
+  - repo: anchore/syft # Easy mode!
   - repo: google/go-containerregistry
-    arch: x86_64
-    filename: crane
-```
+    extractfilename: crane # specific file name within a tar.gz
+  - repo: GoogleContainerTools/container-structure-test
+    releasefilename: container-structure-test-darwin-amd64 # specific release file name
+    linkname: cst # Set the link name
+  - repo: helm/helm
+    url: https://get.helm.sh/helm-%s-linux-amd64.tar.gz
+    extractfilename: linux-amd64/helm
+  - repo: GoogleContainerTools/container-diff
+    downloadonly: true # binman will only download the file. You take care of the rest ;)
+    releasefilename: container-diff-darwin-amd64
+  - repo: jesseduffield/lazygit
+    linkname: lzg
+  - repo: jesseduffield/lazydocker
+    linkname: lzd
 
-A tarball with a binary not located at the root path
-
-```
- - repo: moby/buildkit
-    arch: linux-amd64
-    filename: bin/buildctl
-```
+ ```
 
 # Flow
 
 * Get releases from GH
 * Process releases
   * Download releaseFile to ${confg.releasepath}/repos/${org}/${repo}/${tag}/downloadedfileshere
+  * Extract notes
   * If file is a tar ball it is extracted to the same directory it was downloaded to
   * Create a symlink from to ${config.releasepath}/${cmdName}
