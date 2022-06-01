@@ -9,10 +9,17 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/schollz/progressbar/v3"
 )
+
+// test if a file is a tar
+func isTar(filepath string) bool {
+	boolReturn, _ := regexp.MatchString(TarRegEx, filepath)
+	return boolReturn
+}
 
 func handleTar(publishDir string, tarpath string) error {
 	f, err := os.Open(filepath.Clean(tarpath))

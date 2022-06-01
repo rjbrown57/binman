@@ -7,6 +7,8 @@ import (
 	"github.com/google/go-github/v44/github"
 )
 
+const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
+
 // I should refactor this a bit to use a regex for Arch to interchange amd64 v x86_64
 // rel* vars should come in a interface
 func GetAssetbyName(relFileName string, assets []*github.ReleaseAsset) (string, string) {
@@ -23,9 +25,15 @@ func GetAssetbyName(relFileName string, assets []*github.ReleaseAsset) (string, 
 func FindAsset(relArch string, relOS string, assets []*github.ReleaseAsset) (string, string) {
 	for _, asset := range assets {
 		an := strings.ToLower(*asset.Name)
+		// Currently we handle binaries and tars
 		testOS, _ := regexp.MatchString(relArch, an)
 		testArch, _ := regexp.MatchString(relOS, an)
-		if testOS && testArch {
+		binCheck := strings.ContainsAny(an, ".")
+		tarCheck, _ := regexp.MatchString(TarRegEx, an)
+		exeCheck := strings.HasSuffix(an, ".exe")
+
+		// If the asset matches OS/ARCH and binCheck is false or tarCheck is true or exe check is true
+		if testOS && testArch && (!binCheck || tarCheck || exeCheck) {
 			return *asset.Name, *asset.BrowserDownloadURL
 		}
 	}

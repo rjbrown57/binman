@@ -40,7 +40,7 @@ type GHBMRelease struct {
 	Org             string // Will be provided by constuctor
 	Project         string // Will be provided by constuctor
 	PublishPath     string // Path Release will be set up at
-	ArtifactPath    string // Will be set by GHBMRelease.setPaths
+	ArtifactPath    string // Will be set by GHBMRelease.setPaths. This is the source path for the link
 	LinkName        string `yaml:"linkname,omitempty"` // Set what the final link will be. Defaults to project name.
 	LinkPath        string // Will be set by GHBMRelease.setPaths
 	Version         string `yaml:"version,omitempty"` // Stub
@@ -53,14 +53,18 @@ func (r *GHBMRelease) getOR() {
 	r.Project = n[1]
 }
 
-// Helper method to set paths for a requested release object
-func (r *GHBMRelease) setPaths(ReleasePath string, tag string) {
-
+// Helper method to set artifactpath for a requested release object
+// This will be called early in a main loop iteration so we can check if we already have a release
+func (r *GHBMRelease) setArtifactPath(ReleasePath string, tag string) {
 	// Trim trailing / if user provided
 	if strings.HasSuffix(ReleasePath, "/") {
 		ReleasePath = strings.TrimSuffix(ReleasePath, "/")
 	}
 	r.PublishPath = fmt.Sprintf("%s/repos/%s/%s/%s", ReleasePath, r.Org, r.Project, tag)
+}
+
+// Helper method to set paths for a requested release object
+func (r *GHBMRelease) setPublishPaths(ReleasePath string, assetName string) {
 
 	// Allow user to supply the name of the final link
 	// This is nice for projects like lazygit which is simply too much to type
@@ -85,7 +89,13 @@ func (r *GHBMRelease) setPaths(ReleasePath string, tag string) {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, filepath.Base(r.ExternalUrl))
 		log.Debugf("Tar with Filename set %s\n", r.ArtifactPath)
 	} else {
-		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.Project)
+		// If we find a tar in the assetName assume the name of the binary within the tar
+		// Else our default is a binary
+		if isTar(assetName) {
+			r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.Project)
+		} else {
+			r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, assetName)
+		}
 		log.Debugf("Default Extraction %s\n", r.ArtifactPath)
 	}
 

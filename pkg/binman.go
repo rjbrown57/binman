@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"time"
 
 	"github.com/rjbrown57/binman/pkg/gh"
@@ -59,8 +58,7 @@ func Main(configFile string, debug bool, jsonLog bool) {
 		}
 
 		// Get Path and Verify it DNE before digging through assets
-		//rel.PublishPath = fmt.Sprintf("%s%s/%s/%s", config.Config.ReleasePath, rel.Org, rel.Project, *release.TagName)
-		rel.setPaths(config.Config.ReleasePath, *release.TagName)
+		rel.setArtifactPath(config.Config.ReleasePath, *release.TagName)
 		log.Debugf("release = %+v", rel)
 
 		_, err = os.Stat(rel.PublishPath)
@@ -92,7 +90,11 @@ func Main(configFile string, debug bool, jsonLog bool) {
 			continue
 		}
 
+		// Set paths based on asset we selected
+		rel.setPublishPaths(config.Config.ReleasePath, assetName)
+
 		filePath := fmt.Sprintf("%s/%s", rel.PublishPath, assetName)
+		// filePath should be set in the rel.setPublishPaths
 
 		// prepare directory path
 		err = os.MkdirAll(rel.PublishPath, 0750)
@@ -114,7 +116,7 @@ func Main(configFile string, debug bool, jsonLog bool) {
 		}
 
 		// untar file
-		if testTar, _ := regexp.MatchString(TarRegEx, filePath); testTar {
+		if isTar(filePath) {
 			log.Debug("extract start")
 			err = handleTar(rel.PublishPath, filePath)
 			if err != nil {
