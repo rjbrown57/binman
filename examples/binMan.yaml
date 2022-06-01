@@ -1,0 +1,32 @@
+config:
+  tokenvar: GH_TOKEN 
+releases:
+  - repo: anchore/syft 
+  - repo: anchore/grype
+  - repo: cilium/cilium-cli
+    extractfilename: cilium
+    linkname: cilium
+  - repo: docker/compose
+    linkname: docker-compose
+  - repo: google/go-containerregistry
+    extractfilename: crane 
+  - repo: GoogleContainerTools/container-structure-test
+    linkname: cst 
+  - repo: GoogleContainerTools/container-diff
+  - repo: helm/helm
+    url: https://get.helm.sh/helm-%s-linux-amd64.tar.gz
+    extractfilename: linux-amd64/helm
+  - repo: jesseduffield/lazygit
+    linkname: lzg
+  - repo: jesseduffield/lazydocker
+    linkname: lzd
+  - repo: kubernetes/kubernetes
+    url: https://dl.k8s.io/release/%s/bin/linux/amd64/kubectl
+    linkname: kubectl
+  - repo: kubernetes-sigs/kind
+    url: https://kind.sigs.k8s.io/dl/%s/kind-linux-amd64
+    linkname: kind
+  - repo: moby/buildkit
+    extractfilename: bin/buildctl
+    linkname: buildctl
+  - repo: wagoodman/dive
