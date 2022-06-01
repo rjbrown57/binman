@@ -77,17 +77,20 @@ func (r *GHBMRelease) setPaths(ReleasePath string, tag string) {
 	// else we want default
 	if r.ReleaseFileName != "" {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.ReleaseFileName)
-		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, linkName)
-		log.Debugf("ReleaseFilenName set %s->%s\n", r.ArtifactPath, r.LinkPath)
+		log.Debugf("ReleaseFilenName set %s\n", r.ArtifactPath)
 	} else if r.ExtractFileName != "" {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.ExtractFileName)
-		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, filepath.Base(r.ExtractFileName))
-		log.Debugf("Tar with Filename set %s -> %s\n", r.ArtifactPath, filepath.Base(r.ExtractFileName))
+		log.Debugf("Tar with Filename set %s\n", r.ArtifactPath)
+	} else if r.ExternalUrl != "" {
+		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, filepath.Base(r.ExternalUrl))
+		log.Debugf("Tar with Filename set %s\n", r.ArtifactPath)
 	} else {
 		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.Project)
-		r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, linkName)
-		log.Debugf("Default Extraction %s->%s\n", r.ArtifactPath, r.Project)
+		log.Debugf("Default Extraction %s\n", r.ArtifactPath)
 	}
+
+	r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, linkName)
+	log.Debugf("Artifact Path %s Link Path %s\n", r.ArtifactPath, r.Project)
 
 }
 
