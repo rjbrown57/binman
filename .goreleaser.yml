@@ -10,6 +10,9 @@ builds:
       - windows
     goarch:
       - amd64
+dockers:
+  - image_templates:
+    - ghcr.io/rjbrown57/binman
 archives:
   - format: binary
 checksum:
