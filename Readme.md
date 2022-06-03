@@ -35,6 +35,7 @@ Flags:
 
 ## Example config file
 
+binman will try it's best to detect either a binary or tar to grab from github that matches your OS and ARCH. Various keys can be set per release to aid in getting/extraction and linking.
 
 ```
 config:
@@ -67,6 +68,7 @@ releases:
 
 * Get releases from GH
 * Process releases
+  * Try to find a binary or a tar that matches or OS/ARCH. Or the OS/ARCH specified for that specific release.
   * Download releaseFile to ${confg.releasepath}/repos/${org}/${repo}/${tag}/downloadedfileshere
   * Extract notes
   * If file is a tar ball it is extracted to the same directory it was downloaded to
