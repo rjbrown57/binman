@@ -14,6 +14,7 @@ import (
 var debug bool
 var jsonLog bool
 var config string
+var repo string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -21,7 +22,15 @@ var rootCmd = &cobra.Command{
 	Short: "GitHub Binary Manager",
 	Long:  `Github Binary Manager will grab binaries from github for you!`,
 	Run: func(cmd *cobra.Command, args []string) {
-		binman.Main(config, debug, jsonLog)
+		if config == "" && repo == "" {
+			cmd.Root().Help()
+			os.Exit(1)
+		}
+
+		m := make(map[string]string)
+		m["configFile"] = config
+		m["repo"] = repo
+		binman.Main(m, debug, jsonLog)
 	},
 }
 
@@ -43,9 +52,8 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly
+	rootCmd.Flags().StringVarP(&config, "config", "c", "", "path to config file")
 	rootCmd.Flags().BoolVarP(&debug, "debug", "d", false, "enable debug logging")
 	rootCmd.Flags().BoolVarP(&jsonLog, "json", "j", false, "enable json style logging")
-	rootCmd.Flags().StringVarP(&config, "config", "c", "", "path to config file")
-
-	rootCmd.MarkFlagRequired("config")
+	rootCmd.Flags().StringVarP(&repo, "repo", "r", "", "Github repo in format org/repo")
 }
