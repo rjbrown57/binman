@@ -28,7 +28,8 @@ func FindAsset(relArch string, relOS string, assets []*github.ReleaseAsset) (str
 		// Currently we handle binaries and tars
 		testOS, _ := regexp.MatchString(relArch, an)
 		testArch, _ := regexp.MatchString(relOS, an)
-		binCheck := strings.ContainsAny(an, ".")
+		// anything following by a "." and then any three characters
+		binCheck, _ := regexp.MatchString(an, `.*\....`)
 		tarCheck, _ := regexp.MatchString(TarRegEx, an)
 		exeCheck := strings.HasSuffix(an, ".exe")
 
