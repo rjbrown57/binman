@@ -8,27 +8,28 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/google/go-github/v44/github"
 	"gopkg.in/yaml.v2"
 )
 
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
 const x86RegEx = `(amd64|x86_64)`
 
-// GHBMConfigfile contains Global Config Options
-type GHBMConfigFile struct {
+// BinmanConfig contains Global Config Options
+type BinmanConfig struct {
 	ReleasePath string `yaml:"releasepath"`        //path to download/link releases from github
 	TokenVar    string `yaml:"tokenvar,omitempty"` //Github Auth Token
 }
 
-// GHBMDefaults contains default config options. If a value is unset in releases array these will be used.
-type GHBMDefaults struct {
+// BinmanDefaults contains default config options. If a value is unset in releases array these will be used.
+type BinmanDefaults struct {
 	Os      string `yaml:"os,omitempty"`      //OS architechrue to look for
 	Arch    string `yaml:"arch,omitempty"`    //OS architechrue to look for
 	Version string `yaml:"version,omitempty"` // Stub Version to look for
 }
 
-// GHBMRelease contains info on specifc releases to hunt for
-type GHBMRelease struct {
+// BinmanRelease contains info on specifc releases to hunt for
+type BinmanRelease struct {
 	Os              string `yaml:"os,omitempty"`
 	Arch            string `yaml:"arch,omitempty"`
 	CheckSum        bool   `yaml:"checkSum,omitempty"`
@@ -40,14 +41,15 @@ type GHBMRelease struct {
 	Org             string // Will be provided by constuctor
 	Project         string // Will be provided by constuctor
 	PublishPath     string // Path Release will be set up at
-	ArtifactPath    string // Will be set by GHBMRelease.setPaths. This is the source path for the link
+	ArtifactPath    string // Will be set by BinmanRelease.setPaths. This is the source path for the link
 	LinkName        string `yaml:"linkname,omitempty"` // Set what the final link will be. Defaults to project name.
-	LinkPath        string // Will be set by GHBMRelease.setPaths
+	LinkPath        string // Will be set by BinmanRelease.setPaths
 	Version         string `yaml:"version,omitempty"` // Stub
+	GithubData      *github.RepositoryRelease
 }
 
 // set project and org vars
-func (r *GHBMRelease) getOR() {
+func (r *BinmanRelease) getOR() {
 	n := strings.Split(r.Repo, "/")
 	r.Org = n[0]
 	r.Project = n[1]
@@ -55,7 +57,7 @@ func (r *GHBMRelease) getOR() {
 
 // Helper method to set artifactpath for a requested release object
 // This will be called early in a main loop iteration so we can check if we already have a release
-func (r *GHBMRelease) setArtifactPath(ReleasePath string, tag string) {
+func (r *BinmanRelease) setArtifactPath(ReleasePath string, tag string) {
 	// Trim trailing / if user provided
 	if strings.HasSuffix(ReleasePath, "/") {
 		ReleasePath = strings.TrimSuffix(ReleasePath, "/")
@@ -64,7 +66,7 @@ func (r *GHBMRelease) setArtifactPath(ReleasePath string, tag string) {
 }
 
 // Helper method to set paths for a requested release object
-func (r *GHBMRelease) setPublishPaths(ReleasePath string, assetName string) {
+func (r *BinmanRelease) setPublishPaths(ReleasePath string, assetName string) {
 
 	// Allow user to supply the name of the final link
 	// This is nice for projects like lazygit which is simply too much to type
@@ -106,9 +108,9 @@ func (r *GHBMRelease) setPublishPaths(ReleasePath string, assetName string) {
 
 // Type that rolls up the above types into one happy family
 type GHBMConfig struct {
-	Config   GHBMConfigFile `yaml:"config"`
-	Defaults GHBMDefaults   `yaml:"defaults"`
-	Releases []GHBMRelease  `yaml:"releases"`
+	Config   BinmanConfig    `yaml:"config"`
+	Defaults BinmanDefaults  `yaml:"defaults"`
+	Releases []BinmanRelease `yaml:"releases"`
 }
 
 func newGHBMConfig(configPath string) *GHBMConfig {
