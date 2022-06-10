@@ -31,6 +31,21 @@ Flags:
   -d, --debug           enable debug logging
   -h, --help            help for binman
   -j, --json            enable json style logging
+  -r, --repo string     Github repo in format org/repo
+```
+
+
+## Direct download
+
+Supply `-r/--repo` flag to download a single release. This will place the latest release in your current directory. Currently it does not extract tar's but that will be added at a later date.
+```
+/binman -r anchore/syft
+INFO[0000] binman sync begin
+INFO[0000] direct repo download
+INFO[0000] Querying github api for latest release of anchore/syft
+INFO[0000] Getting https://github.com/anchore/syft/releases/download/v0.47.0/syft_0.47.0_darwin_amd64.tar.gz
+downloading 100% |███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| (21/21 MB, 3.026 MB/s)
+INFO[0007] binman finished!
 ```
 
 ## Example config file
