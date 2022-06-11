@@ -3,6 +3,7 @@ config:
 releases:
   - repo: anchore/syft 
   - repo: anchore/grype
+  - repo: anchore/kai
   - repo: cilium/cilium-cli
     extractfilename: cilium
     linkname: cilium
