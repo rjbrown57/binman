@@ -25,9 +25,15 @@ func syncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease) er
 
 	log.Debugf("release = %+v", rel)
 
-	log.Infof("Querying github api for latest release of %s", rel.Repo)
-	// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
-	rel.GithubData, _, err = ghClient.Repositories.GetLatestRelease(ctx, rel.Org, rel.Project)
+	if rel.Version == "" {
+		log.Infof("Querying github api for latest release of %s", rel.Repo)
+		// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
+		rel.GithubData, _, err = ghClient.Repositories.GetLatestRelease(ctx, rel.Org, rel.Project)
+	} else {
+		log.Infof("Querying github api for %s release of %s", rel.Version, rel.Repo)
+		// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
+		rel.GithubData, _, err = ghClient.Repositories.GetReleaseByTag(ctx, rel.Org, rel.Project, rel.Version)
+	}
 
 	if err != nil {
 		log.Warnf("error listing releases %v", err)
@@ -186,6 +192,7 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 			Arch:         runtime.GOARCH,
 			PublishPath:  cdir,
 			DownloadOnly: true,
+			Version:      work["version"],
 		}
 
 		rel.getOR()

@@ -23,9 +23,8 @@ type BinmanConfig struct {
 
 // BinmanDefaults contains default config options. If a value is unset in releases array these will be used.
 type BinmanDefaults struct {
-	Os      string `yaml:"os,omitempty"`      //OS architechrue to look for
-	Arch    string `yaml:"arch,omitempty"`    //OS architechrue to look for
-	Version string `yaml:"version,omitempty"` // Stub Version to look for
+	Os   string `yaml:"os,omitempty"`   //OS architechrue to look for
+	Arch string `yaml:"arch,omitempty"` //OS architechrue to look for
 }
 
 // BinmanRelease contains info on specifc releases to hunt for
@@ -44,7 +43,7 @@ type BinmanRelease struct {
 	ArtifactPath    string // Will be set by BinmanRelease.setPaths. This is the source path for the link
 	LinkName        string `yaml:"linkname,omitempty"` // Set what the final link will be. Defaults to project name.
 	LinkPath        string // Will be set by BinmanRelease.setPaths
-	Version         string `yaml:"version,omitempty"` // Stub
+	Version         string `yaml:"version,omitempty"` // Pull a specific version
 	GithubData      *github.RepositoryRelease
 }
 

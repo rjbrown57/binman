@@ -15,6 +15,7 @@ var debug bool
 var jsonLog bool
 var config string
 var repo string
+var version string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -30,6 +31,8 @@ var rootCmd = &cobra.Command{
 		m := make(map[string]string)
 		m["configFile"] = config
 		m["repo"] = repo
+		m["version"] = version
+
 		binman.Main(m, debug, jsonLog)
 	},
 }
@@ -56,4 +59,6 @@ func init() {
 	rootCmd.Flags().BoolVarP(&debug, "debug", "d", false, "enable debug logging")
 	rootCmd.Flags().BoolVarP(&jsonLog, "json", "j", false, "enable json style logging")
 	rootCmd.Flags().StringVarP(&repo, "repo", "r", "", "Github repo in format org/repo")
+	rootCmd.Flags().StringVarP(&version, "version", "v", "", "Specific version to grab via direct download")
+
 }
