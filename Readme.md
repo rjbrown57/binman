@@ -27,17 +27,18 @@ Usage:
   binman [flags]
 
 Flags:
-  -c, --config string   path to config file
-  -d, --debug           enable debug logging
-  -h, --help            help for binman
-  -j, --json            enable json style logging
-  -r, --repo string     Github repo in format org/repo
+  -c, --config string    path to config file
+  -d, --debug            enable debug logging
+  -h, --help             help for binman
+  -j, --json             enable json style logging
+  -r, --repo string      Github repo in format org/repo
+  -v, --version string   Specific version to grab via direct download
 ```
 
 
 ## Direct download
 
-Supply `-r/--repo` flag to download a single release. This will place the latest release in your current directory. Currently it does not extract tar's but that will be added at a later date.
+Supply `-r/--repo` flag to download a single release. This will place the latest release in your current directory. Currently it does not extract tar's but that will be added at a later date. If you want a specific version just add it with `-v`.
 ```
 /binman -r anchore/syft
 INFO[0000] binman sync begin
