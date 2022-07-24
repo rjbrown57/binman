@@ -31,3 +31,4 @@ releases:
     extractfilename: bin/buildctl
     linkname: buildctl
   - repo: wagoodman/dive
+  - repo: google/ko
