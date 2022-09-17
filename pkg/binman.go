@@ -17,7 +17,7 @@ const timeout = 60 * time.Second
 
 var log = logrus.New()
 
-func syncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease) error {
+func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, c chan error) {
 
 	var assetName, dlUrl string
 	var err error
@@ -26,18 +26,19 @@ func syncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease) er
 	log.Debugf("release = %+v", rel)
 
 	if rel.Version == "" {
-		log.Infof("Querying github api for latest release of %s", rel.Repo)
+		log.Debugf("Querying github api for latest release of %s", rel.Repo)
 		// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
 		rel.GithubData, _, err = ghClient.Repositories.GetLatestRelease(ctx, rel.Org, rel.Project)
 	} else {
-		log.Infof("Querying github api for %s release of %s", rel.Version, rel.Repo)
+		log.Debugf("Querying github api for %s release of %s", rel.Version, rel.Repo)
 		// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
 		rel.GithubData, _, err = ghClient.Repositories.GetReleaseByTag(ctx, rel.Org, rel.Project, rel.Version)
 	}
 
 	if err != nil {
 		log.Warnf("error listing releases %v", err)
-		return err
+		c <- err
+		return
 	}
 
 	// Get Path and Verify it DNE before digging through assets
@@ -46,8 +47,9 @@ func syncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease) er
 		rel.setArtifactPath(releasePath, *rel.GithubData.TagName)
 		_, err = os.Stat(rel.PublishPath)
 		if err == nil {
-			log.Warnf("Latest version is %s. %s is up to date", *rel.GithubData.TagName, rel.Repo)
-			return err
+			log.Infof("Latest version is %s %s is up to date", *rel.GithubData.TagName, rel.Repo)
+			c <- err
+			return
 		}
 	}
 
@@ -68,7 +70,8 @@ func syncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease) er
 
 	if dlUrl == "" {
 		log.Warnf("Target release asset not found for %s", rel.Repo)
-		return nil
+		c <- err
+		return
 	}
 
 	// Set paths based on asset we selected
@@ -80,7 +83,8 @@ func syncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease) er
 	err = os.MkdirAll(rel.PublishPath, 0750)
 	if err != nil {
 		log.Warnf("Error creating %s - %v", rel.PublishPath, err)
-		return err
+		c <- err
+		return
 	}
 
 	// end pre steps
@@ -89,12 +93,14 @@ func syncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease) er
 	err = downloadFile(filePath, dlUrl)
 	if err != nil {
 		log.Warnf("Unable to download file : %v", err)
-		return err
+		c <- err
+		return
 	}
 
 	// If user has requested download only move to next release
 	if rel.DownloadOnly {
-		return nil
+		c <- err
+		return
 	}
 
 	// untar file
@@ -103,6 +109,8 @@ func syncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease) er
 		err = handleTar(rel.PublishPath, filePath)
 		if err != nil {
 			log.Warnf("Failed to extract file : %v", err)
+			c <- err
+			return
 		}
 	}
 
@@ -110,21 +118,24 @@ func syncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease) er
 	err = os.Chmod(rel.ArtifactPath, 0750)
 	if err != nil {
 		log.Warnf("Failed to set permissions on %s", rel.PublishPath)
-		return err
+		c <- err
+		return
 	}
 
 	// Create symlink
 	err = createReleaseLink(rel.ArtifactPath, rel.LinkPath)
 	if err != nil {
 		log.Warnf("Failed to make symlink: %v", err)
-		return err
+		c <- err
+		return
 	}
 
 	// Verify symlink is good
 	_, err = os.Stat(rel.LinkPath)
 	if err != nil {
 		log.Warnf("Issue with created symlink: %v", err)
-		return err
+		c <- err
+		return
 	}
 	log.Debugf("Symlink Created!")
 
@@ -135,12 +146,14 @@ func syncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease) er
 		err := writeNotes(notePath, relNotes)
 		if err != nil {
 			log.Fatalf("Issue writing release notes: %v", err)
-			return err
+			c <- err
+			return
 		}
 		log.Debugf("Notes written to %s", notePath)
 	}
 
-	return nil
+	c <- nil
+	return
 }
 
 // Main does basic setup, then calls the appropriate functions for asset resolution
@@ -161,8 +174,10 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 
 	log.Info("binman sync begin")
 
+	c := make(chan error)
+
 	if work["configFile"] != "" {
-		log.Info("config sync")
+		log.Debug("config sync")
 		config := newGHBMConfig(work["configFile"])
 
 		log.Debugf("Process %v Releases", len(config.Releases))
@@ -171,12 +186,15 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 
 		log.Debugf("config = %+v", config)
 
+		// https://github.com/lotusirous/go-concurrency-patterns/blob/main/2-chan/main.go
 		for _, rel := range config.Releases {
-			err := syncRepo(ghClient, config.Config.ReleasePath, rel)
-			if err != nil {
-				log.Warnf("Error syncing %s - %v\n", rel.Repo, err)
-			}
+			go goSyncRepo(ghClient, config.Config.ReleasePath, rel, c)
 		}
+
+		for _, rel := range config.Releases {
+			log.Debugf("Repo %s, Error %q\n", rel.Repo, <-c)
+		}
+
 	} else {
 		log.Info("direct repo download")
 		ghClient := gh.GetGHCLient("none")
@@ -197,10 +215,11 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 
 		rel.getOR()
 
-		err = syncRepo(ghClient, cdir, rel)
-		if err != nil {
-			log.Warnf("Error syncing %s - %v\n", rel.Repo, err)
+		go goSyncRepo(ghClient, cdir, rel, c)
+		for i := 0; i < 1; i++ {
+			log.Debugf("Repo %s, Error %q\n", rel.Repo, <-c)
 		}
+
 	}
 
 	log.Info("binman finished!")
