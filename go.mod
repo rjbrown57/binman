@@ -1,6 +1,6 @@
 module github.com/rjbrown57/binman
 
-go 1.18
+go 1.19
 
 require (
 	github.com/google/go-github/v44 v44.1.0

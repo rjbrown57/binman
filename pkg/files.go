@@ -11,8 +11,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/schollz/progressbar/v3"
 )
 
 // test if a file is a tar
@@ -122,7 +120,7 @@ func writeNotes(path string, notes string) error {
 
 func downloadFile(path string, url string) error {
 
-	log.Infof("Getting %s", url)
+	log.Infof("Downloading %s", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -137,15 +135,12 @@ func downloadFile(path string, url string) error {
 
 	defer out.Close()
 
-	bar := progressbar.DefaultBytes(
-		resp.ContentLength,
-		"downloading",
-	)
-
-	_, err = io.Copy(io.MultiWriter(out, bar), resp.Body)
+	_, err = io.Copy(io.MultiWriter(out), resp.Body)
 	if err != nil {
 		return err
 	}
+
+	log.Infof("Download %s complete", url)
 
 	return nil
 }
