@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -55,10 +54,11 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly
-	rootCmd.Flags().StringVarP(&config, "config", "c", "", "path to config file")
+
+	configDefault := os.ExpandEnv("${BINMAN_CONFIG}")
+	rootCmd.Flags().StringVarP(&config, "config", "c", configDefault, "path to config file. Can be set with ${BINMAN_CONFIG} env var")
 	rootCmd.Flags().BoolVarP(&debug, "debug", "d", false, "enable debug logging")
 	rootCmd.Flags().BoolVarP(&jsonLog, "json", "j", false, "enable json style logging")
 	rootCmd.Flags().StringVarP(&repo, "repo", "r", "", "Github repo in format org/repo")
 	rootCmd.Flags().StringVarP(&version, "version", "v", "", "Specific version to grab via direct download")
-
 }
