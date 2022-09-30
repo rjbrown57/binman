@@ -2,6 +2,7 @@ package binman
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -119,6 +120,27 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 		err = handleZip(rel.PublishPath, filePath)
 		if err != nil {
 			log.Warnf("Failed to extract zip file: %v", err)
+			c <- BinmanMsg{rel: rel, err: err}
+			return
+		}
+	}
+
+	// If the file still doesn't exist, attempt to find it in sub-directories
+	if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
+		log.Debugf("Wasn't able to find the artifact at %s, walking the directory to see if we can find it",
+			rel.ArtifactPath)
+		_ = filepath.Walk(rel.PublishPath, func(path string, info os.FileInfo, err error) error {
+			log.Debugf("Checking %s, against %s...", rel.Project, info.Name())
+			if err == nil && rel.Project == info.Name() {
+				log.Debugf("Found match! Using %s as the new artifact path.", path)
+				rel.ArtifactPath = path
+				return nil
+			}
+			return nil
+		})
+		if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
+			err := fmt.Errorf("Unable to find file matching '%s' anywhere in the release archive", rel.Project)
+			log.Warnf("%v", err)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
 		}
