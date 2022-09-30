@@ -114,7 +114,7 @@ func handleTar(publishDir string, tarpath string) error {
 			log.Debugf("creating directory for %s", newDir)
 			err := os.MkdirAll(newDir, 0750)
 			if err != nil {
-				log.Warnf("Errore creating %s,%v", newDir, err)
+				log.Warnf("Error creating %s,%v", newDir, err)
 			}
 		}
 
