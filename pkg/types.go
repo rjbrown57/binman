@@ -15,6 +15,12 @@ import (
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
 const x86RegEx = `(amd64|x86_64)`
 
+// BinmanMsg contains return messages for binman's concurrent workers
+type BinmanMsg struct {
+	err error
+	rel BinmanRelease
+}
+
 // BinmanConfig contains Global Config Options
 type BinmanConfig struct {
 	ReleasePath string `yaml:"releasepath"`        //path to download/link releases from github
