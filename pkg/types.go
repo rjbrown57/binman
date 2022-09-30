@@ -12,6 +12,7 @@ import (
 )
 
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
+const ZipRegEx = `(\.zip$)`
 const x86RegEx = `(amd64|x86_64)`
 
 // BinmanMsg contains return messages for binman's concurrent workers
@@ -87,17 +88,19 @@ func (r *BinmanRelease) setPublishPaths(ReleasePath string, assetName string) {
 	// else we want default
 	if r.ReleaseFileName != "" {
 		r.ArtifactPath = filepath.Join(r.PublishPath, r.ReleaseFileName)
-		log.Debugf("ReleaseFilenName set %s\n", r.ArtifactPath)
+		log.Debugf("ReleaseFileName set %s\n", r.ArtifactPath)
 	} else if r.ExtractFileName != "" {
 		r.ArtifactPath = filepath.Join(r.PublishPath, r.ExtractFileName)
-		log.Debugf("Tar with Filename set %s\n", r.ArtifactPath)
+		log.Debugf("Archive with Filename set %s\n", r.ArtifactPath)
 	} else if r.ExternalUrl != "" {
 		r.ArtifactPath = filepath.Join(r.PublishPath, filepath.Base(r.ExternalUrl))
-		log.Debugf("Tar with Filename set %s\n", r.ArtifactPath)
+		log.Debugf("Archive with ExternalURL set %s\n", r.ArtifactPath)
 	} else {
 		// If we find a tar in the assetName assume the name of the binary within the tar
 		// Else our default is a binary
 		if isTar(assetName) {
+			r.ArtifactPath = filepath.Join(r.PublishPath, r.Project)
+		} else if isZip(assetName) {
 			r.ArtifactPath = filepath.Join(r.PublishPath, r.Project)
 		} else {
 			r.ArtifactPath = filepath.Join(r.PublishPath, assetName)

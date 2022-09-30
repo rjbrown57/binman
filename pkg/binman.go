@@ -107,10 +107,18 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 
 	// untar file
 	if isTar(filePath) {
-		log.Debug("extract start")
+		log.Debug("tar extract start")
 		err = handleTar(rel.PublishPath, filePath)
 		if err != nil {
-			log.Warnf("Failed to extract file : %v", err)
+			log.Warnf("Failed to extract tar file: %v", err)
+			c <- BinmanMsg{rel: rel, err: err}
+			return
+		}
+	} else if isZip(filePath) {
+		log.Debug("zip extract start")
+		err = handleZip(rel.PublishPath, filePath)
+		if err != nil {
+			log.Warnf("Failed to extract zip file: %v", err)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
 		}
