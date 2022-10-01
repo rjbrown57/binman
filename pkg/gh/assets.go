@@ -8,6 +8,7 @@ import (
 )
 
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
+const ZipRegEx = `(\.zip$)`
 
 // I should refactor this a bit to use a regex for Arch to interchange amd64 v x86_64
 // rel* vars should come in a interface
@@ -31,10 +32,11 @@ func FindAsset(relArch string, relOS string, assets []*github.ReleaseAsset) (str
 		// anything following by a "." and then any three characters
 		binCheck, _ := regexp.MatchString(`.*\....$`, an)
 		tarCheck, _ := regexp.MatchString(TarRegEx, an)
+		zipCheck, _ := regexp.MatchString(ZipRegEx, an)
 		exeCheck := strings.HasSuffix(an, ".exe")
 
 		// If the asset matches OS/ARCH and binCheck is false or tarCheck is true or exe check is true
-		if testOS && testArch && (!binCheck || tarCheck || exeCheck) {
+		if testOS && testArch && (!binCheck || tarCheck || zipCheck || exeCheck) {
 			return *asset.Name, *asset.BrowserDownloadURL
 		}
 	}

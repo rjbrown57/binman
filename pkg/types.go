@@ -1,7 +1,6 @@
 package binman
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -13,7 +12,14 @@ import (
 )
 
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
+const ZipRegEx = `(\.zip$)`
 const x86RegEx = `(amd64|x86_64)`
+
+// BinmanMsg contains return messages for binman's concurrent workers
+type BinmanMsg struct {
+	err error
+	rel BinmanRelease
+}
 
 // BinmanConfig contains Global Config Options
 type BinmanConfig struct {
@@ -61,7 +67,7 @@ func (r *BinmanRelease) setArtifactPath(ReleasePath string, tag string) {
 	if strings.HasSuffix(ReleasePath, "/") {
 		ReleasePath = strings.TrimSuffix(ReleasePath, "/")
 	}
-	r.PublishPath = fmt.Sprintf("%s/repos/%s/%s/%s", ReleasePath, r.Org, r.Project, tag)
+	r.PublishPath = filepath.Join(ReleasePath, "repos", r.Org, r.Project, tag)
 }
 
 // Helper method to set paths for a requested release object
@@ -81,26 +87,28 @@ func (r *BinmanRelease) setPublishPaths(ReleasePath string, assetName string) {
 	// else if it's a tar but we have specified the inside file use filename for source and destination
 	// else we want default
 	if r.ReleaseFileName != "" {
-		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.ReleaseFileName)
-		log.Debugf("ReleaseFilenName set %s\n", r.ArtifactPath)
+		r.ArtifactPath = filepath.Join(r.PublishPath, r.ReleaseFileName)
+		log.Debugf("ReleaseFileName set %s\n", r.ArtifactPath)
 	} else if r.ExtractFileName != "" {
-		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.ExtractFileName)
-		log.Debugf("Tar with Filename set %s\n", r.ArtifactPath)
+		r.ArtifactPath = filepath.Join(r.PublishPath, r.ExtractFileName)
+		log.Debugf("Archive with Filename set %s\n", r.ArtifactPath)
 	} else if r.ExternalUrl != "" {
-		r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, filepath.Base(r.ExternalUrl))
-		log.Debugf("Tar with Filename set %s\n", r.ArtifactPath)
+		r.ArtifactPath = filepath.Join(r.PublishPath, filepath.Base(r.ExternalUrl))
+		log.Debugf("Archive with ExternalURL set %s\n", r.ArtifactPath)
 	} else {
 		// If we find a tar in the assetName assume the name of the binary within the tar
 		// Else our default is a binary
 		if isTar(assetName) {
-			r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, r.Project)
+			r.ArtifactPath = filepath.Join(r.PublishPath, r.Project)
+		} else if isZip(assetName) {
+			r.ArtifactPath = filepath.Join(r.PublishPath, r.Project)
 		} else {
-			r.ArtifactPath = fmt.Sprintf("%s/%s", r.PublishPath, assetName)
+			r.ArtifactPath = filepath.Join(r.PublishPath, assetName)
 		}
 		log.Debugf("Default Extraction %s\n", r.ArtifactPath)
 	}
 
-	r.LinkPath = fmt.Sprintf("%s/%s", ReleasePath, linkName)
+	r.LinkPath = filepath.Join(ReleasePath, linkName)
 	log.Debugf("Artifact Path %s Link Path %s\n", r.ArtifactPath, r.Project)
 
 }

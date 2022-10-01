@@ -2,6 +2,7 @@ package binman
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -17,6 +18,65 @@ import (
 func isTar(filepath string) bool {
 	boolReturn, _ := regexp.MatchString(TarRegEx, filepath)
 	return boolReturn
+}
+
+func isZip(filepath string) bool {
+	boolReturn, _ := regexp.MatchString(ZipRegEx, filepath)
+	return boolReturn
+}
+
+func handleZip(publishDir string, zippath string) error {
+	archive, err := zip.OpenReader(zippath)
+	if err != nil {
+		log.Warnf("Unable to open %s", zippath)
+		return err
+	}
+	defer archive.Close()
+
+	for _, f := range archive.File {
+		dstPath := filepath.Join(publishDir, f.Name)
+
+		if !strings.HasPrefix(dstPath, filepath.Clean(publishDir)+string(os.PathSeparator)) {
+			log.Warnf("Extracted file would have had an invalid path, cannot continue")
+			return fmt.Errorf("Extracted file would have had an invalid path, cannot continue")
+		}
+
+		if f.FileInfo().IsDir() {
+			log.Debugf("creating directory for %s", dstPath)
+			err := os.MkdirAll(dstPath, 0750)
+			if err != nil {
+				log.Warnf("Error creating %s, %v", dstPath, err)
+				return fmt.Errorf("Error creating %s, %v", dstPath, err)
+			}
+			continue
+		}
+
+		if err := os.MkdirAll(filepath.Dir(dstPath), os.ModePerm); err != nil {
+			log.Warnf("Error creating %s, %v", filepath.Dir(dstPath), err)
+			return fmt.Errorf("Error creating %s, %v", filepath.Dir(dstPath), err)
+		}
+
+		dstFile, err := os.OpenFile(dstPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			log.Warnf("Error creating %s, %v", dstPath, err)
+			return fmt.Errorf("Error creating %s, %v", dstPath, err)
+		}
+		defer dstFile.Close()
+
+		fileInArchive, err := f.Open()
+		if err != nil {
+			log.Warnf("Could not read file inside zip: %s, %v", f.Name, err)
+			return fmt.Errorf("Could not read file inside zip: %s, %v", f.Name, err)
+		}
+		defer fileInArchive.Close()
+
+		if _, err := io.Copy(dstFile, fileInArchive); err != nil {
+			log.Warnf("Could not copy file inside zip: %s, %v", f.Name, err)
+			return fmt.Errorf("Could not copy file inside zip: %s, %v", f.Name, err)
+		}
+	}
+
+	return nil
 }
 
 func handleTar(publishDir string, tarpath string) error {
@@ -54,7 +114,7 @@ func handleTar(publishDir string, tarpath string) error {
 			log.Debugf("creating directory for %s", newDir)
 			err := os.MkdirAll(newDir, 0750)
 			if err != nil {
-				log.Warnf("Errore creating %s,%v", newDir, err)
+				log.Warnf("Error creating %s,%v", newDir, err)
 			}
 		}
 
