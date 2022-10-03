@@ -1,7 +1,12 @@
 config:
   tokenvar: GH_TOKEN 
+  upx:
+    enabled: true
+    args: ["-k"] # Args to be added to upx command
 releases:
   - repo: anchore/syft 
+    upx:
+      enabled: false
   - repo: anchore/grype
   - repo: anchore/kai
   - repo: cilium/cilium-cli
@@ -32,3 +37,4 @@ releases:
     linkname: buildctl
   - repo: wagoodman/dive
   - repo: google/ko
+  - repo: rjbrown57/binman
