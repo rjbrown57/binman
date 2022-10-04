@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -182,6 +183,27 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 			return
 		}
 		log.Debugf("Notes written to %s", notePath)
+	}
+
+	// IF enabled shrink via upx
+	if rel.UpxConfig.Enabled == "true" {
+
+		args := []string{rel.ArtifactPath}
+		// If user supplied extra args add them
+		if len(rel.UpxConfig.Args) != 0 {
+			args = append(args, rel.UpxConfig.Args...)
+		}
+
+		log.Infof("Start upx on %s\n", rel.ArtifactPath)
+		out, err := exec.Command("upx", args...).Output()
+
+		if err != nil {
+			c <- BinmanMsg{rel: rel, err: err}
+			return
+		}
+
+		log.Infof("Upx complete on %s\n", rel.ArtifactPath)
+		log.Debugf("Upx output %s\n", out)
 	}
 
 	c <- BinmanMsg{rel: rel, err: nil}

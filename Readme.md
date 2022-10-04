@@ -57,9 +57,9 @@ binman will try it's best to detect either a binary or tar to grab from github t
 config:
   #releasepath: /set/path/heretopublishto/ # Default is homeDirectory/binMan 
   tokenvar: GH_TOKEN # GITHUB API TOKEN
-defaults:
-  checksum: false
-  filetype: tar.gz # choose tar.gz or binary
+  upx:
+    enabled: true # run upx against all releases. Make sure you have upx in your path!
+    args: ["-q","-k"] # arguements to upx command
 releases:
   - repo: anchore/syft # Easy mode!
   - repo: google/go-containerregistry
