@@ -176,7 +176,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	relNotes := rel.GithubData.GetBody()
 	if relNotes != "" {
 		notePath := fmt.Sprintf("%s/releaseNotes.txt", rel.PublishPath)
-		err := writeNotes(notePath, relNotes)
+		err := writeStringtoFile(notePath, relNotes)
 		if err != nil {
 			log.Fatalf("Issue writing release notes: %v", err)
 			c <- BinmanMsg{rel: rel, err: err}
@@ -234,7 +234,13 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 	var ghClient *github.Client
 	var releasePath string
 
-	if work["configFile"] != "" {
+	// Create default path + config file if necessary
+	if work["configFile"] == "default" {
+		work["configFile"] = mustEnsureDefaultPaths()
+	}
+
+	// This should be refactored to be simplified
+	if work["repo"] == "" {
 		log.Debug("config sync")
 		config := newGHBMConfig(work["configFile"])
 		log.Debugf("config = %+v", config)

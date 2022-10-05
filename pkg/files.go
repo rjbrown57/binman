@@ -174,8 +174,8 @@ func createReleaseLink(source string, target string) error {
 	return nil
 }
 
-func writeNotes(path string, notes string) error {
-	return ioutil.WriteFile(path, []byte(notes), 0600)
+func writeStringtoFile(path string, thestring string) error {
+	return ioutil.WriteFile(path, []byte(thestring), 0600)
 }
 
 func downloadFile(path string, url string) error {
