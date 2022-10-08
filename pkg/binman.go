@@ -27,7 +27,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	var err error
 	ctx := context.Background()
 
-	log.Debugf("release = %+v", rel)
+	log.Debugf("release %s = %+v", rel.Repo, rel)
 
 	if rel.Version == "" {
 		log.Debugf("Querying github api for latest release of %s", rel.Repo)
