@@ -130,9 +130,10 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
 		log.Debugf("Wasn't able to find the artifact at %s, walking the directory to see if we can find it",
 			rel.ArtifactPath)
+		targetFileName := filepath.Base(rel.ArtifactPath)
 		_ = filepath.Walk(rel.PublishPath, func(path string, info os.FileInfo, err error) error {
-			log.Debugf("Checking %s, against %s...", rel.Project, info.Name())
-			if err == nil && rel.Project == info.Name() {
+			log.Debugf("Checking %s, against %s...", targetFileName, info.Name())
+			if err == nil && targetFileName == info.Name() {
 				log.Debugf("Found match! Using %s as the new artifact path.", path)
 				rel.ArtifactPath = path
 				return nil
@@ -140,7 +141,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 			return nil
 		})
 		if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
-			err := fmt.Errorf("Unable to find file matching '%s' anywhere in the release archive", rel.Project)
+			err := fmt.Errorf("Unable to find file matching '%s' anywhere in the release archive", targetFileName)
 			log.Warnf("%v", err)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
