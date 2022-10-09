@@ -107,11 +107,12 @@ func (r *BinmanRelease) setPublishPaths(ReleasePath string, assetName string) {
 	} else {
 		// If we find a tar/zip in the assetName assume the name of the binary within the tar
 		// Else our default is a binary
-		if isTar(assetName) {
+		switch findfType(assetName) {
+		case "tar":
 			r.ArtifactPath = filepath.Join(r.PublishPath, r.Project)
-		} else if isZip(assetName) {
+		case "zip":
 			r.ArtifactPath = filepath.Join(r.PublishPath, r.Project)
-		} else {
+		default:
 			r.ArtifactPath = filepath.Join(r.PublishPath, assetName)
 		}
 		log.Debugf("Default Extraction %s\n", r.ArtifactPath)

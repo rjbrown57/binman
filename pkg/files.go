@@ -14,15 +14,20 @@ import (
 	"strings"
 )
 
-// test if a file is a tar
-func isTar(filepath string) bool {
-	boolReturn, _ := regexp.MatchString(TarRegEx, filepath)
-	return boolReturn
-}
+// Test for filetypes
+func findfType(filepath string) string {
 
-func isZip(filepath string) bool {
-	boolReturn, _ := regexp.MatchString(ZipRegEx, filepath)
-	return boolReturn
+	zipRegex := regexp.MustCompile(ZipRegEx)
+	tarRegex := regexp.MustCompile(TarRegEx)
+
+	switch {
+	case tarRegex.MatchString(filepath):
+		return "tar"
+	case zipRegex.MatchString(filepath):
+		return "zip"
+	default:
+		return "default"
+	}
 }
 
 func handleZip(publishDir string, zippath string) error {
