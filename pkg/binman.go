@@ -62,12 +62,16 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	// User can provide an exact asset name via releaseFilename
 	// binman will try to find the release via fileType,Arch
 	if rel.ExternalUrl != "" {
-		dlUrl = fmt.Sprintf(rel.ExternalUrl, *rel.GithubData.TagName)
+		dlUrl = formatString(rel.ExternalUrl, *rel.GithubData.TagName)
+		log.Debugf("User specified url %s", dlUrl)
 		assetName = filepath.Base(dlUrl)
 	} else {
 		if rel.ReleaseFileName != "" {
-			assetName, dlUrl = gh.GetAssetbyName(rel.ReleaseFileName, rel.GithubData.Assets)
+			rFilename := formatString(rel.ReleaseFileName, *rel.GithubData.TagName)
+			log.Debugf("Get asset by name %s", rFilename)
+			assetName, dlUrl = gh.GetAssetbyName(rFilename, rel.GithubData.Assets)
 		} else {
+			log.Debugf("Attempt to find asset %s", rel.ReleaseFileName)
 			assetName, dlUrl = gh.FindAsset(rel.Arch, rel.Os, rel.GithubData.Assets)
 		}
 	}

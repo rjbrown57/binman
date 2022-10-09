@@ -209,3 +209,8 @@ func downloadFile(path string, url string) error {
 
 	return nil
 }
+
+// Format strings for processing. Currently used by releaseFileName and DlUrl
+func formatString(templateString string, dataString string) string {
+	return fmt.Sprintf(templateString, dataString)
+}
