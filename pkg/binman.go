@@ -244,21 +244,17 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 		work["configFile"] = mustEnsureDefaultPaths()
 	}
 
+	// Read config
+	config := newGHBMConfig(work["configFile"])
+	log.Debugf("binman config = %+v", config)
+
+	// get github client
+	ghClient = gh.GetGHCLient(config.Config.TokenVar)
+
 	// This should be refactored to be simplified
-	if work["repo"] == "" {
-		log.Debug("config sync")
-		config := newGHBMConfig(work["configFile"])
-		log.Debugf("config = %+v", config)
-
-		releases = config.Releases
-		log.Debugf("Process %v Releases", len(releases))
-		releasePath = config.Config.ReleasePath
-
-		ghClient = gh.GetGHCLient(config.Config.TokenVar)
-	} else {
+	if work["repo"] != "" {
 		var err error
 		log.Info("direct repo download")
-		ghClient = gh.GetGHCLient("none")
 
 		releasePath, err = os.Getwd()
 		if err != nil {
@@ -277,6 +273,11 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 		rel.getOR()
 
 		releases = []BinmanRelease{rel}
+	} else {
+		log.Debug("config file based sync")
+		releases = config.Releases
+		log.Debugf("Process %v Releases", len(releases))
+		releasePath = config.Config.ReleasePath
 	}
 
 	// https://github.com/lotusirous/go-concurrency-patterns/blob/main/2-chan/main.go
