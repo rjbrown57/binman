@@ -207,7 +207,7 @@ func (config *GHBMConfig) setDefaults() {
 	}
 }
 
-// Add an in default values for most fields :)
+// mustUnmarshalYaml will Unmarshall from config to GHBMConfig
 func mustUnmarshalYaml(configPath string, v interface{}) {
 	yamlFile, err := ioutil.ReadFile(filepath.Clean(configPath))
 	if err != nil {
