@@ -14,15 +14,20 @@ import (
 	"strings"
 )
 
-// test if a file is a tar
-func isTar(filepath string) bool {
-	boolReturn, _ := regexp.MatchString(TarRegEx, filepath)
-	return boolReturn
-}
+// Test for filetypes
+func findfType(filepath string) string {
 
-func isZip(filepath string) bool {
-	boolReturn, _ := regexp.MatchString(ZipRegEx, filepath)
-	return boolReturn
+	zipRegex := regexp.MustCompile(ZipRegEx)
+	tarRegex := regexp.MustCompile(TarRegEx)
+
+	switch {
+	case tarRegex.MatchString(filepath):
+		return "tar"
+	case zipRegex.MatchString(filepath):
+		return "zip"
+	default:
+		return "default"
+	}
 }
 
 func handleZip(publishDir string, zippath string) error {
@@ -174,8 +179,8 @@ func createReleaseLink(source string, target string) error {
 	return nil
 }
 
-func writeNotes(path string, notes string) error {
-	return ioutil.WriteFile(path, []byte(notes), 0600)
+func writeStringtoFile(path string, thestring string) error {
+	return ioutil.WriteFile(path, []byte(thestring), 0600)
 }
 
 func downloadFile(path string, url string) error {
@@ -203,4 +208,9 @@ func downloadFile(path string, url string) error {
 	log.Infof("Download %s complete", url)
 
 	return nil
+}
+
+// Format strings for processing. Currently used by releaseFileName and DlUrl
+func formatString(templateString string, dataString string) string {
+	return fmt.Sprintf(templateString, dataString)
 }

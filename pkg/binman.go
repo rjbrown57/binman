@@ -27,7 +27,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	var err error
 	ctx := context.Background()
 
-	log.Debugf("release = %+v", rel)
+	log.Debugf("release %s = %+v", rel.Repo, rel)
 
 	if rel.Version == "" {
 		log.Debugf("Querying github api for latest release of %s", rel.Repo)
@@ -62,12 +62,16 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	// User can provide an exact asset name via releaseFilename
 	// binman will try to find the release via fileType,Arch
 	if rel.ExternalUrl != "" {
-		dlUrl = fmt.Sprintf(rel.ExternalUrl, *rel.GithubData.TagName)
+		dlUrl = formatString(rel.ExternalUrl, *rel.GithubData.TagName)
+		log.Debugf("User specified url %s", dlUrl)
 		assetName = filepath.Base(dlUrl)
 	} else {
 		if rel.ReleaseFileName != "" {
-			assetName, dlUrl = gh.GetAssetbyName(rel.ReleaseFileName, rel.GithubData.Assets)
+			rFilename := formatString(rel.ReleaseFileName, *rel.GithubData.TagName)
+			log.Debugf("Get asset by name %s", rFilename)
+			assetName, dlUrl = gh.GetAssetbyName(rFilename, rel.GithubData.Assets)
 		} else {
+			log.Debugf("Attempt to find asset %s", rel.ReleaseFileName)
 			assetName, dlUrl = gh.FindAsset(rel.Arch, rel.Os, rel.GithubData.Assets)
 		}
 	}
@@ -107,8 +111,8 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 		return
 	}
 
-	// untar file
-	if isTar(filePath) {
+	switch findfType(filePath) {
+	case "tar":
 		log.Debug("tar extract start")
 		err = handleTar(rel.PublishPath, filePath)
 		if err != nil {
@@ -116,7 +120,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 			c <- BinmanMsg{rel: rel, err: err}
 			return
 		}
-	} else if isZip(filePath) {
+	case "zip":
 		log.Debug("zip extract start")
 		err = handleZip(rel.PublishPath, filePath)
 		if err != nil {
@@ -130,9 +134,10 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
 		log.Debugf("Wasn't able to find the artifact at %s, walking the directory to see if we can find it",
 			rel.ArtifactPath)
+		targetFileName := filepath.Base(rel.ArtifactPath)
 		_ = filepath.Walk(rel.PublishPath, func(path string, info os.FileInfo, err error) error {
-			log.Debugf("Checking %s, against %s...", rel.Project, info.Name())
-			if err == nil && rel.Project == info.Name() {
+			log.Debugf("Checking %s, against %s...", targetFileName, info.Name())
+			if err == nil && targetFileName == info.Name() {
 				log.Debugf("Found match! Using %s as the new artifact path.", path)
 				rel.ArtifactPath = path
 				return nil
@@ -140,7 +145,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 			return nil
 		})
 		if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
-			err := fmt.Errorf("Unable to find file matching '%s' anywhere in the release archive", rel.Project)
+			err := fmt.Errorf("Unable to find file matching '%s' anywhere in the release archive", targetFileName)
 			log.Warnf("%v", err)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
@@ -176,7 +181,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	relNotes := rel.GithubData.GetBody()
 	if relNotes != "" {
 		notePath := fmt.Sprintf("%s/releaseNotes.txt", rel.PublishPath)
-		err := writeNotes(notePath, relNotes)
+		err := writeStringtoFile(notePath, relNotes)
 		if err != nil {
 			log.Fatalf("Issue writing release notes: %v", err)
 			c <- BinmanMsg{rel: rel, err: err}
@@ -234,20 +239,22 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 	var ghClient *github.Client
 	var releasePath string
 
-	if work["configFile"] != "" {
-		log.Debug("config sync")
-		config := newGHBMConfig(work["configFile"])
-		log.Debugf("config = %+v", config)
+	// Create default path + config file if necessary
+	if work["configFile"] == "default" {
+		work["configFile"] = mustEnsureDefaultPaths()
+	}
 
-		releases = config.Releases
-		log.Debugf("Process %v Releases", len(releases))
-		releasePath = config.Config.ReleasePath
+	// Read config
+	config := newGHBMConfig(work["configFile"])
+	log.Debugf("binman config = %+v", config)
 
-		ghClient = gh.GetGHCLient(config.Config.TokenVar)
-	} else {
+	// get github client
+	ghClient = gh.GetGHCLient(config.Config.TokenVar)
+
+	// This should be refactored to be simplified
+	if work["repo"] != "" {
 		var err error
 		log.Info("direct repo download")
-		ghClient = gh.GetGHCLient("none")
 
 		releasePath, err = os.Getwd()
 		if err != nil {
@@ -266,6 +273,11 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 		rel.getOR()
 
 		releases = []BinmanRelease{rel}
+	} else {
+		log.Debug("config file based sync")
+		releases = config.Releases
+		log.Debugf("Process %v Releases", len(releases))
+		releasePath = config.Config.ReleasePath
 	}
 
 	// https://github.com/lotusirous/go-concurrency-patterns/blob/main/2-chan/main.go

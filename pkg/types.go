@@ -93,7 +93,7 @@ func (r *BinmanRelease) setPublishPaths(ReleasePath string, assetName string) {
 	}
 
 	// If a binary is specified by ReleaseFileName use it for source and project for destination
-	// else if it's a tar but we have specified the inside file use filename for source and destination
+	// else if it's a tar/zip but we have specified the inside file via ExtractFileName. Use ExtraceFileName for source and destination
 	// else we want default
 	if r.ReleaseFileName != "" {
 		r.ArtifactPath = filepath.Join(r.PublishPath, r.ReleaseFileName)
@@ -105,13 +105,14 @@ func (r *BinmanRelease) setPublishPaths(ReleasePath string, assetName string) {
 		r.ArtifactPath = filepath.Join(r.PublishPath, filepath.Base(r.ExternalUrl))
 		log.Debugf("Archive with ExternalURL set %s\n", r.ArtifactPath)
 	} else {
-		// If we find a tar in the assetName assume the name of the binary within the tar
+		// If we find a tar/zip in the assetName assume the name of the binary within the tar
 		// Else our default is a binary
-		if isTar(assetName) {
+		switch findfType(assetName) {
+		case "tar":
 			r.ArtifactPath = filepath.Join(r.PublishPath, r.Project)
-		} else if isZip(assetName) {
+		case "zip":
 			r.ArtifactPath = filepath.Join(r.PublishPath, r.Project)
-		} else {
+		default:
 			r.ArtifactPath = filepath.Join(r.PublishPath, assetName)
 		}
 		log.Debugf("Default Extraction %s\n", r.ArtifactPath)
@@ -149,7 +150,7 @@ func (config *GHBMConfig) setDefaults() {
 	}
 
 	if config.Config.TokenVar == "" {
-		log.Warn("tokenvar is not set at config.tokenvar using anonymous authentication. Please be aware you can quickly be rate limited by github. Instructions here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
+		log.Warn("config.tokenvar is not set. Using anonymous authentication. Please be aware you can quickly be rate limited by github. Instructions here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
 		config.Config.TokenVar = "none"
 	}
 
@@ -206,7 +207,7 @@ func (config *GHBMConfig) setDefaults() {
 	}
 }
 
-// Add an in default values for most fields :)
+// mustUnmarshalYaml will Unmarshall from config to GHBMConfig
 func mustUnmarshalYaml(configPath string, v interface{}) {
 	yamlFile, err := ioutil.ReadFile(filepath.Clean(configPath))
 	if err != nil {
