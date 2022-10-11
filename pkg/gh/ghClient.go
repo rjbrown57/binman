@@ -12,7 +12,7 @@ import (
 func GetGHCLient(tokenvar string) *github.Client {
 
 	// No auth client if user does not supply envvar
-	if tokenvar == "" {
+	if tokenvar == "none" {
 		return github.NewClient(nil)
 	}
 
