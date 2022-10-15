@@ -1,12 +1,14 @@
+![intro](images/binmanlogo.png)
+
 ## General
 
-binman is a tool to sync release assets from github to your local workstation. The main use case is syncing via config to keep the tools you use every day up to date.
+Binman is a tool to sync release assets from github to your local workstation. The main use case is syncing via config to keep the tools you use every day up to date.
 
 Grab the latest release [here](https://github.com/rjbrown57/binman/releases), and let binman grab it for you next time :rocket:
 
-Binman will attempt to find a release asset that matches your OS and architecture and one of the types of files we handle currently. Currently handled filetyles are "zip", "tar", "binary", "exe". When a proper release asset is found it will be downloaded to your `releasepath` or the default `$HOME/binMan`. The download file will be placed at `$releasepath/repos/${githuborg}/${githubproject}/${version}/`. If the asset is an archive all files will be extracted. Binman will then attempt to find the binary and will link it to `$releasepath/${githubproject}`. Just add the releasepath to your shell PATH var and you are good to go!  
+Binman will attempt to find a release asset that matches your OS and architecture and one of the types of files we handle currently. Currently handled file types are "zip", "tar", "binary", "exe". When a proper release asset is found it will be downloaded to your `releasepath` or the default `$HOME/binMan`. The download file will be placed at `$releasepath/repos/${githuborg}/${githubproject}/${version}/`. If the asset is an archive all files will be extracted. Binman will then attempt to find the binary and will link it to `$releasepath/${githubproject}`. Just add the releasepath to your shell PATH var and you are good to go!  
 
- Binman provides many config options to allow you to handle all the manifold release styles out there on github and those are detailed in the [config Options](#config-options section).
+Binman provides many config options to allow you to handle all the manifold release styles on github. Check out the [config options section](#config-options) for details.
 
 ## Config Sync 
 
@@ -51,7 +53,7 @@ These options can be set per release
 | linkname | by default binman will create a symlink matching the project name. This can be overidden with linkname set per release |
 | releasefilename | in some cases project publish assets that have different names than the github project. For example [cilium-cli](github.com/cilium/cilium-cli) publishs a cli `cilium`. We would set `cilium` here so binman knows what to look for |
 | os | target OS  |
-| upx | upx config can be set per release as well |
+| upx | see [upx Config](#upx-config) |
 | version | pin to a specific release version |
 
 ### External Url Support
@@ -64,7 +66,7 @@ releases:
     url: https://kind.sigs.k8s.io/dl/%s/kind-linux-amd64
 ```
 
-Currently only version number is supported for formatting in this style. Expect a [refactor](https://github.com/rjbrown57/binman/issues/19) on this feature soon.
+Currently only version number is supported for templating in this style. Expect a [refactor](https://github.com/rjbrown57/binman/issues/19) on this feature soon.
 
 ### Upx Config
 
@@ -91,7 +93,7 @@ INFO[0002] Download https://github.com/rjbrown57/binman/releases/download/v0.0.1
 INFO[0002] binman finished!          
 ```
 
-## Using "ghcr.io/rjbrown57/binman:latest"
+## Using "ghcr.io/rjbrown57/binman:latest" container image
 
 You can use the binman image in a multi-stage build to grab binaries for docker images.
 
