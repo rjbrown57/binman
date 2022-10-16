@@ -16,6 +16,13 @@ const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
 const ZipRegEx = `(\.zip$)`
 const x86RegEx = `(amd64|x86_64)`
 
+// KnownUrlMap contains "projectname/repo" = "downloadurl" for common release assets not hosted on github
+var KnownUrlMap = map[string]string{
+	"helm/helm":             "https://get.helm.sh/helm-{{.}}-linux-amd64.tar.gz",
+	"kubernetes/kubernetes": "https://dl.k8s.io/release/{{.}}/bin/linux/amd64/kubectl",
+	"hashicorp/terraform":   `https://releases.hashicorp.com/terraform/{{ trimPrefix "v" . }}/terraform_{{ trimPrefix "v" . }}_linux_amd64.zip`,
+}
+
 // BinmanMsg contains return messages for binman's concurrent workers
 type BinmanMsg struct {
 	err error
@@ -67,6 +74,14 @@ func (r *BinmanRelease) getOR() {
 	n := strings.Split(r.Repo, "/")
 	r.Org = n[0]
 	r.Project = n[1]
+}
+
+// knownUrlCheck will see if binman is aware of a common external url for this repo.
+func (r *BinmanRelease) knownUrlCheck() {
+	if url, ok := KnownUrlMap[r.Repo]; ok {
+		log.Debugf("%s is a known repo. Updating download url to %s", r.Repo, url)
+		r.ExternalUrl = url
+	}
 }
 
 // Helper method to set artifactpath for a requested release object
@@ -184,6 +199,11 @@ func (config *GHBMConfig) setDefaults() {
 
 		// set project/org variables
 		config.Releases[k].getOR()
+
+		// If the user has not supplied an external url check against our map of known external urls
+		if config.Releases[k].ExternalUrl == "" {
+			config.Releases[k].knownUrlCheck()
+		}
 
 		// enable UpxShrink
 		if config.Config.UpxConfig.Enabled == "true" {
