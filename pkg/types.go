@@ -108,7 +108,7 @@ func (r *BinmanRelease) setPublishPaths(ReleasePath string, assetName string) {
 	}
 
 	// If a binary is specified by ReleaseFileName use it for source and project for destination
-	// else if it's a tar/zip but we have specified the inside file via ExtractFileName. Use ExtraceFileName for source and destination
+	// else if it's a tar/zip but we have specified the inside file via ExtractFileName. Use ExtractFileName for source and destination
 	// else we want default
 	if r.ReleaseFileName != "" {
 		r.ArtifactPath = filepath.Join(r.PublishPath, r.ReleaseFileName)
@@ -117,15 +117,18 @@ func (r *BinmanRelease) setPublishPaths(ReleasePath string, assetName string) {
 		r.ArtifactPath = filepath.Join(r.PublishPath, r.ExtractFileName)
 		log.Debugf("Archive with Filename set %s\n", r.ArtifactPath)
 	} else if r.ExternalUrl != "" {
-		r.ArtifactPath = filepath.Join(r.PublishPath, filepath.Base(r.ExternalUrl))
+		switch findfType(assetName) {
+		case "tar", "zip":
+			r.ArtifactPath = filepath.Join(r.PublishPath, r.Project)
+		default:
+			r.ArtifactPath = filepath.Join(r.PublishPath, filepath.Base(r.ExternalUrl))
+		}
 		log.Debugf("Archive with ExternalURL set %s\n", r.ArtifactPath)
 	} else {
 		// If we find a tar/zip in the assetName assume the name of the binary within the tar
 		// Else our default is a binary
 		switch findfType(assetName) {
-		case "tar":
-			r.ArtifactPath = filepath.Join(r.PublishPath, r.Project)
-		case "zip":
+		case "tar", "zip":
 			r.ArtifactPath = filepath.Join(r.PublishPath, r.Project)
 		default:
 			r.ArtifactPath = filepath.Join(r.PublishPath, assetName)
