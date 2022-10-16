@@ -58,14 +58,12 @@ These options can be set per release
 
 ### External Url Support
 
-binman currently supports fetching version information from github, and then downloading the asset from a seperate url. Templating via go templates and [spig](https://masterminds.github.io/sprig/) can be performed on the url to allow substitution of the fetched tag.
+binman currently supports fetching version information from github, and then downloading the asset from a seperate url. Templating via go templates and [sprig](https://masterminds.github.io/sprig/) can be performed on the url to allow substitution of the fetched tag.
 
 ```
 releases:
-  - repo: kubernetes/kubernetes
+  - repo: kubernetes-sigs/kind
     url: https://kind.sigs.k8s.io/dl/{{.}}/kind-linux-amd64
-  - repo: example/repo
-    url: https://downloadhere.org/dl/{{ trimPrefix "-" . }}/example-Bin
 ```
 
  For convenience a list of "known" repositories is kept with the templating all figured out for you. Just leave the url field blank for these and binman will take care of it.
