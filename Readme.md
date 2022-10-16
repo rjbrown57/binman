@@ -58,15 +58,23 @@ These options can be set per release
 
 ### External Url Support
 
-binman currently supports fetching version information from github, and then downloading the asset from a seperate url. This feature is useful for projects like [kubernetes](github.com/kubernetes/kubernetes) or [helm](github.com/helm/helm) who do not store the useful tools in github. This allows you to specify a url with the version number replaced with `%s`. The correct version will be added in at download time. 
+binman currently supports fetching version information from github, and then downloading the asset from a seperate url. Templating via go templates and [spig](https://masterminds.github.io/sprig/) can be performed on the url to allow substitution of the fetched tag.
 
 ```
 releases:
   - repo: kubernetes/kubernetes
-    url: https://kind.sigs.k8s.io/dl/%s/kind-linux-amd64
+    url: https://kind.sigs.k8s.io/dl/{{.}}/kind-linux-amd64
+  - repo: example/repo
+    url: https://downloadhere.org/dl/{{ trimPrefix "-" . }}/example-Bin
 ```
 
-Currently only version number is supported for templating in this style. Expect a [refactor](https://github.com/rjbrown57/binman/issues/19) on this feature soon.
+ For convenience a list of "known" repositories is kept with the templating all figured out for you. Just leave the url field blank for these and binman will take care of it.
+ 
+ Current known repos are 
+* kubernetes/kubernetes
+  * Please note this is currently harcoded to fetch kubectl. If you want a different binary set additional `repo: kubernetes/kubernetes` and specify the url field for each additional binary.
+* helm/helm
+* hashicorp/terraform
 
 ### Upx Config
 
