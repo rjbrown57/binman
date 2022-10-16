@@ -50,3 +50,12 @@ func TestFindAssetNil(t *testing.T) {
 		t.Fatalf("FindAsset nil test failed. Name should be empty!")
 	}
 }
+
+func TestGetAssetbyName(t *testing.T) {
+	var assetName = "my_awesome_file"
+	name, _ := GetAssetbyName(assetName, createTestData(assetName))
+
+	if name != assetName {
+		t.Fatalf("%s should = %s", assetName, name)
+	}
+}
