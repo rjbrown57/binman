@@ -58,7 +58,7 @@ These options can be set per release
 
 ### External Url Support
 
-binman currently supports fetching version information from github, and then downloading the asset from a seperate url. This comes in handle for projects like [kubernetes](github.com/kubernetes/kubernetes) or [helm](github.com/helm/helm). This allows you to specify a url with the version number replaced with `%s`. The correct version will be added in at download time. 
+binman currently supports fetching version information from github, and then downloading the asset from a seperate url. This feature is useful for projects like [kubernetes](github.com/kubernetes/kubernetes) or [helm](github.com/helm/helm) who do not store the useful tools in github. This allows you to specify a url with the version number replaced with `%s`. The correct version will be added in at download time. 
 
 ```
 releases:
