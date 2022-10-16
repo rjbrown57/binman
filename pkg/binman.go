@@ -134,7 +134,8 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
 		log.Debugf("Wasn't able to find the artifact at %s, walking the directory to see if we can find it",
 			rel.ArtifactPath)
-		targetFileName := filepath.Base(rel.ArtifactPath)
+		targetFileName := formatString(filepath.Base(rel.ArtifactPath), *rel.GithubData.TagName)
+
 		_ = filepath.Walk(rel.PublishPath, func(path string, info os.FileInfo, err error) error {
 			log.Debugf("Checking %s, against %s...", targetFileName, info.Name())
 			if err == nil && targetFileName == info.Name() {
