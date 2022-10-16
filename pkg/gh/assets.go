@@ -25,19 +25,18 @@ func GetAssetbyName(relFileName string, assets []*github.ReleaseAsset) (string, 
 
 // FindAsset will Return first asset that matches our OS and Arch regexes and one of our supported filetypes
 func FindAsset(relArch string, relOS string, assets []*github.ReleaseAsset) (string, string) {
+
+	zipRx := regexp.MustCompile(ZipRegEx)
+	tarRx := regexp.MustCompile(TarRegEx)
+	exeRx := regexp.MustCompile(ExeRegex)
+	osRx := regexp.MustCompile(relOS)
+	archRx := regexp.MustCompile(relArch)
+
 	for _, asset := range assets {
 		an := strings.ToLower(*asset.Name)
 
-		// Config we have an os/arch match
-		testOS, _ := regexp.MatchString(relOS, an)
-		testArch, _ := regexp.MatchString(relArch, an)
-
 		// This asset matches our OS/Arch
-		if testArch && testOS {
-			zipRx := regexp.MustCompile(ZipRegEx)
-			tarRx := regexp.MustCompile(TarRegEx)
-			exeRx := regexp.MustCompile(ExeRegex)
-
+		if osRx.MatchString(an) && archRx.MatchString(an) {
 			// If asset matches one of our supported styles return name+download url
 			// Current styles are tar,zip,exe,linux binary
 			switch {
