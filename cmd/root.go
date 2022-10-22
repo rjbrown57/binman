@@ -55,15 +55,7 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly
 
-	// If BINMAN_CONFIG is set we use that config path
-	// If not we send "default" to binman
-	// if user provides -c that value is used
-	configDefault, binmanConfigIsSet := os.LookupEnv("${BINMAN_CONFIG}")
-	if !binmanConfigIsSet {
-		configDefault = "default"
-	}
-
-	rootCmd.Flags().StringVarP(&config, "config", "c", configDefault, "path to config file. Can be set with ${BINMAN_CONFIG} env var")
+	rootCmd.Flags().StringVarP(&config, "config", "c", "noConfig", "path to config file. Can be set with ${BINMAN_CONFIG} env var")
 	rootCmd.Flags().BoolVarP(&debug, "debug", "d", false, "enable debug logging")
 	rootCmd.Flags().BoolVarP(&jsonLog, "json", "j", false, "enable json style logging")
 	rootCmd.Flags().StringVarP(&repo, "repo", "r", "", "Github repo in format org/repo")

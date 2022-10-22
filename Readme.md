@@ -12,7 +12,7 @@ Binman provides many config options to allow you to handle all the manifold rele
 
 ## Config Sync 
 
-To run binman you effectively you need a config. Running binman with no arguements and no config will populate the following config to your OS's appropriate [config directory](https://pkg.go.dev/os#UserConfigDir). On linux the config file will be added to `~/.config/binman/config`. Binman allows supplying a configfile from an alternate pathwith the `-c` flag.
+To run binman you effectively you need a config. Running binman with no arguements and no config will populate the following config to your OS's appropriate [config directory](https://pkg.go.dev/os#UserConfigDir). On linux the config file will be added to `~/.config/binman/config`. Binman allows supplying a configfile from an alternate path with the `-c` flag.
 
 Here's an example config file
 
