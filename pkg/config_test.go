@@ -92,7 +92,7 @@ func TestSetConfig(t *testing.T) {
 
 	// Add a default config
 	cf := fmt.Sprintf(d + "/" + ".binMan.yaml")
-	writeStringtoFile(cf, defaultConfig)
+	writeStringtoFile(cf, mergeConfig)
 
 	mergedConfig := setConfig(setBaseConfig("noConfig"))
 	mergedLength := len(mergedConfig.Releases)

@@ -1,6 +1,8 @@
 package binman
 
 import (
+	b64 "encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -154,6 +156,33 @@ func newGHBMConfig(configPath string) *GHBMConfig {
 	return config
 }
 
+// Deduplicate releases
+func (config *GHBMConfig) deDuplicate() {
+
+	var deduplicatedReleases []BinmanRelease
+
+	releaseMap := make(map[string]BinmanRelease)
+
+	// Iterate over all releases populating releaseMap.
+	// We iterate over the slice in reverse. THis way if a contextual config contains a duplicate the version from the contexual config will be tossed out
+	for index := len(config.Releases) - 1; index >= 0; index-- {
+
+		// Convert text representation of all values per release to b64.
+		// This will allow multiple versions of one repo with different settings
+		relString := fmt.Sprintf("%v", config.Releases[index])
+		b64string := b64.StdEncoding.EncodeToString([]byte(relString))
+
+		releaseMap[b64string] = config.Releases[index]
+	}
+
+	// Make the final release slice
+	for _, rel := range releaseMap {
+		deduplicatedReleases = append(deduplicatedReleases, rel)
+	}
+
+	config.Releases = deduplicatedReleases
+}
+
 // setDefaults will populate defaults, and required values
 func (config *GHBMConfig) setDefaults() {
 
@@ -196,6 +225,9 @@ func (config *GHBMConfig) setDefaults() {
 	if config.Defaults.Os == "" {
 		config.Defaults.Os = runtime.GOOS
 	}
+
+	// DeDuplicate before we populate defaults
+	config.deDuplicate()
 
 	for k := range config.Releases {
 

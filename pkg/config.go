@@ -72,7 +72,6 @@ func setConfig(suppliedConfig string) *GHBMConfig {
 
 	binMancfg.setDefaults()
 	return binMancfg
-
 }
 
 // detectRepoConfig will check for a directory specific binman config file. Return the path if found + a boolean.
