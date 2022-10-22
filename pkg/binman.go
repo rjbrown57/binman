@@ -240,13 +240,11 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 	var ghClient *github.Client
 	var releasePath string
 
-	// Create default path + config file if necessary
-	if work["configFile"] == "default" {
-		work["configFile"] = mustEnsureDefaultPaths()
-	}
+	// Create config object.
+	// setBaseConfig will return the appropriate base config file.
+	// setConfig will check for a contextual config and merge with our base config and return the result
+	config := setConfig(setBaseConfig(work["configFile"]))
 
-	// Read config
-	config := newGHBMConfig(work["configFile"])
 	log.Debugf("binman config = %+v", config)
 
 	// get github client

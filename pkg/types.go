@@ -151,7 +151,6 @@ type GHBMConfig struct {
 func newGHBMConfig(configPath string) *GHBMConfig {
 	config := &GHBMConfig{}
 	mustUnmarshalYaml(configPath, config)
-	config.setDefaults()
 	return config
 }
 

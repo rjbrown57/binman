@@ -6,13 +6,21 @@ Binman is a tool to sync release assets from github to your local workstation. T
 
 Grab the latest release [here](https://github.com/rjbrown57/binman/releases), and let binman grab it for you next time :rocket:
 
-Binman will attempt to find a release asset that matches your OS and architecture and one of the types of files we handle currently. Currently handled file types are "zip", "tar", "binary", "exe". When a proper release asset is found it will be downloaded to your `releasepath` or the default `$HOME/binMan`. The download file will be placed at `$releasepath/repos/${githuborg}/${githubproject}/${version}/`. If the asset is an archive all files will be extracted. Binman will then attempt to find the binary and will link it to `$releasepath/${githubproject}`. Just add the releasepath to your shell PATH var and you are good to go!  
+Binman will attempt to find a release asset that matches your OS and architecture and one of the types of files we handle currently. Currently handled file types are "zip", "tar", "binary", "exe".
+
+When a matching release asset is found it will be downloaded to your `releasepath` or the default `$HOME/binMan`. The download file will be placed at `$releasepath/repos/${githuborg}/${githubproject}/${version}/`. If the asset is an archive all files will be extracted. Binman will then attempt to find a binary and will link it to `$releasepath/${githubproject}`.
+
+Just add the releasepath to your shell PATH var and you are good to go!  
 
 Binman provides many config options to allow you to handle all the manifold release styles on github. Check out the [config options section](#config-options) for details.
 
-## Config Sync 
+## Config Sync
 
-To run binman you effectively you need a config. Running binman with no arguements and no config will populate the following config to your OS's appropriate [config directory](https://pkg.go.dev/os#UserConfigDir). On linux the config file will be added to `~/.config/binman/config`. Binman allows supplying a configfile from an alternate pathwith the `-c` flag.
+To run binman you effectively you need a config. 
+
+Running binman with no arguements and no config will populate the following config to your OS's appropriate [config directory](https://pkg.go.dev/os#UserConfigDir). On linux the config file will be added to `~/.config/binman/config`. 
+
+Binman also allows supplying a configfile from an alternate path with the `-c` flag or by the "BINMAN_CONFIG" environment variable.
 
 Here's an example config file
 
@@ -30,6 +38,8 @@ releases:
     upx: 
       args: [] #["-k","-v"]
 ```
+
+Binman can also run with a "contextual" config file. If a directory contains a file ".binMan.yaml" this will be merged with your main config. This can be checked into git projects and used to fetch any required dependencies from github.
 
 ### Config Options
 
@@ -60,15 +70,16 @@ These options can be set per release
 
 binman currently supports fetching version information from github, and then downloading the asset from a seperate url. Templating via go templates and [sprig](https://masterminds.github.io/sprig/) can be performed on the url to allow substitution of the fetched tag.
 
-```
+```yaml
 releases:
   - repo: kubernetes-sigs/kind
     url: https://kind.sigs.k8s.io/dl/{{.}}/kind-linux-amd64
 ```
 
  For convenience a list of "known" repositories is kept with the templating all figured out for you. Just leave the url field blank for these and binman will take care of it.
- 
- Current known repos are 
+
+ Current "known" repos are:
+
 * kubernetes/kubernetes
   * Please note this is currently harcoded to fetch kubectl. If you want a different binary set additional `repo: kubernetes/kubernetes` and specify the url field for each additional binary.
 * helm/helm
@@ -88,9 +99,9 @@ config:
 
 ## Direct Repo sync
 
-Binman can also be used to grab a specifc repository with the syntax `binman -r rjbrown57/binman` 
+Binman can also be used to grab a specifc repository with the syntax `binman -r rjbrown57/binman`
 
-```
+```Shell
 binman -r rjbrown57/binman                                                         
 INFO[0000] binman sync begin                            
 INFO[0000] direct repo download                         
@@ -103,7 +114,7 @@ INFO[0002] binman finished!
 
 You can use the binman image in a multi-stage build to grab binaries for docker images.
 
-```
+```Dockerfile
 FROM ghcr.io/rjbrown57/binman:latest AS binman
 RUN binman -r "sigstore/cosign"
 FROM ubuntu:latest
