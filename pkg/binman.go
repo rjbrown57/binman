@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v44/github"
+	"github.com/google/go-github/v48/github"
 	"github.com/rjbrown57/binman/pkg/gh"
 	"github.com/sirupsen/logrus"
 )

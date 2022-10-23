@@ -3,7 +3,7 @@ package gh
 import (
 	"testing"
 
-	"github.com/google/go-github/v44/github"
+	"github.com/google/go-github/v48/github"
 )
 
 // createTestData is a helper function to create test cases that should never be returned. It should be passed the "successful" test string

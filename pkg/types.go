@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/google/go-github/v44/github"
+	"github.com/google/go-github/v48/github"
 	"gopkg.in/yaml.v2"
 )
 
