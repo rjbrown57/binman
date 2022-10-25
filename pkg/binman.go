@@ -62,12 +62,12 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	// User can provide an exact asset name via releaseFilename
 	// binman will try to find the release via fileType,Arch
 	if rel.ExternalUrl != "" {
-		dlUrl = formatString(rel.ExternalUrl, *rel.GithubData.TagName)
+		dlUrl = formatString(rel.ExternalUrl, rel.getDataMap())
 		log.Debugf("User specified url %s", dlUrl)
 		assetName = filepath.Base(dlUrl)
 	} else {
 		if rel.ReleaseFileName != "" {
-			rFilename := formatString(rel.ReleaseFileName, *rel.GithubData.TagName)
+			rFilename := formatString(rel.ReleaseFileName, rel.getDataMap())
 			log.Debugf("Get asset by name %s", rFilename)
 			assetName, dlUrl = gh.GetAssetbyName(rFilename, rel.GithubData.Assets)
 		} else {
@@ -134,7 +134,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
 		log.Debugf("Wasn't able to find the artifact at %s, walking the directory to see if we can find it",
 			rel.ArtifactPath)
-		targetFileName := formatString(filepath.Base(rel.ArtifactPath), *rel.GithubData.TagName)
+		targetFileName := formatString(filepath.Base(rel.ArtifactPath), rel.getDataMap())
 
 		_ = filepath.Walk(rel.PublishPath, func(path string, info os.FileInfo, err error) error {
 			log.Debugf("Checking %s, against %s...", targetFileName, info.Name())

@@ -16,15 +16,8 @@ import (
 
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
 const ZipRegEx = `(\.zip$)`
-const x86RegEx = `(amd64|x86_64)`
 
-// KnownUrlMap contains "projectname/repo" = "downloadurl" for common release assets not hosted on github
-var KnownUrlMap = map[string]string{
-	"helm/helm":             "https://get.helm.sh/helm-{{.}}-linux-amd64.tar.gz",
-	"kubernetes/kubernetes": "https://dl.k8s.io/release/{{.}}/bin/linux/amd64/kubectl",
-	"hashicorp/terraform":   `https://releases.hashicorp.com/terraform/{{ trimPrefix "v" . }}/terraform_{{ trimPrefix "v" . }}_linux_amd64.zip`,
-	"hashicorp/vault":       `https://releases.hashicorp.com/vault/{{ trimPrefix "v" . }}/vault_{{ trimPrefix "v" . }}_linux_amd64.zip`,
-}
+
 
 // BinmanMsg contains return messages for binman's concurrent workers
 type BinmanMsg struct {
@@ -95,6 +88,14 @@ func (r *BinmanRelease) setArtifactPath(ReleasePath string, tag string) {
 		ReleasePath = strings.TrimSuffix(ReleasePath, "/")
 	}
 	r.PublishPath = filepath.Join(ReleasePath, "repos", r.Org, r.Project, tag)
+}
+
+func (r *BinmanRelease) getDataMap() map[string]string {
+	dataMap := make(map[string]string)
+	dataMap["version"] = *r.GithubData.TagName
+	dataMap["os"] = r.Os
+	dataMap["arch"] = r.Arch
+	return dataMap
 }
 
 // Helper method to set paths for a requested release object
@@ -218,9 +219,6 @@ func (config *GHBMConfig) setDefaults() {
 
 	if config.Defaults.Arch == "" {
 		config.Defaults.Arch = runtime.GOARCH
-		if config.Defaults.Arch == "amd64" {
-			config.Defaults.Arch = x86RegEx
-		}
 	}
 
 	if config.Defaults.Os == "" {
