@@ -16,7 +16,6 @@ import (
 
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
 const ZipRegEx = `(\.zip$)`
-const x86RegEx = `(amd64|x86_64)`
 
 
 
@@ -95,15 +94,7 @@ func (r *BinmanRelease) getDataMap() map[string]string {
 	dataMap := make(map[string]string)
 	dataMap["version"] = *r.GithubData.TagName
 	dataMap["os"] = r.Os
-
-	// if the user attempts to use the "arch" map we need to give them an actual value here and not the regex
-	// There is probably room for improvement here.
-	if r.Arch == x86RegEx {
-		dataMap["arch"] = "amd64"
-	} else {
-		dataMap["arch"] = r.Arch
-	}
-
+	dataMap["arch"] = r.Arch
 	return dataMap
 }
 
@@ -228,9 +219,6 @@ func (config *GHBMConfig) setDefaults() {
 
 	if config.Defaults.Arch == "" {
 		config.Defaults.Arch = runtime.GOARCH
-		if config.Defaults.Arch == "amd64" {
-			config.Defaults.Arch = x86RegEx
-		}
 	}
 
 	if config.Defaults.Os == "" {
