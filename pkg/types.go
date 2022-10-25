@@ -23,6 +23,7 @@ var KnownUrlMap = map[string]string{
 	"helm/helm":             "https://get.helm.sh/helm-{{.}}-linux-amd64.tar.gz",
 	"kubernetes/kubernetes": "https://dl.k8s.io/release/{{.}}/bin/linux/amd64/kubectl",
 	"hashicorp/terraform":   `https://releases.hashicorp.com/terraform/{{ trimPrefix "v" . }}/terraform_{{ trimPrefix "v" . }}_linux_amd64.zip`,
+	"hashicorp/vault":       `https://releases.hashicorp.com/vault/{{ trimPrefix "v" . }}/vault_{{ trimPrefix "v" . }}_linux_amd64.zip`,
 }
 
 // BinmanMsg contains return messages for binman's concurrent workers
