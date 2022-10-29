@@ -1,6 +1,9 @@
 package binman
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -23,4 +26,33 @@ func TestFindfType(t *testing.T) {
 		}
 
 	}
+}
+
+func TestWriteStringtoFile(t *testing.T) {
+
+	var testString string = "test-test-test"
+
+	d, err := os.MkdirTemp(os.TempDir(), "binm")
+	if err != nil {
+		t.Fatalf("unable to make temp dir %s", d)
+	}
+
+	defer os.RemoveAll(d)
+
+	writePath := fmt.Sprintf("%s/testString", d)
+
+	writeStringtoFile(writePath, testString)
+	if err != nil {
+		t.Fatalf("failed to write test config to %s", writePath)
+	}
+
+	testBytes, err := ioutil.ReadFile(writePath)
+	if err != nil {
+		t.Fatalf("failed to read test file at  %s", writePath)
+	}
+
+	if string(testBytes) != testString {
+		t.Fatalf("Expected %s got  %s", string(testBytes), testString)
+	}
+
 }
