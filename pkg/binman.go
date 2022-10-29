@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -254,6 +255,10 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 	if work["repo"] != "" {
 		var err error
 		log.Info("direct repo download")
+
+		if !strings.Contains(work["repo"], "/") {
+			log.Fatalf("Provided repo %s must be in the format org/repo", work["repo"])
+		}
 
 		releasePath, err = os.Getwd()
 		if err != nil {
