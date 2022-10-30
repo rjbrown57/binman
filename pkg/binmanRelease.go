@@ -1,6 +1,7 @@
 package binman
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -21,7 +22,7 @@ type BinmanRelease struct {
 	Org             string    // Will be provided by constuctor
 	Project         string    // Will be provided by constuctor
 	PublishPath     string    // Path Release will be set up at
-	ArtifactPath    string    // Will be set by BinmanRelease.setPaths. This is the source path for the link
+	ArtifactPath    string    // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
 	LinkName        string    `yaml:"linkname,omitempty"` // Set what the final link will be. Defaults to project name.
 	LinkPath        string    // Will be set by BinmanRelease.setPaths
 	Version         string    `yaml:"version,omitempty"` // Pull a specific version
@@ -33,6 +34,20 @@ func (r *BinmanRelease) getOR() {
 	n := strings.Split(r.Repo, "/")
 	r.Org = n[0]
 	r.Project = n[1]
+}
+
+func (r *BinmanRelease) findTarget() {
+
+	targetFileName := formatString(filepath.Base(r.ArtifactPath), r.getDataMap())
+
+	_ = filepath.Walk(r.PublishPath, func(path string, info os.FileInfo, err error) error {
+		log.Debugf("Checking %s, against %s...", targetFileName, info.Name())
+		if err == nil && targetFileName == info.Name() {
+			log.Debugf("Found match! Using %s as the new artifact path.", path)
+			r.ArtifactPath = path
+		}
+		return nil
+	})
 }
 
 // knownUrlCheck will see if binman is aware of a common external url for this repo.
