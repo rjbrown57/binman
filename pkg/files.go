@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
 // Test for filetypes
@@ -203,4 +205,18 @@ func downloadFile(path string, url string) error {
 	log.Infof("Download %s complete", url)
 
 	return nil
+}
+
+// mustUnmarshalYaml will Unmarshall from config to GHBMConfig
+func mustUnmarshalYaml(configPath string, v interface{}) {
+	yamlFile, err := ioutil.ReadFile(filepath.Clean(configPath))
+	if err != nil {
+		log.Fatalf("err opening %s   #%v\n", configPath, err)
+		os.Exit(1)
+	}
+	err = yaml.Unmarshal(yamlFile, v)
+	if err != nil {
+		log.Fatalf("unmarhsal error   #%v\n", err)
+		os.Exit(1)
+	}
 }

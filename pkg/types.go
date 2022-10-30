@@ -3,15 +3,9 @@ package binman
 import (
 	b64 "encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
-	"strings"
-
-	"github.com/google/go-github/v48/github"
-	"gopkg.in/yaml.v2"
 )
 
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
@@ -256,19 +250,5 @@ func (config *GHBMConfig) setDefaults() {
 		if config.Releases[k].Arch == "" {
 			config.Releases[k].Arch = config.Defaults.Arch
 		}
-	}
-}
-
-// mustUnmarshalYaml will Unmarshall from config to GHBMConfig
-func mustUnmarshalYaml(configPath string, v interface{}) {
-	yamlFile, err := ioutil.ReadFile(filepath.Clean(configPath))
-	if err != nil {
-		log.Fatalf("err opening %s   #%v\n", configPath, err)
-		os.Exit(1)
-	}
-	err = yaml.Unmarshal(yamlFile, v)
-	if err != nil {
-		log.Fatalf("unmarhsal error   #%v\n", err)
-		os.Exit(1)
 	}
 }
