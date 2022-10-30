@@ -163,20 +163,14 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	}
 
 	// Create symlink
-	err = createReleaseLink(rel.ArtifactPath, rel.LinkPath)
-	if err != nil {
-		log.Warnf("Failed to make symlink: %v", err)
-		c <- BinmanMsg{rel: rel, err: err}
-		return
+	if rel.LinkPath != "none" {
+		if err := createReleaseLink(rel.ArtifactPath, rel.LinkPath); err != nil {
+			log.Warnf("Failed to make symlink: %v", err)
+			c <- BinmanMsg{rel: rel, err: err}
+			return
+		}
 	}
 
-	// Verify symlink is good
-	_, err = os.Stat(rel.LinkPath)
-	if err != nil {
-		log.Warnf("Issue with created symlink: %v", err)
-		c <- BinmanMsg{rel: rel, err: err}
-		return
-	}
 	log.Debugf("Symlink Created!")
 
 	// Write Release

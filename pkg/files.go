@@ -156,11 +156,6 @@ func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 // Create the link to new release
 func createReleaseLink(source string, target string) error {
 
-	// if none is set no link is requested
-	if target == "none" {
-		return nil
-	}
-
 	// If target exists, remove it
 	if _, err := os.Stat(target); err == nil {
 		log.Warnf("Updating %s to %s\n", source, target)
