@@ -32,20 +32,6 @@ releases:
   - repo: rjbrown57/binman
 `
 
-func TestGetOr(t *testing.T) {
-
-	rel := BinmanRelease{
-		Repo: "rjbrown57/binman",
-	}
-
-	rel.getOR()
-	testRepo := fmt.Sprintf("%s/%s", rel.Org, rel.Project)
-	if testRepo != rel.Repo {
-		t.Fatalf("%s != %s ; Should be equal", testRepo, rel.Repo)
-	}
-
-}
-
 func TestDeduplicate(t *testing.T) {
 
 	d, err := os.MkdirTemp(os.TempDir(), "binmantest")
