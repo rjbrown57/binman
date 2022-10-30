@@ -56,7 +56,7 @@ func TestFindTarget(t *testing.T) {
 
 	rel := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		ArtifactPath: "binman", // a dummy value, this will be used with filepath.base to return the assetName. Post findTarget should == the full path to target
+		ArtifactPath: "binman",
 		PublishPath:  d,
 		Os:           "linux",
 		Arch:         "amd64",
@@ -68,6 +68,108 @@ func TestFindTarget(t *testing.T) {
 	// We should find our file in the subdir
 	if rel.ArtifactPath != testFileName {
 		t.Fatalf("Expected %s got %s", rel.ArtifactPath, afp)
+	}
+}
+
+func TestSetpublishPath(t *testing.T) {
+
+	// A release where we have set a specific target with releasefilename
+	relWithRelFilename := BinmanRelease{
+		Repo:            "rjbrown57/binman",
+		ArtifactPath:    "binman",
+		PublishPath:     "/tmp/",
+		ReleaseFileName: "binman",
+		Project:         "binmanz",
+		LinkName:        "",
+		Os:              "linux",
+		Arch:            "amd64",
+	}
+
+	// A release where the asset is a tar/tgz/zip and we have specified a path internally
+	relWithExtractFilename := BinmanRelease{
+		Repo:            "rjbrown57/binman",
+		ArtifactPath:    "binman",
+		PublishPath:     "/tmp/",
+		ExtractFileName: "extractbinman",
+		Project:         "binman",
+		LinkName:        "",
+		Os:              "linux",
+		Arch:            "amd64",
+	}
+
+	// A release with an external url that is a binary
+	relWithUrlNonTar := BinmanRelease{
+		Repo:         "rjbrown57/binman",
+		ArtifactPath: "binman",
+		PublishPath:  "/tmp/",
+		ExternalUrl:  "extractbinman",
+		Project:      "binman",
+		LinkName:     "",
+		Os:           "linux",
+		Arch:         "amd64",
+	}
+
+	// A release with an external url that is a tar/tgz/zip
+	relWithUrlTar := BinmanRelease{
+		Repo:         "rjbrown57/binman",
+		ArtifactPath: "binman",
+		PublishPath:  "/tmp/",
+		ExternalUrl:  "extractbinman.tar.gz",
+		Project:      "binman",
+		LinkName:     "",
+		Os:           "linux",
+		Arch:         "amd64",
+	}
+
+	// A basic release we use multiple times
+	relBasic := BinmanRelease{
+		Repo:         "rjbrown57/binman",
+		ArtifactPath: "binman",
+		PublishPath:  "/tmp/",
+		LinkName:     "",
+		Project:      "binman",
+		Os:           "linux",
+		Arch:         "amd64",
+	}
+
+	// A release with the link name set
+	relWithLinkName := BinmanRelease{
+		Repo:         "rjbrown57/binman",
+		ArtifactPath: "binman",
+		PublishPath:  "/tmp/",
+		Project:      "binman",
+		LinkName:     "none",
+		Os:           "linux",
+		Arch:         "amd64",
+	}
+
+	var tests = []struct {
+		rel                 BinmanRelease
+		expectedLinkPath    string
+		exectedArtifactPath string
+		assetName           string
+		releasePath         string
+	}{
+		{relWithRelFilename, "/tmp/binmanz", "/tmp/binman", "binman", "/tmp/"},
+		{relWithUrlNonTar, "/tmp/binman", "/tmp/extractbinman", "testfile", "/tmp/"},
+		{relWithUrlTar, "/tmp/binman", "/tmp/extractbinman.tar.gz", "testfile", "/tmp/"},
+		{relWithExtractFilename, "/tmp/binman", "/tmp/extractbinman", "testfile", "/tmp/"},
+		{relWithLinkName, "/tmp/none", "/tmp/test", "test", "/tmp/"},
+		{relBasic, "/tmp/binman", "/tmp/binman", "myfile.tgz", "/tmp/"},
+		{relBasic, "/tmp/binman", "/tmp/binman", "myfile.zip", "/tmp/"},
+		{relBasic, "/tmp/binman", "/tmp/binman", "myfile.tar.gz", "/tmp/"},
+		{relBasic, "/tmp/binman", "/tmp/testfile", "testfile", "/tmp/"},
+	}
+
+	for _, test := range tests {
+		test.rel.setPublishPaths(test.releasePath, test.assetName)
+		if test.rel.LinkPath != test.expectedLinkPath {
+			t.Fatalf("Link Path expected %s, got %s", test.expectedLinkPath, test.rel.LinkPath)
+		}
+
+		if test.rel.ArtifactPath != test.exectedArtifactPath {
+			t.Fatalf("Artifact Path expected %s, got %s", test.exectedArtifactPath, test.rel.ArtifactPath)
+		}
 	}
 }
 
