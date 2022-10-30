@@ -122,3 +122,14 @@ func (r *BinmanRelease) setPublishPaths(ReleasePath string, assetName string) {
 	r.LinkPath = filepath.Join(ReleasePath, linkName)
 	log.Debugf("Artifact Path %s Link Path %s\n", r.ArtifactPath, r.Project)
 }
+
+func (r *BinmanRelease) writeReleaseNotes() error {
+	relNotes := r.GithubData.GetBody()
+	if relNotes != "" {
+		notePath := filepath.Join(r.PublishPath, "releaseNotes.txt")
+		log.Debugf("Notes written to %s", notePath)
+		return writeStringtoFile(notePath, relNotes)
+	}
+
+	return nil
+}

@@ -166,17 +166,13 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 
 	log.Debugf("Symlink Created!")
 
-	// Write Release
-	relNotes := rel.GithubData.GetBody()
-	if relNotes != "" {
-		notePath := fmt.Sprintf("%s/releaseNotes.txt", rel.PublishPath)
-		err := writeStringtoFile(notePath, relNotes)
+	// Write Release Notes
+	if err := rel.writeReleaseNotes(); err != nil {
 		if err != nil {
 			log.Fatalf("Issue writing release notes: %v", err)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
 		}
-		log.Debugf("Notes written to %s", notePath)
 	}
 
 	// IF enabled shrink via upx
