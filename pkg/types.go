@@ -17,8 +17,6 @@ import (
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
 const ZipRegEx = `(\.zip$)`
 
-
-
 // BinmanMsg contains return messages for binman's concurrent workers
 type BinmanMsg struct {
 	err error
@@ -90,6 +88,7 @@ func (r *BinmanRelease) setArtifactPath(ReleasePath string, tag string) {
 	r.PublishPath = filepath.Join(ReleasePath, "repos", r.Org, r.Project, tag)
 }
 
+// getDataMap is a helper function to provide data to be used with templating
 func (r *BinmanRelease) getDataMap() map[string]string {
 	dataMap := make(map[string]string)
 	dataMap["version"] = *r.GithubData.TagName
