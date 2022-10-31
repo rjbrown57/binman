@@ -71,7 +71,7 @@ func TestFindTarget(t *testing.T) {
 	}
 }
 
-func TestSetpublishPath(t *testing.T) {
+func TestSetArtifactPath(t *testing.T) {
 
 	// A release where we have set a specific target with releasefilename
 	relWithRelFilename := BinmanRelease{
@@ -162,7 +162,7 @@ func TestSetpublishPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test.rel.setPublishPaths(test.releasePath, test.assetName)
+		test.rel.setArtifactPath(test.releasePath, test.assetName)
 		if test.rel.LinkPath != test.expectedLinkPath {
 			t.Fatalf("Link Path expected %s, got %s", test.expectedLinkPath, test.rel.LinkPath)
 		}

@@ -60,7 +60,7 @@ func (r *BinmanRelease) knownUrlCheck() {
 
 // Helper method to set artifactpath for a requested release object
 // This will be called early in a main loop iteration so we can check if we already have a release
-func (r *BinmanRelease) setArtifactPath(ReleasePath string, tag string) {
+func (r *BinmanRelease) setPublisPath(ReleasePath string, tag string) {
 	// Trim trailing / if user provided
 	if strings.HasSuffix(ReleasePath, "/") {
 		ReleasePath = strings.TrimSuffix(ReleasePath, "/")
@@ -78,7 +78,7 @@ func (r *BinmanRelease) getDataMap() map[string]string {
 }
 
 // Helper method to set paths for a requested release object
-func (r *BinmanRelease) setPublishPaths(ReleasePath string, assetName string) {
+func (r *BinmanRelease) setArtifactPath(ReleasePath string, assetName string) {
 
 	// Allow user to supply the name of the final link
 	// This is nice for projects like lazygit which is simply too much to type

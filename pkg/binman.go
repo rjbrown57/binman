@@ -64,7 +64,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	// Get Path and Verify it DNE before digging through assets
 	// If PublishPath is already set ignore these checks. This means we are doing a direct repo download
 	if rel.PublishPath == "" {
-		rel.setArtifactPath(releasePath, *rel.GithubData.TagName)
+		rel.setPublisPath(releasePath, *rel.GithubData.TagName)
 		_, err = os.Stat(rel.PublishPath)
 		if err == nil {
 			log.Infof("Latest version is %s %s is up to date", *rel.GithubData.TagName, rel.Repo)
@@ -99,7 +99,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	}
 
 	// Set paths based on asset we selected
-	rel.setPublishPaths(releasePath, assetName)
+	rel.setArtifactPath(releasePath, assetName)
 
 	filePath := fmt.Sprintf("%s/%s", rel.PublishPath, assetName)
 
