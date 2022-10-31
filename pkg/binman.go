@@ -21,6 +21,21 @@ const timeout = 60 * time.Second
 
 var log = logrus.New()
 
+func configureLog(jsonLog bool, debug bool) {
+	// logging
+	if jsonLog {
+		log.Formatter = &logrus.JSONFormatter{}
+	}
+
+	log.Out = os.Stdout
+
+	if debug {
+		log.Level = logrus.DebugLevel
+	} else {
+		log.Level = logrus.InfoLevel
+	}
+}
+
 func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	defer wg.Done()
 
@@ -203,19 +218,8 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 // Main does basic setup, then calls the appropriate functions for asset resolution
 func Main(work map[string]string, debug bool, jsonLog bool) {
 
-	// logging
-	if jsonLog {
-		log.Formatter = &logrus.JSONFormatter{}
-	}
-
-	log.Out = os.Stdout
-
-	if debug {
-		log.Level = logrus.DebugLevel
-	} else {
-		log.Level = logrus.InfoLevel
-	}
-
+	// Set the logging options
+	configureLog(jsonLog, debug)
 	log.Info("binman sync begin")
 
 	c := make(chan BinmanMsg)
