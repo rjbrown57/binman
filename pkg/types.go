@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"sync"
 )
 
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
@@ -76,6 +77,50 @@ func (config *GHBMConfig) deDuplicate() {
 	config.Releases = deduplicatedReleases
 }
 
+// populateReleases applies defaults and does prep work on each release in our config
+func (config *GHBMConfig) populateReleases() {
+
+	var wg sync.WaitGroup
+
+	for k := range config.Releases {
+		wg.Add(1)
+		go func(index int) {
+
+			defer wg.Done()
+
+			// set project/org variables
+			config.Releases[index].getOR()
+
+			// If the user has not supplied an external url check against our map of known external urls
+			if config.Releases[index].ExternalUrl == "" {
+				config.Releases[index].knownUrlCheck()
+			}
+
+			// enable UpxShrink
+			if config.Config.UpxConfig.Enabled == "true" {
+				if config.Releases[index].UpxConfig.Enabled != "false" {
+					config.Releases[index].UpxConfig.Enabled = "true"
+				}
+
+				// If release has specifc args do nothing, if not set the defaults from config
+				if len(config.Releases[index].UpxConfig.Args) == 0 {
+					config.Releases[index].UpxConfig.Args = config.Config.UpxConfig.Args
+				}
+			}
+
+			if config.Releases[index].Os == "" {
+				config.Releases[index].Os = config.Defaults.Os
+			}
+
+			if config.Releases[index].Arch == "" {
+				config.Releases[index].Arch = config.Defaults.Arch
+			}
+		}(k)
+	}
+	// Wait until all defaults have been set
+	wg.Wait()
+}
+
 // setDefaults will populate defaults, and required values
 func (config *GHBMConfig) setDefaults() {
 
@@ -119,34 +164,7 @@ func (config *GHBMConfig) setDefaults() {
 	// DeDuplicate before we populate defaults
 	config.deDuplicate()
 
-	for k := range config.Releases {
+	// Fill out all releases fields
+	config.populateReleases()
 
-		// set project/org variables
-		config.Releases[k].getOR()
-
-		// If the user has not supplied an external url check against our map of known external urls
-		if config.Releases[k].ExternalUrl == "" {
-			config.Releases[k].knownUrlCheck()
-		}
-
-		// enable UpxShrink
-		if config.Config.UpxConfig.Enabled == "true" {
-			if config.Releases[k].UpxConfig.Enabled != "false" {
-				config.Releases[k].UpxConfig.Enabled = "true"
-			}
-
-			// If release has specifc args do nothing, if not set the defaults from config
-			if len(config.Releases[k].UpxConfig.Args) == 0 {
-				config.Releases[k].UpxConfig.Args = config.Config.UpxConfig.Args
-			}
-		}
-
-		if config.Releases[k].Os == "" {
-			config.Releases[k].Os = config.Defaults.Os
-		}
-
-		if config.Releases[k].Arch == "" {
-			config.Releases[k].Arch = config.Defaults.Arch
-		}
-	}
 }
