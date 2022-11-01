@@ -213,3 +213,34 @@ func TestWriteReleaseNotes(t *testing.T) {
 	}
 
 }
+
+func TestGetDataMap(t *testing.T) {
+
+	// Create a dummy asset to detect in a subdir of the temp
+	var version string = "v0.0.0"
+	var os string = "linux"
+	var arch string = "amd64"
+
+	// Create a fake release
+	ghData := github.RepositoryRelease{
+		TagName: &version,
+	}
+
+	rel := BinmanRelease{
+		Os:         os,
+		Arch:       arch,
+		GithubData: &ghData,
+	}
+
+	testdataMap := make(map[string]string)
+	testdataMap["version"] = version
+	testdataMap["os"] = os
+	testdataMap["arch"] = arch
+
+	m := rel.getDataMap()
+	for k, v := range m {
+		if testdataMap[k] != v {
+			t.Fatalf("Expected %s got %s", testdataMap[k], v)
+		}
+	}
+}
