@@ -244,3 +244,31 @@ func TestGetDataMap(t *testing.T) {
 		}
 	}
 }
+
+func TestKnownUrlCheck(t *testing.T) {
+
+	relUnknown := BinmanRelease{
+		Repo: "rjbrown57/binman",
+	}
+
+	relKnown := BinmanRelease{
+		Repo: "kubernetes/kubernetes",
+	}
+
+	var testRepo string = "kubernetes/kubernetes"
+
+	var tests = []struct {
+		rel         BinmanRelease
+		expectedurl string
+	}{
+		{relUnknown, ""},
+		{relKnown, KnownUrlMap[testRepo]},
+	}
+
+	for _, test := range tests {
+		test.rel.knownUrlCheck()
+		if test.rel.ExternalUrl != test.expectedurl {
+			t.Fatalf("%s Expected %s got %s", test.rel.Repo, test.expectedurl, test.rel.ExternalUrl)
+		}
+	}
+}
