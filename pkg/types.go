@@ -160,11 +160,4 @@ func (config *GHBMConfig) setDefaults() {
 	if config.Defaults.Os == "" {
 		config.Defaults.Os = runtime.GOOS
 	}
-
-	// DeDuplicate before we populate defaults
-	config.deDuplicate()
-
-	// Fill out all releases fields
-	config.populateReleases()
-
 }
