@@ -58,7 +58,7 @@ func (config *GHBMConfig) deDuplicate() {
 	releaseMap := make(map[string]BinmanRelease)
 
 	// Iterate over all releases populating releaseMap.
-	// We iterate over the slice in reverse. THis way if a contextual config contains a duplicate the version from the contexual config will be tossed out
+	// We iterate over the slice in reverse. This way if a contextual config contains a duplicate the version from the contexual config will be tossed out
 	for index := len(config.Releases) - 1; index >= 0; index-- {
 
 		// Convert text representation of all values per release to b64.
@@ -70,8 +70,9 @@ func (config *GHBMConfig) deDuplicate() {
 	}
 
 	// Make the final release slice
+	// Since we reversed the order to deduplicate, now "prepend" to restore the original release order
 	for _, rel := range releaseMap {
-		deduplicatedReleases = append(deduplicatedReleases, rel)
+		deduplicatedReleases = append([]BinmanRelease{rel}, deduplicatedReleases...)
 	}
 
 	config.Releases = deduplicatedReleases
