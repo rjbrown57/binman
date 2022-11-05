@@ -21,6 +21,21 @@ const timeout = 60 * time.Second
 
 var log = logrus.New()
 
+func configureLog(jsonLog bool, debug bool) {
+	// logging
+	if jsonLog {
+		log.Formatter = &logrus.JSONFormatter{}
+	}
+
+	log.Out = os.Stdout
+
+	if debug {
+		log.Level = logrus.DebugLevel
+	} else {
+		log.Level = logrus.InfoLevel
+	}
+}
+
 func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	defer wg.Done()
 
@@ -49,7 +64,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	// Get Path and Verify it DNE before digging through assets
 	// If PublishPath is already set ignore these checks. This means we are doing a direct repo download
 	if rel.PublishPath == "" {
-		rel.setArtifactPath(releasePath, *rel.GithubData.TagName)
+		rel.setPublisPath(releasePath, *rel.GithubData.TagName)
 		_, err = os.Stat(rel.PublishPath)
 		if err == nil {
 			log.Infof("Latest version is %s %s is up to date", *rel.GithubData.TagName, rel.Repo)
@@ -84,7 +99,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	}
 
 	// Set paths based on asset we selected
-	rel.setPublishPaths(releasePath, assetName)
+	rel.setArtifactPath(releasePath, assetName)
 
 	filePath := fmt.Sprintf("%s/%s", rel.PublishPath, assetName)
 
@@ -135,19 +150,12 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
 		log.Debugf("Wasn't able to find the artifact at %s, walking the directory to see if we can find it",
 			rel.ArtifactPath)
-		targetFileName := formatString(filepath.Base(rel.ArtifactPath), rel.getDataMap())
 
-		_ = filepath.Walk(rel.PublishPath, func(path string, info os.FileInfo, err error) error {
-			log.Debugf("Checking %s, against %s...", targetFileName, info.Name())
-			if err == nil && targetFileName == info.Name() {
-				log.Debugf("Found match! Using %s as the new artifact path.", path)
-				rel.ArtifactPath = path
-				return nil
-			}
-			return nil
-		})
+		// Walk the directory looking for the file. If found artifact path will be updated
+		rel.findTarget()
+
 		if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
-			err := fmt.Errorf("Unable to find file matching '%s' anywhere in the release archive", targetFileName)
+			err := fmt.Errorf("unable to find a matching file for %s anywhere in the release archive", rel.Repo)
 			log.Warnf("%v", err)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
@@ -163,33 +171,23 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	}
 
 	// Create symlink
-	err = createReleaseLink(rel.ArtifactPath, rel.LinkPath)
-	if err != nil {
-		log.Warnf("Failed to make symlink: %v", err)
-		c <- BinmanMsg{rel: rel, err: err}
-		return
+	if rel.LinkPath != "none" {
+		if err := createReleaseLink(rel.ArtifactPath, rel.LinkPath); err != nil {
+			log.Warnf("Failed to make symlink: %v", err)
+			c <- BinmanMsg{rel: rel, err: err}
+			return
+		}
 	}
 
-	// Verify symlink is good
-	_, err = os.Stat(rel.LinkPath)
-	if err != nil {
-		log.Warnf("Issue with created symlink: %v", err)
-		c <- BinmanMsg{rel: rel, err: err}
-		return
-	}
 	log.Debugf("Symlink Created!")
 
-	// Write Release
-	relNotes := rel.GithubData.GetBody()
-	if relNotes != "" {
-		notePath := fmt.Sprintf("%s/releaseNotes.txt", rel.PublishPath)
-		err := writeStringtoFile(notePath, relNotes)
+	// Write Release Notes
+	if err := rel.writeReleaseNotes(); err != nil {
 		if err != nil {
 			log.Fatalf("Issue writing release notes: %v", err)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
 		}
-		log.Debugf("Notes written to %s", notePath)
 	}
 
 	// IF enabled shrink via upx
@@ -214,25 +212,13 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	}
 
 	c <- BinmanMsg{rel: rel, err: nil}
-	return
 }
 
 // Main does basic setup, then calls the appropriate functions for asset resolution
 func Main(work map[string]string, debug bool, jsonLog bool) {
 
-	// logging
-	if jsonLog {
-		log.Formatter = &logrus.JSONFormatter{}
-	}
-
-	log.Out = os.Stdout
-
-	if debug {
-		log.Level = logrus.DebugLevel
-	} else {
-		log.Level = logrus.InfoLevel
-	}
-
+	// Set the logging options
+	configureLog(jsonLog, debug)
 	log.Info("binman sync begin")
 
 	c := make(chan BinmanMsg)

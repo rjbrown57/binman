@@ -3,21 +3,14 @@ package binman
 import (
 	b64 "encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
-	"strings"
-
-	"github.com/google/go-github/v48/github"
-	"gopkg.in/yaml.v2"
+	"sync"
 )
 
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
 const ZipRegEx = `(\.zip$)`
-
-
 
 // BinmanMsg contains return messages for binman's concurrent workers
 type BinmanMsg struct {
@@ -44,107 +37,6 @@ type BinmanDefaults struct {
 	Arch string `yaml:"arch,omitempty"` //OS architechrue to look for
 }
 
-// BinmanRelease contains info on specifc releases to hunt for
-type BinmanRelease struct {
-	Os              string    `yaml:"os,omitempty"`
-	Arch            string    `yaml:"arch,omitempty"`
-	CheckSum        bool      `yaml:"checkSum,omitempty"`
-	DownloadOnly    bool      `yaml:"downloadonly,omitempty"`
-	UpxConfig       UpxConfig `yaml:"upx,omitempty"`             // Allow shrinking with Upx
-	ExternalUrl     string    `yaml:"url,omitempty"`             // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
-	ExtractFileName string    `yaml:"extractfilename,omitempty"` // The file within the release you want
-	ReleaseFileName string    `yaml:"releasefilename,omitempty"` // Specifc Release filename to look for. This is useful if a project publishes a binary and not a tarball.
-	Repo            string    `yaml:"repo"`                      // The specific repo name in github. e.g achore/syft
-	Org             string    // Will be provided by constuctor
-	Project         string    // Will be provided by constuctor
-	PublishPath     string    // Path Release will be set up at
-	ArtifactPath    string    // Will be set by BinmanRelease.setPaths. This is the source path for the link
-	LinkName        string    `yaml:"linkname,omitempty"` // Set what the final link will be. Defaults to project name.
-	LinkPath        string    // Will be set by BinmanRelease.setPaths
-	Version         string    `yaml:"version,omitempty"` // Pull a specific version
-	GithubData      *github.RepositoryRelease
-}
-
-// set project and org vars
-func (r *BinmanRelease) getOR() {
-	n := strings.Split(r.Repo, "/")
-	r.Org = n[0]
-	r.Project = n[1]
-}
-
-// knownUrlCheck will see if binman is aware of a common external url for this repo.
-func (r *BinmanRelease) knownUrlCheck() {
-	if url, ok := KnownUrlMap[r.Repo]; ok {
-		log.Debugf("%s is a known repo. Updating download url to %s", r.Repo, url)
-		r.ExternalUrl = url
-	}
-}
-
-// Helper method to set artifactpath for a requested release object
-// This will be called early in a main loop iteration so we can check if we already have a release
-func (r *BinmanRelease) setArtifactPath(ReleasePath string, tag string) {
-	// Trim trailing / if user provided
-	if strings.HasSuffix(ReleasePath, "/") {
-		ReleasePath = strings.TrimSuffix(ReleasePath, "/")
-	}
-	r.PublishPath = filepath.Join(ReleasePath, "repos", r.Org, r.Project, tag)
-}
-
-func (r *BinmanRelease) getDataMap() map[string]string {
-	dataMap := make(map[string]string)
-	dataMap["version"] = *r.GithubData.TagName
-	dataMap["os"] = r.Os
-	dataMap["arch"] = r.Arch
-	return dataMap
-}
-
-// Helper method to set paths for a requested release object
-func (r *BinmanRelease) setPublishPaths(ReleasePath string, assetName string) {
-
-	// Allow user to supply the name of the final link
-	// This is nice for projects like lazygit which is simply too much to type
-	// linkname: lg would have lazygit point at lg :)
-	var linkName string
-	if r.LinkName == "" {
-		linkName = r.Project
-	} else {
-		linkName = r.LinkName
-	}
-
-	// If a binary is specified by ReleaseFileName use it for source and project for destination
-	// else if it's a tar/zip but we have specified the inside file via ExtractFileName. Use ExtractFileName for source and destination
-	// else we want default
-	if r.ReleaseFileName != "" {
-		r.ArtifactPath = filepath.Join(r.PublishPath, r.ReleaseFileName)
-		log.Debugf("ReleaseFileName set %s\n", r.ArtifactPath)
-	} else if r.ExtractFileName != "" {
-		r.ArtifactPath = filepath.Join(r.PublishPath, r.ExtractFileName)
-		log.Debugf("Archive with Filename set %s\n", r.ArtifactPath)
-	} else if r.ExternalUrl != "" {
-		switch findfType(assetName) {
-		case "tar", "zip":
-			r.ArtifactPath = filepath.Join(r.PublishPath, r.Project)
-		default:
-			r.ArtifactPath = filepath.Join(r.PublishPath, filepath.Base(r.ExternalUrl))
-		}
-		log.Debugf("Archive with ExternalURL set %s\n", r.ArtifactPath)
-	} else {
-		// If we find a tar/zip in the assetName assume the name of the binary within the tar
-		// Else our default is a binary
-		switch findfType(assetName) {
-		case "tar", "zip":
-			r.ArtifactPath = filepath.Join(r.PublishPath, r.Project)
-		default:
-			r.ArtifactPath = filepath.Join(r.PublishPath, assetName)
-		}
-		log.Debugf("Default Extraction %s\n", r.ArtifactPath)
-	}
-
-	r.LinkPath = filepath.Join(ReleasePath, linkName)
-	log.Debugf("Artifact Path %s Link Path %s\n", r.ArtifactPath, r.Project)
-
-}
-
 // Type that rolls up the above types into one happy family
 type GHBMConfig struct {
 	Config   BinmanConfig    `yaml:"config"`
@@ -166,7 +58,7 @@ func (config *GHBMConfig) deDuplicate() {
 	releaseMap := make(map[string]BinmanRelease)
 
 	// Iterate over all releases populating releaseMap.
-	// We iterate over the slice in reverse. THis way if a contextual config contains a duplicate the version from the contexual config will be tossed out
+	// We iterate over the slice in reverse. This way if a contextual config contains a duplicate the version from the contexual config will be tossed out
 	for index := len(config.Releases) - 1; index >= 0; index-- {
 
 		// Convert text representation of all values per release to b64.
@@ -178,11 +70,56 @@ func (config *GHBMConfig) deDuplicate() {
 	}
 
 	// Make the final release slice
+	// Since we reversed the order to deduplicate, now "prepend" to restore the original release order
 	for _, rel := range releaseMap {
-		deduplicatedReleases = append(deduplicatedReleases, rel)
+		deduplicatedReleases = append([]BinmanRelease{rel}, deduplicatedReleases...)
 	}
 
 	config.Releases = deduplicatedReleases
+}
+
+// populateReleases applies defaults and does prep work on each release in our config
+func (config *GHBMConfig) populateReleases() {
+
+	var wg sync.WaitGroup
+
+	for k := range config.Releases {
+		wg.Add(1)
+		go func(index int) {
+
+			defer wg.Done()
+
+			// set project/org variables
+			config.Releases[index].getOR()
+
+			// If the user has not supplied an external url check against our map of known external urls
+			if config.Releases[index].ExternalUrl == "" {
+				config.Releases[index].knownUrlCheck()
+			}
+
+			// enable UpxShrink
+			if config.Config.UpxConfig.Enabled == "true" {
+				if config.Releases[index].UpxConfig.Enabled != "false" {
+					config.Releases[index].UpxConfig.Enabled = "true"
+				}
+
+				// If release has specifc args do nothing, if not set the defaults from config
+				if len(config.Releases[index].UpxConfig.Args) == 0 {
+					config.Releases[index].UpxConfig.Args = config.Config.UpxConfig.Args
+				}
+			}
+
+			if config.Releases[index].Os == "" {
+				config.Releases[index].Os = config.Defaults.Os
+			}
+
+			if config.Releases[index].Arch == "" {
+				config.Releases[index].Arch = config.Defaults.Arch
+			}
+		}(k)
+	}
+	// Wait until all defaults have been set
+	wg.Wait()
 }
 
 // setDefaults will populate defaults, and required values
@@ -223,53 +160,5 @@ func (config *GHBMConfig) setDefaults() {
 
 	if config.Defaults.Os == "" {
 		config.Defaults.Os = runtime.GOOS
-	}
-
-	// DeDuplicate before we populate defaults
-	config.deDuplicate()
-
-	for k := range config.Releases {
-
-		// set project/org variables
-		config.Releases[k].getOR()
-
-		// If the user has not supplied an external url check against our map of known external urls
-		if config.Releases[k].ExternalUrl == "" {
-			config.Releases[k].knownUrlCheck()
-		}
-
-		// enable UpxShrink
-		if config.Config.UpxConfig.Enabled == "true" {
-			if config.Releases[k].UpxConfig.Enabled != "false" {
-				config.Releases[k].UpxConfig.Enabled = "true"
-			}
-
-			// If release has specifc args do nothing, if not set the defaults from config
-			if len(config.Releases[k].UpxConfig.Args) == 0 {
-				config.Releases[k].UpxConfig.Args = config.Config.UpxConfig.Args
-			}
-		}
-
-		if config.Releases[k].Os == "" {
-			config.Releases[k].Os = config.Defaults.Os
-		}
-
-		if config.Releases[k].Arch == "" {
-			config.Releases[k].Arch = config.Defaults.Arch
-		}
-	}
-}
-
-// mustUnmarshalYaml will Unmarshall from config to GHBMConfig
-func mustUnmarshalYaml(configPath string, v interface{}) {
-	yamlFile, err := ioutil.ReadFile(filepath.Clean(configPath))
-	if err != nil {
-		log.Fatalf("err opening %s   #%v\n", configPath, err)
-		os.Exit(1)
-	}
-	err = yaml.Unmarshal(yamlFile, v)
-	if err != nil {
-		log.Fatalf("unmarhsal error   #%v\n", err)
-		os.Exit(1)
 	}
 }

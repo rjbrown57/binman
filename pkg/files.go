@@ -6,12 +6,13 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
 // Test for filetypes
@@ -43,7 +44,7 @@ func handleZip(publishDir string, zippath string) error {
 
 		if !strings.HasPrefix(dstPath, filepath.Clean(publishDir)+string(os.PathSeparator)) {
 			log.Warnf("Extracted file would have had an invalid path, cannot continue")
-			return fmt.Errorf("Extracted file would have had an invalid path, cannot continue")
+			return fmt.Errorf("extracted file would have had an invalid path, cannot continue")
 		}
 
 		if f.FileInfo().IsDir() {
@@ -51,33 +52,33 @@ func handleZip(publishDir string, zippath string) error {
 			err := os.MkdirAll(dstPath, 0750)
 			if err != nil {
 				log.Warnf("Error creating %s, %v", dstPath, err)
-				return fmt.Errorf("Error creating %s, %v", dstPath, err)
+				return fmt.Errorf("error creating %s, %v", dstPath, err)
 			}
 			continue
 		}
 
 		if err := os.MkdirAll(filepath.Dir(dstPath), os.ModePerm); err != nil {
 			log.Warnf("Error creating %s, %v", filepath.Dir(dstPath), err)
-			return fmt.Errorf("Error creating %s, %v", filepath.Dir(dstPath), err)
+			return fmt.Errorf("error creating %s, %v", filepath.Dir(dstPath), err)
 		}
 
 		dstFile, err := os.OpenFile(dstPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
 			log.Warnf("Error creating %s, %v", dstPath, err)
-			return fmt.Errorf("Error creating %s, %v", dstPath, err)
+			return fmt.Errorf("error creating %s, %v", dstPath, err)
 		}
 		defer dstFile.Close()
 
 		fileInArchive, err := f.Open()
 		if err != nil {
 			log.Warnf("Could not read file inside zip: %s, %v", f.Name, err)
-			return fmt.Errorf("Could not read file inside zip: %s, %v", f.Name, err)
+			return fmt.Errorf("could not read file inside zip: %s, %v", f.Name, err)
 		}
 		defer fileInArchive.Close()
 
 		if _, err := io.Copy(dstFile, fileInArchive); err != nil {
 			log.Warnf("Could not copy file inside zip: %s, %v", f.Name, err)
-			return fmt.Errorf("Could not copy file inside zip: %s, %v", f.Name, err)
+			return fmt.Errorf("could not copy file inside zip: %s, %v", f.Name, err)
 		}
 	}
 
@@ -156,11 +157,6 @@ func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 // Create the link to new release
 func createReleaseLink(source string, target string) error {
 
-	// if none is set no link is requested
-	if target == "none" {
-		return nil
-	}
-
 	// If target exists, remove it
 	if _, err := os.Stat(target); err == nil {
 		log.Warnf("Updating %s to %s\n", source, target)
@@ -180,7 +176,7 @@ func createReleaseLink(source string, target string) error {
 }
 
 func writeStringtoFile(path string, thestring string) error {
-	return ioutil.WriteFile(path, []byte(thestring), 0600)
+	return os.WriteFile(path, []byte(thestring), 0600)
 }
 
 func downloadFile(path string, url string) error {
@@ -208,4 +204,18 @@ func downloadFile(path string, url string) error {
 	log.Infof("Download %s complete", url)
 
 	return nil
+}
+
+// mustUnmarshalYaml will Unmarshall from config to GHBMConfig
+func mustUnmarshalYaml(configPath string, v interface{}) {
+	yamlFile, err := os.ReadFile(filepath.Clean(configPath))
+	if err != nil {
+		log.Fatalf("err opening %s   #%v\n", configPath, err)
+		os.Exit(1)
+	}
+	err = yaml.Unmarshal(yamlFile, v)
+	if err != nil {
+		log.Fatalf("unmarhsal error   #%v\n", err)
+		os.Exit(1)
+	}
 }
