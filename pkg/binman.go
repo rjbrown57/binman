@@ -212,7 +212,6 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	}
 
 	c <- BinmanMsg{rel: rel, err: nil}
-	return
 }
 
 // Main does basic setup, then calls the appropriate functions for asset resolution
