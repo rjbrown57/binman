@@ -135,7 +135,7 @@ func handleTar(publishDir string, tarpath string) error {
 		}
 
 		log.Debugf("tar extract file %s", publishPath)
-		io.Copy(wf, tar)
+		_, err = io.Copy(wf, tar)
 		if err != nil {
 			log.Warnf("Unable to write file %s", publishPath)
 			return err

@@ -23,7 +23,10 @@ var rootCmd = &cobra.Command{
 	Long:  `Github Binary Manager will grab binaries from github for you!`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if config == "" && repo == "" {
-			cmd.Root().Help()
+			err := cmd.Root().Help()
+			if err != nil {
+				os.Exit(1)
+			}
 			os.Exit(1)
 		}
 
