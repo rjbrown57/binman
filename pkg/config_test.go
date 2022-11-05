@@ -2,7 +2,6 @@ package binman
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -140,7 +139,7 @@ func TestMustEnsureDefaultPaths(t *testing.T) {
 
 	mustEnsureDefaultPaths()
 
-	cf, err := ioutil.ReadFile(filepath.Clean(binmanConfigFile))
+	cf, err := os.ReadFile(filepath.Clean(binmanConfigFile))
 	if err != nil {
 		t.Fatalf("unable to read file %s", binmanConfigFile)
 	}

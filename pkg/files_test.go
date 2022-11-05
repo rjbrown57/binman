@@ -2,7 +2,6 @@ package binman
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -46,7 +45,7 @@ func TestWriteStringtoFile(t *testing.T) {
 		t.Fatalf("failed to write test config to %s", writePath)
 	}
 
-	testBytes, err := ioutil.ReadFile(writePath)
+	testBytes, err := os.ReadFile(writePath)
 	if err != nil {
 		t.Fatalf("failed to read test file at  %s", writePath)
 	}

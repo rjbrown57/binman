@@ -6,7 +6,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -177,7 +176,7 @@ func createReleaseLink(source string, target string) error {
 }
 
 func writeStringtoFile(path string, thestring string) error {
-	return ioutil.WriteFile(path, []byte(thestring), 0600)
+	return os.WriteFile(path, []byte(thestring), 0600)
 }
 
 func downloadFile(path string, url string) error {
@@ -209,7 +208,7 @@ func downloadFile(path string, url string) error {
 
 // mustUnmarshalYaml will Unmarshall from config to GHBMConfig
 func mustUnmarshalYaml(configPath string, v interface{}) {
-	yamlFile, err := ioutil.ReadFile(filepath.Clean(configPath))
+	yamlFile, err := os.ReadFile(filepath.Clean(configPath))
 	if err != nil {
 		log.Fatalf("err opening %s   #%v\n", configPath, err)
 		os.Exit(1)
