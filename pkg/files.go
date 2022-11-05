@@ -45,7 +45,7 @@ func handleZip(publishDir string, zippath string) error {
 
 		if !strings.HasPrefix(dstPath, filepath.Clean(publishDir)+string(os.PathSeparator)) {
 			log.Warnf("Extracted file would have had an invalid path, cannot continue")
-			return fmt.Errorf("Extracted file would have had an invalid path, cannot continue")
+			return fmt.Errorf("extracted file would have had an invalid path, cannot continue")
 		}
 
 		if f.FileInfo().IsDir() {
@@ -53,33 +53,33 @@ func handleZip(publishDir string, zippath string) error {
 			err := os.MkdirAll(dstPath, 0750)
 			if err != nil {
 				log.Warnf("Error creating %s, %v", dstPath, err)
-				return fmt.Errorf("Error creating %s, %v", dstPath, err)
+				return fmt.Errorf("error creating %s, %v", dstPath, err)
 			}
 			continue
 		}
 
 		if err := os.MkdirAll(filepath.Dir(dstPath), os.ModePerm); err != nil {
 			log.Warnf("Error creating %s, %v", filepath.Dir(dstPath), err)
-			return fmt.Errorf("Error creating %s, %v", filepath.Dir(dstPath), err)
+			return fmt.Errorf("error creating %s, %v", filepath.Dir(dstPath), err)
 		}
 
 		dstFile, err := os.OpenFile(dstPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
 			log.Warnf("Error creating %s, %v", dstPath, err)
-			return fmt.Errorf("Error creating %s, %v", dstPath, err)
+			return fmt.Errorf("error creating %s, %v", dstPath, err)
 		}
 		defer dstFile.Close()
 
 		fileInArchive, err := f.Open()
 		if err != nil {
 			log.Warnf("Could not read file inside zip: %s, %v", f.Name, err)
-			return fmt.Errorf("Could not read file inside zip: %s, %v", f.Name, err)
+			return fmt.Errorf("could not read file inside zip: %s, %v", f.Name, err)
 		}
 		defer fileInArchive.Close()
 
 		if _, err := io.Copy(dstFile, fileInArchive); err != nil {
 			log.Warnf("Could not copy file inside zip: %s, %v", f.Name, err)
-			return fmt.Errorf("Could not copy file inside zip: %s, %v", f.Name, err)
+			return fmt.Errorf("could not copy file inside zip: %s, %v", f.Name, err)
 		}
 	}
 

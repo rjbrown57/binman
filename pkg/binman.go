@@ -155,7 +155,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 		rel.findTarget()
 
 		if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
-			err := fmt.Errorf("Unable to find a matching file for %s anywhere in the release archive", rel.Repo)
+			err := fmt.Errorf("unable to find a matching file for %s anywhere in the release archive", rel.Repo)
 			log.Warnf("%v", err)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
