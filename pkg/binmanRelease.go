@@ -62,9 +62,7 @@ func (r *BinmanRelease) knownUrlCheck() {
 // This will be called early in a main loop iteration so we can check if we already have a release
 func (r *BinmanRelease) setPublisPath(ReleasePath string, tag string) {
 	// Trim trailing / if user provided
-	if strings.HasSuffix(ReleasePath, "/") {
-		ReleasePath = strings.TrimSuffix(ReleasePath, "/")
-	}
+	ReleasePath = strings.TrimSuffix(ReleasePath, "/")
 	r.PublishPath = filepath.Join(ReleasePath, "repos", r.Org, r.Project, tag)
 }
 
