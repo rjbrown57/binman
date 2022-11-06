@@ -144,6 +144,7 @@ releases:
   - repo: rjbrown57/lp
     upx:
       enabled: false
+  - repo: hashicorp/vault
 `
 
 func TestPopulateReleases(t *testing.T) {
@@ -153,7 +154,7 @@ func TestPopulateReleases(t *testing.T) {
 		t.Fatalf("unable to make temp dir %s", d)
 	}
 
-	defer os.RemoveAll(d)
+	//defer os.RemoveAll(d)
 
 	configPath := fmt.Sprintf("%s/config", d)
 
@@ -205,6 +206,17 @@ func TestPopulateReleases(t *testing.T) {
 			DownloadOnly: false,
 			UpxConfig:    testUpxConfigFalse,
 		},
+		{
+			Repo:         "hashicorp/vault",
+			Org:          "hashicorp",
+			Project:      "vault",
+			Os:           "linux",
+			Arch:         "amd64",
+			CheckSum:     false,
+			DownloadOnly: false,
+			UpxConfig:    testUpxConfigTrue,
+			ExternalUrl:  `https://releases.hashicorp.com/vault/{{ trimPrefix "v" .version }}/vault_{{ trimPrefix "v" .version }}_{{.os}}_{{.arch}}.zip`,
+		},
 	}
 
 	got := newGHBMConfig(configPath)
@@ -229,23 +241,28 @@ func TestPopulateReleases(t *testing.T) {
 	for k := range got.Releases {
 
 		if got.Releases[k].Repo != expected.Releases[k].Repo {
-			t.Fatalf("\n Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+			t.Fatalf("\n Repo: Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
 		}
 
 		if got.Releases[k].Arch != expected.Releases[k].Arch {
-			t.Fatalf("\n Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+			t.Fatalf("\n Arch: Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
 		}
 
 		if got.Releases[k].Os != expected.Releases[k].Os {
-			t.Fatalf("\n Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+			t.Fatalf("\n Os: Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
 		}
 
 		if got.Releases[k].UpxConfig.Enabled != expected.Releases[k].UpxConfig.Enabled {
-			t.Fatalf("\n Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+			t.Fatalf("\n UpxConfig: Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
 		}
 
 		if len(got.Releases[k].UpxConfig.Args) != len(expected.Releases[k].UpxConfig.Args) {
-			t.Fatalf("\n Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+			t.Fatalf("\n UpxConfig Args: Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+		}
+
+		fmt.Println(got.Releases[k].ExternalUrl)
+		if got.Releases[k].ExternalUrl != expected.Releases[k].ExternalUrl {
+			t.Fatalf("\n ExternalUrl Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
 		}
 
 	}
