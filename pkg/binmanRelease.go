@@ -27,6 +27,9 @@ type BinmanRelease struct {
 	LinkPath        string    // Will be set by BinmanRelease.setPaths
 	Version         string    `yaml:"version,omitempty"` // Pull a specific version
 	GithubData      *github.RepositoryRelease
+	assetName       string // the target assetName
+	dlUrl           string // the final donwload url
+	filepath        string // the target filepath for download
 }
 
 // set project and org vars

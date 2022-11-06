@@ -39,7 +39,6 @@ func configureLog(jsonLog bool, debug bool) {
 func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	var assetName, dlUrl string
 	var err error
 	ctx := context.Background()
 
@@ -78,30 +77,30 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	// User can provide an exact asset name via releaseFilename
 	// binman will try to find the release via fileType,Arch
 	if rel.ExternalUrl != "" {
-		dlUrl = formatString(rel.ExternalUrl, rel.getDataMap())
-		log.Debugf("User specified url %s", dlUrl)
-		assetName = filepath.Base(dlUrl)
+		rel.dlUrl = formatString(rel.ExternalUrl, rel.getDataMap())
+		log.Debugf("User specified url %s", rel.dlUrl)
+		rel.assetName = filepath.Base(rel.dlUrl)
 	} else {
 		if rel.ReleaseFileName != "" {
 			rFilename := formatString(rel.ReleaseFileName, rel.getDataMap())
 			log.Debugf("Get asset by name %s", rFilename)
-			assetName, dlUrl = gh.GetAssetbyName(rFilename, rel.GithubData.Assets)
+			rel.assetName, rel.dlUrl = gh.GetAssetbyName(rFilename, rel.GithubData.Assets)
 		} else {
 			log.Debugf("Attempt to find asset %s", rel.ReleaseFileName)
-			assetName, dlUrl = gh.FindAsset(rel.Arch, rel.Os, rel.GithubData.Assets)
+			rel.assetName, rel.dlUrl = gh.FindAsset(rel.Arch, rel.Os, rel.GithubData.Assets)
 		}
 	}
 
-	if dlUrl == "" {
+	if rel.dlUrl == "" {
 		log.Warnf("Target release asset not found for %s", rel.Repo)
 		c <- BinmanMsg{rel: rel, err: nil}
 		return
 	}
 
 	// Set paths based on asset we selected
-	rel.setArtifactPath(releasePath, assetName)
+	rel.setArtifactPath(releasePath, rel.assetName)
 
-	filePath := fmt.Sprintf("%s/%s", rel.PublishPath, assetName)
+	rel.filepath = fmt.Sprintf("%s/%s", rel.PublishPath, rel.assetName)
 
 	// prepare directory path
 	err = os.MkdirAll(rel.PublishPath, 0750)
@@ -114,7 +113,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	// end pre steps
 
 	// download file
-	err = downloadFile(filePath, dlUrl)
+	err = downloadFile(rel.filepath, rel.dlUrl)
 	if err != nil {
 		log.Warnf("Unable to download file : %v", err)
 		c <- BinmanMsg{rel: rel, err: err}
@@ -127,10 +126,10 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 		return
 	}
 
-	switch findfType(filePath) {
+	switch findfType(rel.filepath) {
 	case "tar":
 		log.Debug("tar extract start")
-		err = handleTar(rel.PublishPath, filePath)
+		err = handleTar(rel.PublishPath, rel.filepath)
 		if err != nil {
 			log.Warnf("Failed to extract tar file: %v", err)
 			c <- BinmanMsg{rel: rel, err: err}
@@ -138,7 +137,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 		}
 	case "zip":
 		log.Debug("zip extract start")
-		err = handleZip(rel.PublishPath, filePath)
+		err = handleZip(rel.PublishPath, rel.filepath)
 		if err != nil {
 			log.Warnf("Failed to extract zip file: %v", err)
 			c <- BinmanMsg{rel: rel, err: err}
