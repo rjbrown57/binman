@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 
+	log "github.com/rjbrown57/binman/pkg/logging"
 	"gopkg.in/yaml.v2"
 )
 
@@ -148,7 +149,7 @@ func handleTar(publishDir string, tarpath string) error {
 func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 	uncompressedStream, err := gzip.NewReader(gzipFile)
 	if err != nil {
-		log.Fatal("ExtractTarGz: NewReader failed")
+		log.Fatalf("ExtractTarGz: NewReader failed")
 	}
 
 	return uncompressedStream

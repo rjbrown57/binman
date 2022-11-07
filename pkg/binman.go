@@ -14,27 +14,10 @@ import (
 
 	"github.com/google/go-github/v48/github"
 	"github.com/rjbrown57/binman/pkg/gh"
-	"github.com/sirupsen/logrus"
+	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
 const timeout = 60 * time.Second
-
-var log = logrus.New()
-
-func configureLog(jsonLog bool, debug bool) {
-	// logging
-	if jsonLog {
-		log.Formatter = &logrus.JSONFormatter{}
-	}
-
-	log.Out = os.Stdout
-
-	if debug {
-		log.Level = logrus.DebugLevel
-	} else {
-		log.Level = logrus.InfoLevel
-	}
-}
 
 func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	defer wg.Done()
@@ -128,7 +111,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 
 	switch findfType(rel.filepath) {
 	case "tar":
-		log.Debug("tar extract start")
+		log.Debugf("tar extract start")
 		err = handleTar(rel.PublishPath, rel.filepath)
 		if err != nil {
 			log.Warnf("Failed to extract tar file: %v", err)
@@ -136,7 +119,7 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 			return
 		}
 	case "zip":
-		log.Debug("zip extract start")
+		log.Debugf("zip extract start")
 		err = handleZip(rel.PublishPath, rel.filepath)
 		if err != nil {
 			log.Warnf("Failed to extract zip file: %v", err)
@@ -217,8 +200,8 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 func Main(work map[string]string, debug bool, jsonLog bool) {
 
 	// Set the logging options
-	configureLog(jsonLog, debug)
-	log.Info("binman sync begin")
+	log.ConfigureLog(jsonLog, debug)
+	log.Infof("binman sync begin")
 
 	c := make(chan BinmanMsg)
 	var wg sync.WaitGroup
@@ -239,7 +222,7 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 	// This should be refactored to be simplified
 	if work["repo"] != "" {
 		var err error
-		log.Info("direct repo download")
+		log.Infof("direct repo download")
 
 		if !strings.Contains(work["repo"], "/") {
 			log.Fatalf("Provided repo %s must be in the format org/repo", work["repo"])
@@ -247,7 +230,7 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 
 		releasePath, err = os.Getwd()
 		if err != nil {
-			log.Fatal("Unable to get current working directory")
+			log.Fatalf("Unable to get current working directory")
 		}
 
 		rel := BinmanRelease{
@@ -263,7 +246,7 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 
 		releases = []BinmanRelease{rel}
 	} else {
-		log.Debug("config file based sync")
+		log.Debugf("config file based sync")
 		releases = config.Releases
 		log.Debugf("Process %v Releases", len(releases))
 		releasePath = config.Config.ReleasePath
@@ -286,5 +269,5 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 		}
 	}
 
-	log.Info("binman finished!")
+	log.Infof("binman finished!")
 }

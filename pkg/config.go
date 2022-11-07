@@ -3,6 +3,8 @@ package binman
 import (
 	"fmt"
 	"os"
+
+	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
 // if user does not provide a -c this will be populated at ~/.config/binman/config
@@ -101,7 +103,7 @@ func mustEnsureDefaultPaths() string {
 
 	binmanConfigPath, err := os.UserConfigDir()
 	if err != nil {
-		log.Fatal("Unable to find config dir")
+		log.Fatalf("Unable to find config dir")
 	}
 
 	binmanConfigPath = binmanConfigPath + "/binman"

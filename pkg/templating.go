@@ -6,6 +6,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
 // KnownUrlMap contains "projectname/repo" = "downloadurl" for common release assets not hosted on github

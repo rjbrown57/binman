@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v48/github"
+	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
 // BinmanRelease contains info on specifc releases to hunt for

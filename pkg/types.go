@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"runtime"
 	"sync"
+
+	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
@@ -135,7 +137,7 @@ func (config *GHBMConfig) setDefaults() {
 	}
 
 	if config.Config.TokenVar == "" {
-		log.Warn("config.tokenvar is not set. Using anonymous authentication. Please be aware you can quickly be rate limited by github. Instructions here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
+		log.Warnf("config.tokenvar is not set. Using anonymous authentication. Please be aware you can quickly be rate limited by github. Instructions here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
 		config.Config.TokenVar = "none"
 	}
 
