@@ -1,6 +1,7 @@
 package binman
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -123,6 +124,8 @@ func (r *BinmanRelease) setArtifactPath(ReleasePath string, assetName string) {
 
 	r.LinkPath = filepath.Join(ReleasePath, linkName)
 	log.Debugf("Artifact Path %s Link Path %s\n", r.ArtifactPath, r.Project)
+
+	r.filepath = fmt.Sprintf("%s/%s", r.PublishPath, r.assetName)
 }
 
 func (r *BinmanRelease) writeReleaseNotes() error {

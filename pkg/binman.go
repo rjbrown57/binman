@@ -83,8 +83,6 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	// Set paths based on asset we selected
 	rel.setArtifactPath(releasePath, rel.assetName)
 
-	rel.filepath = fmt.Sprintf("%s/%s", rel.PublishPath, rel.assetName)
-
 	// prepare directory path
 	err = os.MkdirAll(rel.PublishPath, 0750)
 	if err != nil {
