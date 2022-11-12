@@ -6,7 +6,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -155,56 +154,9 @@ func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 	return uncompressedStream
 }
 
-// Create the link to new release
-func createReleaseLink(source string, target string) error {
-
-	// If target exists, remove it
-	if _, err := os.Stat(target); err == nil {
-		log.Warnf("Updating %s to %s\n", source, target)
-		err := os.Remove(target)
-		if err != nil {
-			log.Warnf("Unable to remove %s,%v", target, err)
-		}
-	}
-
-	err := os.Symlink(source, target)
-	if err != nil {
-		log.Infof("Creating link %s -> %s\n", source, target)
-		return err
-	}
-
-	return nil
-}
 
 func writeStringtoFile(path string, thestring string) error {
 	return os.WriteFile(path, []byte(thestring), 0600)
-}
-
-func downloadFile(path string, url string) error {
-
-	log.Infof("Downloading %s", url)
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	out, err := os.Create(filepath.Clean(path))
-	if err != nil {
-		return err
-	}
-
-	defer out.Close()
-
-	_, err = io.Copy(io.MultiWriter(out), resp.Body)
-	if err != nil {
-		return err
-	}
-
-	log.Infof("Download %s complete", url)
-
-	return nil
 }
 
 // mustUnmarshalYaml will Unmarshall from config to GHBMConfig

@@ -2,11 +2,9 @@ package binman
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"sync"
@@ -93,102 +91,19 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 
 	// end pre steps
 
-	// download file
-	err = downloadFile(rel.filepath, rel.dlUrl)
-	if err != nil {
-		log.Warnf("Unable to download file : %v", err)
-		c <- BinmanMsg{rel: rel, err: err}
-		return
-	}
+	// Collect post step tasks
+	rel.getPostStepTasks()
 
-	// If user has requested download only move to next release
-	if rel.DownloadOnly {
-		c <- BinmanMsg{rel: rel, err: err}
-		return
-	}
+	log.Debugf("Performing %d tasks for %s", len(rel.tasks), rel.Repo)
 
-	switch findfType(rel.filepath) {
-	case "tar":
-		log.Debugf("tar extract start")
-		err = handleTar(rel.PublishPath, rel.filepath)
+	for _, task := range rel.tasks {
+		log.Debugf("Running task %s for %s", reflect.TypeOf(task), rel.Repo)
+		err = task.execute()
 		if err != nil {
-			log.Warnf("Failed to extract tar file: %v", err)
+			log.Warnf("Unable to complete task %s : %v", reflect.TypeOf(task), err)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
 		}
-	case "zip":
-		log.Debugf("zip extract start")
-		err = handleZip(rel.PublishPath, rel.filepath)
-		if err != nil {
-			log.Warnf("Failed to extract zip file: %v", err)
-			c <- BinmanMsg{rel: rel, err: err}
-			return
-		}
-	}
-
-	// If the file still doesn't exist, attempt to find it in sub-directories
-	if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
-		log.Debugf("Wasn't able to find the artifact at %s, walking the directory to see if we can find it",
-			rel.ArtifactPath)
-
-		// Walk the directory looking for the file. If found artifact path will be updated
-		rel.findTarget()
-
-		if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
-			err := fmt.Errorf("unable to find a matching file for %s anywhere in the release archive", rel.Repo)
-			log.Warnf("%v", err)
-			c <- BinmanMsg{rel: rel, err: err}
-			return
-		}
-	}
-
-	// make the file executable
-	err = os.Chmod(rel.ArtifactPath, 0750)
-	if err != nil {
-		log.Warnf("Failed to set permissions on %s", rel.PublishPath)
-		c <- BinmanMsg{rel: rel, err: err}
-		return
-	}
-
-	// Create symlink
-	if rel.LinkPath != "none" {
-		if err := createReleaseLink(rel.ArtifactPath, rel.LinkPath); err != nil {
-			log.Warnf("Failed to make symlink: %v", err)
-			c <- BinmanMsg{rel: rel, err: err}
-			return
-		}
-	}
-
-	log.Debugf("Symlink Created!")
-
-	// Write Release Notes
-	if err := rel.writeReleaseNotes(); err != nil {
-		if err != nil {
-			log.Fatalf("Issue writing release notes: %v", err)
-			c <- BinmanMsg{rel: rel, err: err}
-			return
-		}
-	}
-
-	// IF enabled shrink via upx
-	if rel.UpxConfig.Enabled == "true" {
-
-		args := []string{rel.ArtifactPath}
-		// If user supplied extra args add them
-		if len(rel.UpxConfig.Args) != 0 {
-			args = append(args, rel.UpxConfig.Args...)
-		}
-
-		log.Infof("Start upx on %s\n", rel.ArtifactPath)
-		out, err := exec.Command("upx", args...).Output()
-
-		if err != nil {
-			c <- BinmanMsg{rel: rel, err: err}
-			return
-		}
-
-		log.Infof("Upx complete on %s\n", rel.ArtifactPath)
-		log.Debugf("Upx output %s\n", out)
 	}
 
 	c <- BinmanMsg{rel: rel, err: nil}
