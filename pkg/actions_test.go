@@ -154,9 +154,17 @@ func TestOsCommandAction(t *testing.T) {
 		},
 	}
 
+	var version string = "v0.0.0"
+
+	// Create a fake release
+	ghData := github.RepositoryRelease{
+		TagName: &version,
+	}
+
 	rel := BinmanRelease{
 		Repo:         "rjbrown57/binman",
 		PostCommands: coms,
+		GithubData:   &ghData,
 	}
 
 	rel.tasks = append(rel.tasks, rel.AddOsCommandAction(0))

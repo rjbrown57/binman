@@ -44,41 +44,41 @@ type PostCommand struct {
 // getPostStepTasks will arrange all final work after we have selected an asset
 func (r *BinmanRelease) getPostStepTasks() {
 
+	// We will always download
 	r.tasks = append(r.tasks, r.AddDownloadAction())
 
-	if r.DownloadOnly {
-		return
-	}
-
-	switch findfType(r.filepath) {
-	case "tar":
-		r.tasks = append(r.tasks, r.AddExtractAction())
-	case "zip":
-		r.tasks = append(r.tasks, r.AddExtractAction())
-	case "default":
-	}
-
-	r.tasks = append(r.tasks, r.AddFindTargetAction(),
-		r.AddMakeExecuteableAction(),
-		r.AddLinkFileAction(),
-		r.AddWriteRelNotesAction())
-
-	// Upx needs to be prepended to PostCommands if user has requested
-	if r.UpxConfig.Enabled == "true" {
-
-		// Merge any user args with upx
-		args := []string{r.ArtifactPath}
-		args = append(args, r.UpxConfig.Args...)
-
-		UpxCommand := PostCommand{
-			Command: "upx",
-			Args:    args,
+	// If we are not set to download only, set the rest of the post processing actions
+	if !r.DownloadOnly {
+		switch findfType(r.filepath) {
+		case "tar":
+			r.tasks = append(r.tasks, r.AddExtractAction())
+		case "zip":
+			r.tasks = append(r.tasks, r.AddExtractAction())
+		case "default":
 		}
 
-		r.PostCommands = append([]PostCommand{UpxCommand}, r.PostCommands...)
+		r.tasks = append(r.tasks, r.AddFindTargetAction(),
+			r.AddMakeExecuteableAction(),
+			r.AddLinkFileAction(),
+			r.AddWriteRelNotesAction())
+
+		// Upx needs to be prepended to PostCommands if user has requested
+		if r.UpxConfig.Enabled == "true" {
+
+			// Merge any user args with upx
+			args := []string{r.ArtifactPath}
+			args = append(args, r.UpxConfig.Args...)
+
+			UpxCommand := PostCommand{
+				Command: "upx",
+				Args:    args,
+			}
+
+			r.PostCommands = append([]PostCommand{UpxCommand}, r.PostCommands...)
+		}
 	}
 
-	// Add post commands defined by user
+	// Add post commands defined by user if specified
 	for index := range r.PostCommands {
 		r.tasks = append(r.tasks, r.AddOsCommandAction(index))
 	}
@@ -128,6 +128,11 @@ func (r *BinmanRelease) getDataMap() map[string]string {
 	dataMap["version"] = *r.GithubData.TagName
 	dataMap["os"] = r.Os
 	dataMap["arch"] = r.Arch
+	dataMap["org"] = r.Org
+	dataMap["project"] = r.Project
+	dataMap["artifactpath"] = r.ArtifactPath
+	dataMap["linkpath"] = r.LinkPath
+	dataMap["filename"] = r.assetName
 	return dataMap
 }
 

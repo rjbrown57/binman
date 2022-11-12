@@ -198,16 +198,24 @@ func (action *OsCommandAction) execute() error {
 
 	command := action.r.PostCommands[action.index].Command
 
-	log.Infof("Starting OS command %s for %s", command, action.r.Repo)
+	dataMap := action.r.getDataMap()
+
+	// Template any args
+	for i, arg := range action.r.PostCommands[action.index].Args {
+		action.r.PostCommands[action.index].Args[i] = formatString(arg, dataMap)
+	}
+
+	log.Infof("Starting OS command %s with args %s for %s ", command, action.r.PostCommands[action.index].Args, action.r.Repo)
 
 	out, err := exec.Command(command, action.r.PostCommands[action.index].Args...).Output()
 
 	if err != nil {
+		log.Warnf("error output for %s with args %s is %s", command, action.r.PostCommands[action.index].Args, out)
 		return err
 	}
 
-	log.Infof("%s complete on %s", command, action.r.Repo)
-	log.Infof("%s output %s", command, out)
+	log.Infof("%s with args %s complete on %s", command, action.r.PostCommands[action.index].Args, action.r.Repo)
+	log.Debugf("%s with args %s output: \n %s", command, action.r.PostCommands[action.index].Args, out)
 
 	return nil
 
