@@ -146,7 +146,7 @@ config:
 
 Binman supports templating via go templates and [sprig](https://masterminds.github.io/sprig/) can be performed on several fields in your config file.
 
-Templating is availab on the following fields
+Templating is available on the following fields
 
 * url
 * releasefilename
