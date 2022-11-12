@@ -65,14 +65,16 @@ These options can be set per release
 | os | target OS  |
 | upx | see [upx Config](#upx-config) |
 | version | pin to a specific release version |
+| postcommands | see [post commands](#post-commands)|
 
-### External Url Support
+## External Url Support
 
 binman currently supports fetching version information from github, and then downloading the asset from a seperate url. Templating via go templates and [sprig](https://masterminds.github.io/sprig/) can be performed on the url to allow substitution of the fetched tag.
 
-The following values are provided
-* arch 
-* os 
+The following values are provided that are commonly used with external urls. See [string templating](#string-templating) for a full list.
+
+* os
+* arch
 * version
 
 ```yaml
@@ -93,6 +95,41 @@ releases:
 * helm/helm
 * hashicorp/terraform
 
+## Post Commands
+
+binman suppors executing arbitrary os commands after it has fetched and setup a release artifact for you. The templating detailed in [string templating](#string-templating) is available to post command args. A simple example is to copy the file to a new location.
+
+```yaml
+releases:
+  - repo: rjbrown57/binextractor
+      releasefilename: binextractor_0.0.1-alpha_linux_amd64
+      downloadonly: true
+      postcommands:
+      - command: cp
+        args: ["{{ .artifactpath }}","/tmp/binextractor"]
+```
+
+A more complex example would be to do a docker build.
+
+```yaml
+releases:
+  - repo: rjbrown57/binman
+    postcommands:
+    - command: docker
+      args: ["build","-t","{{ .project }}","--build-arg","VERSION={{ .version }}","--build-arg","FILENAME={{ .filename }}","/home/lookfar/binMan/repos/{{ .org }}/{{ .project }}/"]
+```
+
+For this to work you must pace a docker file at `~/binMan/repos/rjbrown57/binman/Dockerfile`. An example of the Dockerfile is
+
+```Dockerfile
+FROM ubuntu:22.04
+ARG VERSION
+ARG FILENAME
+COPY $VERSION/$FILENAME /usr/local/bin/$FILENAME
+```
+
+These are just a pair of possible postcommands. See what trouble you can get yoruself into :rocket:
+
 ### Upx Config
 
 Binman allows for shrinking of your downloaded binaries via [upx](https://upx.github.io/). Ensure upx is in your path and add the following to your binman config to enable shrinking via UPX.
@@ -104,6 +141,30 @@ config:
     args: [] # arrary of args for upx https://linux.die.net/man/1/upx
 
 ```
+
+## String Templating
+
+Binman supports templating via go templates and [sprig](https://masterminds.github.io/sprig/) can be performed on several fields in your config file.
+
+Templating is availab on the following fields
+
+* url
+* releasefilename
+* postcommands args
+
+The following values are provided
+| key | notes |
+| ----------- | ----------- |
+| os | the configured os. Usually the os of your workstation |
+| arch | the configured architecture. Usually the arch of your workstation
+| version | the asset version we have fetched from github |
+| project | the github project name |
+| org | the github org name |
+| artifactpath | the full path to the final extracted release artifact. * |
+| link | the full path to link binman creates. * |
+| filename | just the file name of the final release artifact. * |
+
+\* these values are only available to args in postcommands actions.
 
 ## Direct Repo sync
 
