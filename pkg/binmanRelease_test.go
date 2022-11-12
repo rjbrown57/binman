@@ -3,7 +3,6 @@ package binman
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/google/go-github/v48/github"
@@ -170,47 +169,6 @@ func TestSetArtifactPath(t *testing.T) {
 			t.Fatalf("Artifact Path expected %s, got %s", test.exectedArtifactPath, test.rel.ArtifactPath)
 		}
 	}
-}
-
-func TestWriteReleaseNotes(t *testing.T) {
-
-	d, err := os.MkdirTemp(os.TempDir(), "binmwrn")
-	if err != nil {
-		t.Fatalf("unable to make temp dir %s", d)
-	}
-
-	defer os.RemoveAll(d)
-
-	// Create a dummy asset to detect in a subdir of the temp
-	var version string = "v0.0.0"
-	var bodyContent string = "test-test-test"
-
-	// Create a fake release
-	ghData := github.RepositoryRelease{
-		TagName: &version,
-		Body:    &bodyContent,
-	}
-
-	rel := BinmanRelease{
-		Repo:        "rjbrown57/binman",
-		PublishPath: d,
-		GithubData:  &ghData,
-	}
-
-	if err = rel.writeReleaseNotes(); err != nil {
-		t.Fatal("Unable to write release notes")
-	}
-
-	// Read the written release notes
-	notesBytes, err := os.ReadFile(filepath.Join(rel.PublishPath, "releaseNotes.txt"))
-	if err != nil {
-		t.Fatal("Unable to read written release notes")
-	}
-
-	if string(notesBytes) != bodyContent {
-		t.Fatalf("Want %s, got %s", bodyContent, notesBytes)
-	}
-
 }
 
 func TestGetDataMap(t *testing.T) {
