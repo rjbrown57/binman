@@ -1,32 +1,88 @@
 package binman
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/google/go-github/v48/github"
+	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
 // BinmanRelease contains info on specifc releases to hunt for
 type BinmanRelease struct {
-	Os              string    `yaml:"os,omitempty"`
-	Arch            string    `yaml:"arch,omitempty"`
-	CheckSum        bool      `yaml:"checkSum,omitempty"`
-	DownloadOnly    bool      `yaml:"downloadonly,omitempty"`
-	UpxConfig       UpxConfig `yaml:"upx,omitempty"`             // Allow shrinking with Upx
-	ExternalUrl     string    `yaml:"url,omitempty"`             // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
-	ExtractFileName string    `yaml:"extractfilename,omitempty"` // The file within the release you want
-	ReleaseFileName string    `yaml:"releasefilename,omitempty"` // Specifc Release filename to look for. This is useful if a project publishes a binary and not a tarball.
-	Repo            string    `yaml:"repo"`                      // The specific repo name in github. e.g achore/syft
-	Org             string    // Will be provided by constuctor
-	Project         string    // Will be provided by constuctor
-	PublishPath     string    // Path Release will be set up at
-	ArtifactPath    string    // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
-	LinkName        string    `yaml:"linkname,omitempty"` // Set what the final link will be. Defaults to project name.
-	LinkPath        string    // Will be set by BinmanRelease.setPaths
-	Version         string    `yaml:"version,omitempty"` // Pull a specific version
+	Os              string        `yaml:"os,omitempty"`
+	Arch            string        `yaml:"arch,omitempty"`
+	CheckSum        bool          `yaml:"checkSum,omitempty"`
+	DownloadOnly    bool          `yaml:"downloadonly,omitempty"`
+	UpxConfig       UpxConfig     `yaml:"upx,omitempty"`             // Allow shrinking with Upx
+	ExternalUrl     string        `yaml:"url,omitempty"`             // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
+	ExtractFileName string        `yaml:"extractfilename,omitempty"` // The file within the release you want
+	ReleaseFileName string        `yaml:"releasefilename,omitempty"` // Specifc Release filename to look for. This is useful if a project publishes a binary and not a tarball.
+	Repo            string        `yaml:"repo"`                      // The specific repo name in github. e.g achore/syft
+	Org             string        // Will be provided by constuctor
+	Project         string        // Will be provided by constuctor
+	PublishPath     string        // Path Release will be set up at
+	ArtifactPath    string        // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
+	LinkName        string        `yaml:"linkname,omitempty"` // Set what the final link will be. Defaults to project name.
+	LinkPath        string        // Will be set by BinmanRelease.setPaths
+	Version         string        `yaml:"version,omitempty"` // Pull a specific version
+	PostCommands    []PostCommand `yaml:"postcommands,omitempty"`
 	GithubData      *github.RepositoryRelease
+	assetName       string   // the target assetName
+	dlUrl           string   // the final donwload url
+	filepath        string   // the target filepath for download
+	tasks           []Action // the actions we will perform for this release
+}
+
+type PostCommand struct {
+	Command string   `yaml:"command"`
+	Args    []string `yaml:"args,omitempty"`
+}
+
+// getPostStepTasks will arrange all final work after we have selected an asset
+func (r *BinmanRelease) getPostStepTasks() {
+
+	// We will always download
+	r.tasks = append(r.tasks, r.AddDownloadAction())
+
+	// If we are not set to download only, set the rest of the post processing actions
+	if !r.DownloadOnly {
+		switch findfType(r.filepath) {
+		case "tar":
+			r.tasks = append(r.tasks, r.AddExtractAction())
+		case "zip":
+			r.tasks = append(r.tasks, r.AddExtractAction())
+		case "default":
+		}
+
+		r.tasks = append(r.tasks, r.AddFindTargetAction(),
+			r.AddMakeExecuteableAction(),
+			r.AddLinkFileAction(),
+			r.AddWriteRelNotesAction())
+
+		// Upx needs to be prepended to PostCommands if user has requested
+		if r.UpxConfig.Enabled == "true" {
+
+			// Merge any user args with upx
+			args := []string{r.ArtifactPath}
+			args = append(args, r.UpxConfig.Args...)
+
+			UpxCommand := PostCommand{
+				Command: "upx",
+				Args:    args,
+			}
+
+			r.PostCommands = append([]PostCommand{UpxCommand}, r.PostCommands...)
+		}
+	}
+
+	// Add post commands defined by user if specified
+	for index := range r.PostCommands {
+		r.tasks = append(r.tasks, r.AddOsCommandAction(index))
+	}
+
 }
 
 // set project and org vars
@@ -72,6 +128,11 @@ func (r *BinmanRelease) getDataMap() map[string]string {
 	dataMap["version"] = *r.GithubData.TagName
 	dataMap["os"] = r.Os
 	dataMap["arch"] = r.Arch
+	dataMap["org"] = r.Org
+	dataMap["project"] = r.Project
+	dataMap["artifactpath"] = r.ArtifactPath
+	dataMap["linkpath"] = r.LinkPath
+	dataMap["filename"] = r.assetName
 	return dataMap
 }
 
@@ -119,15 +180,6 @@ func (r *BinmanRelease) setArtifactPath(ReleasePath string, assetName string) {
 
 	r.LinkPath = filepath.Join(ReleasePath, linkName)
 	log.Debugf("Artifact Path %s Link Path %s\n", r.ArtifactPath, r.Project)
-}
 
-func (r *BinmanRelease) writeReleaseNotes() error {
-	relNotes := r.GithubData.GetBody()
-	if relNotes != "" {
-		notePath := filepath.Join(r.PublishPath, "releaseNotes.txt")
-		log.Debugf("Notes written to %s", notePath)
-		return writeStringtoFile(notePath, relNotes)
-	}
-
-	return nil
+	r.filepath = fmt.Sprintf("%s/%s", r.PublishPath, r.assetName)
 }

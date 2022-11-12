@@ -154,7 +154,7 @@ func TestPopulateReleases(t *testing.T) {
 		t.Fatalf("unable to make temp dir %s", d)
 	}
 
-	//defer os.RemoveAll(d)
+	defer os.RemoveAll(d)
 
 	configPath := fmt.Sprintf("%s/config", d)
 

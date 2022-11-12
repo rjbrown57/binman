@@ -2,11 +2,9 @@ package binman
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"sync"
@@ -14,32 +12,14 @@ import (
 
 	"github.com/google/go-github/v48/github"
 	"github.com/rjbrown57/binman/pkg/gh"
-	"github.com/sirupsen/logrus"
+	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
 const timeout = 60 * time.Second
 
-var log = logrus.New()
-
-func configureLog(jsonLog bool, debug bool) {
-	// logging
-	if jsonLog {
-		log.Formatter = &logrus.JSONFormatter{}
-	}
-
-	log.Out = os.Stdout
-
-	if debug {
-		log.Level = logrus.DebugLevel
-	} else {
-		log.Level = logrus.InfoLevel
-	}
-}
-
 func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	var assetName, dlUrl string
 	var err error
 	ctx := context.Background()
 
@@ -78,30 +58,28 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	// User can provide an exact asset name via releaseFilename
 	// binman will try to find the release via fileType,Arch
 	if rel.ExternalUrl != "" {
-		dlUrl = formatString(rel.ExternalUrl, rel.getDataMap())
-		log.Debugf("User specified url %s", dlUrl)
-		assetName = filepath.Base(dlUrl)
+		rel.dlUrl = formatString(rel.ExternalUrl, rel.getDataMap())
+		log.Debugf("User specified url %s", rel.dlUrl)
+		rel.assetName = filepath.Base(rel.dlUrl)
 	} else {
 		if rel.ReleaseFileName != "" {
 			rFilename := formatString(rel.ReleaseFileName, rel.getDataMap())
 			log.Debugf("Get asset by name %s", rFilename)
-			assetName, dlUrl = gh.GetAssetbyName(rFilename, rel.GithubData.Assets)
+			rel.assetName, rel.dlUrl = gh.GetAssetbyName(rFilename, rel.GithubData.Assets)
 		} else {
 			log.Debugf("Attempt to find asset %s", rel.ReleaseFileName)
-			assetName, dlUrl = gh.FindAsset(rel.Arch, rel.Os, rel.GithubData.Assets)
+			rel.assetName, rel.dlUrl = gh.FindAsset(rel.Arch, rel.Os, rel.GithubData.Assets)
 		}
 	}
 
-	if dlUrl == "" {
+	if rel.dlUrl == "" {
 		log.Warnf("Target release asset not found for %s", rel.Repo)
 		c <- BinmanMsg{rel: rel, err: nil}
 		return
 	}
 
 	// Set paths based on asset we selected
-	rel.setArtifactPath(releasePath, assetName)
-
-	filePath := fmt.Sprintf("%s/%s", rel.PublishPath, assetName)
+	rel.setArtifactPath(releasePath, rel.assetName)
 
 	// prepare directory path
 	err = os.MkdirAll(rel.PublishPath, 0750)
@@ -113,102 +91,19 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 
 	// end pre steps
 
-	// download file
-	err = downloadFile(filePath, dlUrl)
-	if err != nil {
-		log.Warnf("Unable to download file : %v", err)
-		c <- BinmanMsg{rel: rel, err: err}
-		return
-	}
+	// Collect post step tasks
+	rel.getPostStepTasks()
 
-	// If user has requested download only move to next release
-	if rel.DownloadOnly {
-		c <- BinmanMsg{rel: rel, err: err}
-		return
-	}
+	log.Debugf("Performing %d tasks for %s", len(rel.tasks), rel.Repo)
 
-	switch findfType(filePath) {
-	case "tar":
-		log.Debug("tar extract start")
-		err = handleTar(rel.PublishPath, filePath)
+	for _, task := range rel.tasks {
+		log.Debugf("Running task %s for %s", reflect.TypeOf(task), rel.Repo)
+		err = task.execute()
 		if err != nil {
-			log.Warnf("Failed to extract tar file: %v", err)
+			log.Warnf("Unable to complete task %s : %v", reflect.TypeOf(task), err)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
 		}
-	case "zip":
-		log.Debug("zip extract start")
-		err = handleZip(rel.PublishPath, filePath)
-		if err != nil {
-			log.Warnf("Failed to extract zip file: %v", err)
-			c <- BinmanMsg{rel: rel, err: err}
-			return
-		}
-	}
-
-	// If the file still doesn't exist, attempt to find it in sub-directories
-	if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
-		log.Debugf("Wasn't able to find the artifact at %s, walking the directory to see if we can find it",
-			rel.ArtifactPath)
-
-		// Walk the directory looking for the file. If found artifact path will be updated
-		rel.findTarget()
-
-		if _, err := os.Stat(rel.ArtifactPath); errors.Is(err, os.ErrNotExist) {
-			err := fmt.Errorf("unable to find a matching file for %s anywhere in the release archive", rel.Repo)
-			log.Warnf("%v", err)
-			c <- BinmanMsg{rel: rel, err: err}
-			return
-		}
-	}
-
-	// make the file executable
-	err = os.Chmod(rel.ArtifactPath, 0750)
-	if err != nil {
-		log.Warnf("Failed to set permissions on %s", rel.PublishPath)
-		c <- BinmanMsg{rel: rel, err: err}
-		return
-	}
-
-	// Create symlink
-	if rel.LinkPath != "none" {
-		if err := createReleaseLink(rel.ArtifactPath, rel.LinkPath); err != nil {
-			log.Warnf("Failed to make symlink: %v", err)
-			c <- BinmanMsg{rel: rel, err: err}
-			return
-		}
-	}
-
-	log.Debugf("Symlink Created!")
-
-	// Write Release Notes
-	if err := rel.writeReleaseNotes(); err != nil {
-		if err != nil {
-			log.Fatalf("Issue writing release notes: %v", err)
-			c <- BinmanMsg{rel: rel, err: err}
-			return
-		}
-	}
-
-	// IF enabled shrink via upx
-	if rel.UpxConfig.Enabled == "true" {
-
-		args := []string{rel.ArtifactPath}
-		// If user supplied extra args add them
-		if len(rel.UpxConfig.Args) != 0 {
-			args = append(args, rel.UpxConfig.Args...)
-		}
-
-		log.Infof("Start upx on %s\n", rel.ArtifactPath)
-		out, err := exec.Command("upx", args...).Output()
-
-		if err != nil {
-			c <- BinmanMsg{rel: rel, err: err}
-			return
-		}
-
-		log.Infof("Upx complete on %s\n", rel.ArtifactPath)
-		log.Debugf("Upx output %s\n", out)
 	}
 
 	c <- BinmanMsg{rel: rel, err: nil}
@@ -218,8 +113,8 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 func Main(work map[string]string, debug bool, jsonLog bool) {
 
 	// Set the logging options
-	configureLog(jsonLog, debug)
-	log.Info("binman sync begin")
+	log.ConfigureLog(jsonLog, debug)
+	log.Infof("binman sync begin")
 
 	c := make(chan BinmanMsg)
 	var wg sync.WaitGroup
@@ -240,7 +135,7 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 	// This should be refactored to be simplified
 	if work["repo"] != "" {
 		var err error
-		log.Info("direct repo download")
+		log.Infof("direct repo download")
 
 		if !strings.Contains(work["repo"], "/") {
 			log.Fatalf("Provided repo %s must be in the format org/repo", work["repo"])
@@ -248,7 +143,7 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 
 		releasePath, err = os.Getwd()
 		if err != nil {
-			log.Fatal("Unable to get current working directory")
+			log.Fatalf("Unable to get current working directory")
 		}
 
 		rel := BinmanRelease{
@@ -264,7 +159,7 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 
 		releases = []BinmanRelease{rel}
 	} else {
-		log.Debug("config file based sync")
+		log.Debugf("config file based sync")
 		releases = config.Releases
 		log.Debugf("Process %v Releases", len(releases))
 		releasePath = config.Config.ReleasePath
@@ -287,5 +182,5 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 		}
 	}
 
-	log.Info("binman finished!")
+	log.Infof("binman finished!")
 }
