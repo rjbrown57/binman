@@ -4,6 +4,8 @@
 
 Binman is a tool to sync release assets from github to your local workstation. The main use case is syncing via config to keep the tools you use every day up to date.
 
+![demo](examples/demo.gif)
+
 Grab the latest release [here](https://github.com/rjbrown57/binman/releases), and let binman grab it for you next time :rocket:
 
 Binman will attempt to find a release asset that matches your OS and architecture and one of the types of files we handle currently. Currently handled file types are "zip", "tar", "binary", "exe".
@@ -16,9 +18,9 @@ Binman provides many config options to allow you to handle all the manifold rele
 
 ## Config Sync
 
-To run binman you effectively you need a config. 
+To run binman effectively you need a config. 
 
-Running binman with no arguements and no config will populate the following config to your OS's appropriate [config directory](https://pkg.go.dev/os#UserConfigDir). On linux the config file will be added to `~/.config/binman/config`. 
+Running binman with no arguements, and no config will populate the following config to your OS's appropriate [config directory](https://pkg.go.dev/os#UserConfigDir). On linux the config file will be added to `~/.config/binman/config`. 
 
 Binman also allows supplying a configfile from an alternate path with the `-c` flag or by the "BINMAN_CONFIG" environment variable.
 
@@ -39,7 +41,7 @@ releases:
       args: [] #["-k","-v"]
 ```
 
-Binman can also run with a "contextual" config file. If a directory contains a file ".binMan.yaml" this will be merged with your main config. This can be checked into git projects and used to fetch any required dependencies from github.
+Binman can also run with a "contextual" config file. If a directory contains a file ".binMan.yaml" this will be merged with your main config. Check a config into git projects and easily fetch required dependencies from github.
 
 ### Config Options
 
@@ -94,10 +96,11 @@ releases:
   * Please note this is currently harcoded to fetch kubectl. If you want a different binary set additional `repo: kubernetes/kubernetes` and specify the url field for each additional binary.
 * helm/helm
 * hashicorp/terraform
+* hashicorp/vault
 
 ## Post Commands
 
-binman suppors executing arbitrary os commands after it has fetched and setup a release artifact for you. The templating detailed in [string templating](#string-templating) is available to post command args. A simple example is to copy the file to a new location.
+binman supports executing arbitrary os commands after it has fetched and set up a release artifact for you. The templating detailed in [string templating](#string-templating) is available to postcommand args. A simple example is to copy the file to a new location.
 
 ```yaml
 releases:
@@ -116,7 +119,7 @@ releases:
   - repo: rjbrown57/binman
     postcommands:
     - command: docker
-      args: ["build","-t","{{ .project }}","--build-arg","VERSION={{ .version }}","--build-arg","FILENAME={{ .filename }}","/home/lookfar/binMan/repos/{{ .org }}/{{ .project }}/"]
+      args: ["build","-t","{{ .project }}","--build-arg","VERSION={{ .version }}","--build-arg","FILENAME={{ .filename }}","/home/myuser/binMan/repos/{{ .org }}/{{ .project }}/"]
 ```
 
 For this to work you must pace a docker file at `~/binMan/repos/rjbrown57/binman/Dockerfile`. An example of the Dockerfile is

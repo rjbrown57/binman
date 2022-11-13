@@ -1,0 +1,7 @@
+config:
+  releasepath: ./mytooldir/ # path for releases
+  tokenvar: GH_TOKEN # GITHUB API TOKEN env var
+releases:
+  - repo: anchore/syft
+  - repo: helm/helm
+  - repo: charmbracelet/vhs
