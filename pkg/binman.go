@@ -125,7 +125,7 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 	// Create config object.
 	// setBaseConfig will return the appropriate base config file.
 	// setConfig will check for a contextual config and merge with our base config and return the result
-	config := setConfig(setBaseConfig(work["configFile"]))
+	config := setConfig(SetBaseConfig(work["configFile"]))
 
 	log.Debugf("binman config = %+v", config)
 

@@ -35,13 +35,13 @@ func setupConfigDir(configPath string) error {
 }
 
 // setBaseConfig will check for each of the possible config locations and return the correct value
-func setBaseConfig(configArg string) string {
+func SetBaseConfig(configArg string) string {
 
 	var cfg string
 
 	// Precedence order is -c supplied config, then env var, then binman default path
 	switch configArg {
-	case "noConfig":
+	case "noConfig", "":
 		cfgEnv, cfgBool := os.LookupEnv("BINMAN_CONFIG")
 		if cfgBool {
 			log.Debugf("BINMAN_CONFIG is set to %s. Using as our config", cfgEnv)
