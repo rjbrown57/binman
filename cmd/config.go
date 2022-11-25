@@ -34,3 +34,13 @@ var configAddCmd = &cobra.Command{
 		binmanconfig.Add(config, repo)
 	},
 }
+
+// Config add sub command
+var configGetCmd = &cobra.Command{
+	Use:   "get",
+	Short: "View current config",
+	Long:  `View current config`,
+	Run: func(cmd *cobra.Command, args []string) {
+		binmanconfig.Get(config)
+	},
+}

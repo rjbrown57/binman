@@ -69,3 +69,14 @@ func Add(config string, repo string) {
 	}
 
 }
+
+func Get(config string) {
+	cPath := binman.SetBaseConfig(config)
+	// We use NewGHBMConfig here to avoid grabbing contextual configs
+	c, err := os.ReadFile(cPath)
+	if err != nil {
+		log.Fatalf("Unable to read file %s", cPath)
+	}
+
+	log.Infof("Current config(%s):\n%s", cPath, string(c))
+}

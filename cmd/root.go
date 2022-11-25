@@ -46,9 +46,11 @@ func Execute() {
 }
 
 func addSubcommands() {
-	// add edit to config
+	// add edit/get to config
 	configCmd.AddCommand(configEditCmd)
+	configCmd.AddCommand(configGetCmd)
 
+	// Setup repo flag and add to root
 	configAddCmd.Flags().StringVarP(&repo, "repo", "r", "", "Supply repo to add to config in format org/repo")
 	configCmd.AddCommand(configAddCmd)
 
