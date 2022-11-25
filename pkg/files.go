@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	log "github.com/rjbrown57/binman/pkg/logging"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // Test for filetypes

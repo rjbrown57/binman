@@ -6,7 +6,7 @@ import (
 
 	binman "github.com/rjbrown57/binman/pkg"
 	log "github.com/rjbrown57/binman/pkg/logging"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // https://github.com/kubernetes/kubectl/blob/da50ec2b223f5ec08bc34b700411c70b2bcc87fd/pkg/cmd/util/editor/editor.go
