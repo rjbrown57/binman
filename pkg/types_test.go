@@ -175,8 +175,8 @@ func TestPopulateReleases(t *testing.T) {
 	testRelSlice := []BinmanRelease{
 		{
 			Repo:         "rjbrown57/binman",
-			Org:          "rjbrown57",
-			Project:      "binman",
+			org:          "rjbrown57",
+			project:      "binman",
 			Os:           "linux",
 			Arch:         "amd64",
 			CheckSum:     false,
@@ -185,8 +185,8 @@ func TestPopulateReleases(t *testing.T) {
 		},
 		{
 			Repo:         "rjbrown57/binextractor",
-			Org:          "rjbrown57",
-			Project:      "extractor",
+			org:          "rjbrown57",
+			project:      "extractor",
 			Os:           "linux",
 			Arch:         "amd64",
 			CheckSum:     false,
@@ -198,8 +198,8 @@ func TestPopulateReleases(t *testing.T) {
 		},
 		{
 			Repo:         "rjbrown57/lp",
-			Org:          "rjbrown57",
-			Project:      "lp",
+			org:          "rjbrown57",
+			project:      "lp",
 			Os:           "linux",
 			Arch:         "amd64",
 			CheckSum:     false,
@@ -208,8 +208,8 @@ func TestPopulateReleases(t *testing.T) {
 		},
 		{
 			Repo:         "hashicorp/vault",
-			Org:          "hashicorp",
-			Project:      "vault",
+			org:          "hashicorp",
+			project:      "vault",
 			Os:           "linux",
 			Arch:         "amd64",
 			CheckSum:     false,

@@ -61,17 +61,17 @@ type LinkFileAction struct {
 
 func (action *LinkFileAction) execute() error {
 	// If target exists, remove it
-	if _, err := os.Stat(action.r.LinkPath); err == nil {
-		log.Warnf("Updating %s to %s\n", action.r.ArtifactPath, action.r.LinkPath)
-		err := os.Remove(action.r.LinkPath)
+	if _, err := os.Stat(action.r.linkPath); err == nil {
+		log.Warnf("Updating %s to %s\n", action.r.artifactPath, action.r.linkPath)
+		err := os.Remove(action.r.linkPath)
 		if err != nil {
-			log.Warnf("Unable to remove %s,%v", action.r.LinkPath, err)
+			log.Warnf("Unable to remove %s,%v", action.r.linkPath, err)
 		}
 	}
 
-	err := os.Symlink(action.r.ArtifactPath, action.r.LinkPath)
+	err := os.Symlink(action.r.artifactPath, action.r.linkPath)
 	if err != nil {
-		log.Infof("Creating link %s -> %s\n", action.r.ArtifactPath, action.r.LinkPath)
+		log.Infof("Creating link %s -> %s\n", action.r.artifactPath, action.r.linkPath)
 		return err
 	}
 
@@ -90,9 +90,9 @@ type MakeExecuteableAction struct {
 
 func (action *MakeExecuteableAction) execute() error {
 	// make the file executable
-	err := os.Chmod(action.r.ArtifactPath, 0750)
+	err := os.Chmod(action.r.artifactPath, 0750)
 	if err != nil {
-		log.Warnf("Failed to set permissions on %s", action.r.PublishPath)
+		log.Warnf("Failed to set permissions on %s", action.r.publishPath)
 		return err
 	}
 	return nil
@@ -110,9 +110,9 @@ type WriteRelNotesAction struct {
 }
 
 func (action *WriteRelNotesAction) execute() error {
-	relNotes := action.r.GithubData.GetBody()
+	relNotes := action.r.githubData.GetBody()
 	if relNotes != "" {
-		notePath := filepath.Join(action.r.PublishPath, "releaseNotes.txt")
+		notePath := filepath.Join(action.r.publishPath, "releaseNotes.txt")
 		log.Debugf("Notes written to %s", notePath)
 		return WriteStringtoFile(notePath, relNotes)
 	}
@@ -135,14 +135,14 @@ func (action *ExtractAction) execute() error {
 	switch findfType(action.r.filepath) {
 	case "tar":
 		log.Debugf("tar extract start")
-		err := handleTar(action.r.PublishPath, action.r.filepath)
+		err := handleTar(action.r.publishPath, action.r.filepath)
 		if err != nil {
 			log.Warnf("Failed to extract tar file: %v", err)
 			return err
 		}
 	case "zip":
 		log.Debugf("zip extract start")
-		err := handleZip(action.r.PublishPath, action.r.filepath)
+		err := handleZip(action.r.publishPath, action.r.filepath)
 		if err != nil {
 			log.Warnf("Failed to extract zip file: %v", err)
 			return err
@@ -166,14 +166,14 @@ type FindTargetAction struct {
 
 func (action *FindTargetAction) execute() error {
 	// If the file still doesn't exist, attempt to find it in sub-directories
-	if _, err := os.Stat(action.r.ArtifactPath); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(action.r.artifactPath); errors.Is(err, os.ErrNotExist) {
 		log.Debugf("Wasn't able to find the artifact at %s, walking the directory to see if we can find it",
-			action.r.ArtifactPath)
+			action.r.artifactPath)
 
 		// Walk the directory looking for the file. If found artifact path will be updated
 		action.r.findTarget()
 
-		if _, err := os.Stat(action.r.ArtifactPath); errors.Is(err, os.ErrNotExist) {
+		if _, err := os.Stat(action.r.artifactPath); errors.Is(err, os.ErrNotExist) {
 			err := fmt.Errorf("unable to find a matching file for %s anywhere in the release archive", action.r.Repo)
 			return err
 		}

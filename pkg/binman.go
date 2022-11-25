@@ -28,11 +28,11 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	if rel.Version == "" {
 		log.Debugf("Querying github api for latest release of %s", rel.Repo)
 		// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
-		rel.GithubData, _, err = ghClient.Repositories.GetLatestRelease(ctx, rel.Org, rel.Project)
+		rel.githubData, _, err = ghClient.Repositories.GetLatestRelease(ctx, rel.org, rel.project)
 	} else {
 		log.Debugf("Querying github api for %s release of %s", rel.Version, rel.Repo)
 		// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
-		rel.GithubData, _, err = ghClient.Repositories.GetReleaseByTag(ctx, rel.Org, rel.Project, rel.Version)
+		rel.githubData, _, err = ghClient.Repositories.GetReleaseByTag(ctx, rel.org, rel.project, rel.Version)
 	}
 
 	if err != nil {
@@ -42,12 +42,12 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	}
 
 	// Get Path and Verify it DNE before digging through assets
-	// If PublishPath is already set ignore these checks. This means we are doing a direct repo download
-	if rel.PublishPath == "" {
-		rel.setPublisPath(releasePath, *rel.GithubData.TagName)
-		_, err = os.Stat(rel.PublishPath)
+	// If publishPath is already set ignore these checks. This means we are doing a direct repo download
+	if rel.publishPath == "" {
+		rel.setPublisPath(releasePath, *rel.githubData.TagName)
+		_, err = os.Stat(rel.publishPath)
 		if err == nil {
-			log.Infof("Latest version is %s %s is up to date", *rel.GithubData.TagName, rel.Repo)
+			log.Infof("Latest version is %s %s is up to date", *rel.githubData.TagName, rel.Repo)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
 		}
@@ -65,10 +65,10 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 		if rel.ReleaseFileName != "" {
 			rFilename := formatString(rel.ReleaseFileName, rel.getDataMap())
 			log.Debugf("Get asset by name %s", rFilename)
-			rel.assetName, rel.dlUrl = gh.GetAssetbyName(rFilename, rel.GithubData.Assets)
+			rel.assetName, rel.dlUrl = gh.GetAssetbyName(rFilename, rel.githubData.Assets)
 		} else {
 			log.Debugf("Attempt to find asset %s", rel.ReleaseFileName)
-			rel.assetName, rel.dlUrl = gh.FindAsset(rel.Arch, rel.Os, rel.GithubData.Assets)
+			rel.assetName, rel.dlUrl = gh.FindAsset(rel.Arch, rel.Os, rel.githubData.Assets)
 		}
 	}
 
@@ -82,9 +82,9 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	rel.setArtifactPath(releasePath, rel.assetName)
 
 	// prepare directory path
-	err = os.MkdirAll(rel.PublishPath, 0750)
+	err = os.MkdirAll(rel.publishPath, 0750)
 	if err != nil {
-		log.Warnf("Error creating %s - %v", rel.PublishPath, err)
+		log.Warnf("Error creating %s - %v", rel.publishPath, err)
 		c <- BinmanMsg{rel: rel, err: err}
 		return
 	}
@@ -150,7 +150,7 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 			Repo:         work["repo"],
 			Os:           runtime.GOOS,
 			Arch:         runtime.GOARCH,
-			PublishPath:  releasePath,
+			publishPath:  releasePath,
 			DownloadOnly: true,
 			Version:      work["version"],
 		}

@@ -29,8 +29,8 @@ func TestWriteRelNotesAction(t *testing.T) {
 
 	rel := BinmanRelease{
 		Repo:        "rjbrown57/binman",
-		PublishPath: d,
-		GithubData:  &ghData,
+		publishPath: d,
+		githubData:  &ghData,
 	}
 
 	rel.tasks = append(rel.tasks, rel.AddWriteRelNotesAction())
@@ -40,7 +40,7 @@ func TestWriteRelNotesAction(t *testing.T) {
 	}
 
 	// Read the written release notes
-	notesBytes, err := os.ReadFile(filepath.Join(rel.PublishPath, "releaseNotes.txt"))
+	notesBytes, err := os.ReadFile(filepath.Join(rel.publishPath, "releaseNotes.txt"))
 	if err != nil {
 		t.Fatal("Unable to read written release notes")
 	}
@@ -68,11 +68,11 @@ func TestLinkFileAction(t *testing.T) {
 
 	rel := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		ArtifactPath: filePath,
-		LinkPath:     linkPath,
+		artifactPath: filePath,
+		linkPath:     linkPath,
 	}
 
-	WriteStringtoFile(rel.ArtifactPath, content)
+	WriteStringtoFile(rel.artifactPath, content)
 
 	// Add the link task twice, to confirm link is updated successfully
 	rel.tasks = append(rel.tasks, rel.AddLinkFileAction())
@@ -83,13 +83,13 @@ func TestLinkFileAction(t *testing.T) {
 			t.Fatal("Unable to create release link")
 		}
 
-		if f, err := os.Stat(rel.LinkPath); err == nil {
+		if f, err := os.Stat(rel.linkPath); err == nil {
 			if f.Name() != linkname {
 				t.Fatalf("Expected link name %s got %s", linkname, f.Name())
 			}
 
 			// Read the written release notes
-			contentBytes, err := os.ReadFile(rel.LinkPath)
+			contentBytes, err := os.ReadFile(rel.linkPath)
 			if err != nil {
 				t.Fatal("Unable to read link contents")
 			}
@@ -120,10 +120,10 @@ func TestMakeExecuteableAction(t *testing.T) {
 
 	rel := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		ArtifactPath: filePath,
+		artifactPath: filePath,
 	}
 
-	WriteStringtoFile(rel.ArtifactPath, content)
+	WriteStringtoFile(rel.artifactPath, content)
 
 	rel.tasks = append(rel.tasks, rel.AddMakeExecuteableAction())
 
@@ -131,7 +131,7 @@ func TestMakeExecuteableAction(t *testing.T) {
 		t.Fatal("Unable to create make file executable")
 	}
 
-	if f, err := os.Stat(rel.ArtifactPath); err == nil {
+	if f, err := os.Stat(rel.artifactPath); err == nil {
 		if f.Mode().Perm() != testMode.Perm() {
 			t.Fatalf("Expected %s got %s", "0750", f.Mode().String())
 		}
@@ -164,7 +164,7 @@ func TestOsCommandAction(t *testing.T) {
 	rel := BinmanRelease{
 		Repo:         "rjbrown57/binman",
 		PostCommands: coms,
-		GithubData:   &ghData,
+		githubData:   &ghData,
 	}
 
 	rel.tasks = append(rel.tasks, rel.AddOsCommandAction(0))
