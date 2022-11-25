@@ -1,6 +1,3 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -48,6 +45,20 @@ func Execute() {
 	}
 }
 
+func addSubcommands() {
+	// add edit/get to config
+	configCmd.AddCommand(configEditCmd)
+	configCmd.AddCommand(configGetCmd)
+
+	// Setup repo flag and add to root
+	configAddCmd.Flags().StringVarP(&repo, "repo", "r", "", "Supply repo to add to config in format org/repo")
+	configAddCmd.MarkFlagRequired("repo")
+	configCmd.AddCommand(configAddCmd)
+
+	// add config to root
+	rootCmd.AddCommand(configCmd)
+}
+
 func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -58,7 +69,9 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly
 
-	rootCmd.Flags().StringVarP(&config, "config", "c", "noConfig", "path to config file. Can be set with ${BINMAN_CONFIG} env var")
+	addSubcommands()
+
+	rootCmd.PersistentFlags().StringVarP(&config, "config", "c", "noConfig", "path to config file. Can be set with ${BINMAN_CONFIG} env var")
 	rootCmd.Flags().BoolVarP(&debug, "debug", "d", false, "enable debug logging")
 	rootCmd.Flags().BoolVarP(&jsonLog, "json", "j", false, "enable json style logging")
 	rootCmd.Flags().StringVarP(&repo, "repo", "r", "", "Github repo in format org/repo")

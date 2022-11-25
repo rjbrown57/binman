@@ -42,7 +42,7 @@ func TestSetupConfigPath(t *testing.T) {
 func TestSetBaseConfig(t *testing.T) {
 
 	// Test default path is returned
-	testString := setBaseConfig("noConfig")
+	testString := SetBaseConfig("noConfig")
 	expectedString := mustEnsureDefaultPaths()
 
 	if testString != expectedString {
@@ -56,7 +56,7 @@ func TestSetBaseConfig(t *testing.T) {
 		t.Fatal("Unable to set BINMAN_CONFIG env var")
 	}
 
-	testString = setBaseConfig("noConfig")
+	testString = SetBaseConfig("noConfig")
 	if testString != os.Getenv("BINMAN_CONFIG") {
 		t.Fatalf("%s was expected result, recieved %s", "testvalue", testString)
 	}
@@ -67,7 +67,7 @@ func TestSetBaseConfig(t *testing.T) {
 	}
 
 	// Test user supplied path is returned
-	testString = setBaseConfig("testValue")
+	testString = SetBaseConfig("testValue")
 	if testString != "testValue" {
 		t.Fatalf("%s was expected result, recieved %s", "testValue", testString)
 	}
@@ -82,7 +82,7 @@ func TestSetConfig(t *testing.T) {
 
 	os.Chdir(d)
 
-	config := setConfig(setBaseConfig("noConfig"))
+	config := SetConfig(SetBaseConfig("noConfig"))
 	baseLength := len(config.Releases)
 
 	if baseLength != 1 {
@@ -91,9 +91,9 @@ func TestSetConfig(t *testing.T) {
 
 	// Add a default config
 	cf := fmt.Sprintf(d + "/" + ".binMan.yaml")
-	writeStringtoFile(cf, mergeConfig)
+	WriteStringtoFile(cf, mergeConfig)
 
-	mergedConfig := setConfig(setBaseConfig("noConfig"))
+	mergedConfig := SetConfig(SetBaseConfig("noConfig"))
 	mergedLength := len(mergedConfig.Releases)
 
 	if baseLength == mergedLength {
@@ -118,7 +118,7 @@ func TestDetectRepoConfig(t *testing.T) {
 
 	// Add a default config
 	cf := fmt.Sprintf(d + "/" + ".binMan.yaml")
-	writeStringtoFile(cf, defaultConfig)
+	WriteStringtoFile(cf, defaultConfig)
 
 	// We should detect a .binMan.yaml this time
 	_, sb = detectRepoConfig()

@@ -35,13 +35,13 @@ func setupConfigDir(configPath string) error {
 }
 
 // setBaseConfig will check for each of the possible config locations and return the correct value
-func setBaseConfig(configArg string) string {
+func SetBaseConfig(configArg string) string {
 
 	var cfg string
 
 	// Precedence order is -c supplied config, then env var, then binman default path
 	switch configArg {
-	case "noConfig":
+	case "noConfig", "":
 		cfgEnv, cfgBool := os.LookupEnv("BINMAN_CONFIG")
 		if cfgBool {
 			log.Debugf("BINMAN_CONFIG is set to %s. Using as our config", cfgEnv)
@@ -58,16 +58,16 @@ func setBaseConfig(configArg string) string {
 }
 
 // setConfig will create the appropriate GHBMConfig and merge if required
-func setConfig(suppliedConfig string) *GHBMConfig {
+func SetConfig(suppliedConfig string) *GHBMConfig {
 
 	// create the base config
-	binMancfg := newGHBMConfig(suppliedConfig)
+	binMancfg := NewGHBMConfig(suppliedConfig)
 
 	// If ${repoDir}/.binMan.yaml exists we merge it's releases with our main config
 	cfg, cfgBool := detectRepoConfig()
 	if cfgBool {
 		log.Debugf("Found %s merging with main config", cfg)
-		tc := newGHBMConfig(cfg)
+		tc := NewGHBMConfig(cfg)
 		// append releases from the contextual config
 		binMancfg.Releases = append(binMancfg.Releases, tc.Releases...)
 	}
@@ -120,7 +120,7 @@ func mustEnsureDefaultPaths() string {
 	// populate the default config if missing
 	if _, err := os.Stat(binmanConfigFile); os.IsNotExist(err) {
 		// Add the config
-		err = writeStringtoFile(binmanConfigFile, defaultConfig)
+		err = WriteStringtoFile(binmanConfigFile, defaultConfig)
 		if err != nil {
 			log.Fatalf("Unable to create %s", binmanConfigFile)
 		}

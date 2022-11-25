@@ -15,7 +15,7 @@ func TestGetOr(t *testing.T) {
 	}
 
 	rel.getOR()
-	testRepo := fmt.Sprintf("%s/%s", rel.Org, rel.Project)
+	testRepo := fmt.Sprintf("%s/%s", rel.org, rel.project)
 	if testRepo != rel.Repo {
 		t.Fatalf("%s != %s ; Should be equal", testRepo, rel.Repo)
 	}
@@ -42,7 +42,7 @@ func TestFindTarget(t *testing.T) {
 	var testFileName string = "binman"
 	var version string = "v0.0.0"
 	afp := fmt.Sprintf("%s/%s", td, testFileName)
-	writeStringtoFile(afp, "test-test-test")
+	WriteStringtoFile(afp, "test-test-test")
 	if err != nil {
 		t.Fatalf("unable to write string to file %s", afp)
 	}
@@ -54,30 +54,30 @@ func TestFindTarget(t *testing.T) {
 
 	rel := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		ArtifactPath: "binman",
-		PublishPath:  d,
+		artifactPath: "binman",
+		publishPath:  d,
 		Os:           "linux",
 		Arch:         "amd64",
-		GithubData:   &ghData,
+		githubData:   &ghData,
 	}
 
 	rel.findTarget()
 
 	// We should find our file in the subdir
-	if rel.ArtifactPath != testFileName {
-		t.Fatalf("Expected %s got %s", rel.ArtifactPath, afp)
+	if rel.artifactPath != testFileName {
+		t.Fatalf("Expected %s got %s", rel.artifactPath, afp)
 	}
 }
 
-func TestSetArtifactPath(t *testing.T) {
+func TestSetartifactPath(t *testing.T) {
 
 	// A release where we have set a specific target with releasefilename
 	relWithRelFilename := BinmanRelease{
 		Repo:            "rjbrown57/binman",
-		ArtifactPath:    "binman",
-		PublishPath:     "/tmp/",
+		artifactPath:    "binman",
+		publishPath:     "/tmp/",
 		ReleaseFileName: "binman",
-		Project:         "binmanz",
+		project:         "binmanz",
 		LinkName:        "",
 		Os:              "linux",
 		Arch:            "amd64",
@@ -86,10 +86,10 @@ func TestSetArtifactPath(t *testing.T) {
 	// A release where the asset is a tar/tgz/zip and we have specified a path internally
 	relWithExtractFilename := BinmanRelease{
 		Repo:            "rjbrown57/binman",
-		ArtifactPath:    "binman",
-		PublishPath:     "/tmp/",
+		artifactPath:    "binman",
+		publishPath:     "/tmp/",
 		ExtractFileName: "extractbinman",
-		Project:         "binman",
+		project:         "binman",
 		LinkName:        "",
 		Os:              "linux",
 		Arch:            "amd64",
@@ -98,10 +98,10 @@ func TestSetArtifactPath(t *testing.T) {
 	// A release with an external url that is a binary
 	relWithUrlNonTar := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		ArtifactPath: "binman",
-		PublishPath:  "/tmp/",
+		artifactPath: "binman",
+		publishPath:  "/tmp/",
 		ExternalUrl:  "extractbinman",
-		Project:      "binman",
+		project:      "binman",
 		LinkName:     "",
 		Os:           "linux",
 		Arch:         "amd64",
@@ -110,10 +110,10 @@ func TestSetArtifactPath(t *testing.T) {
 	// A release with an external url that is a tar/tgz/zip
 	relWithUrlTar := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		ArtifactPath: "binman",
-		PublishPath:  "/tmp/",
+		artifactPath: "binman",
+		publishPath:  "/tmp/",
 		ExternalUrl:  "extractbinman.tar.gz",
-		Project:      "binman",
+		project:      "binman",
 		LinkName:     "",
 		Os:           "linux",
 		Arch:         "amd64",
@@ -122,10 +122,10 @@ func TestSetArtifactPath(t *testing.T) {
 	// A basic release we use multiple times
 	relBasic := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		ArtifactPath: "binman",
-		PublishPath:  "/tmp/",
+		artifactPath: "binman",
+		publishPath:  "/tmp/",
 		LinkName:     "",
-		Project:      "binman",
+		project:      "binman",
 		Os:           "linux",
 		Arch:         "amd64",
 	}
@@ -133,9 +133,9 @@ func TestSetArtifactPath(t *testing.T) {
 	// A release with the link name set
 	relWithLinkName := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		ArtifactPath: "binman",
-		PublishPath:  "/tmp/",
-		Project:      "binman",
+		artifactPath: "binman",
+		publishPath:  "/tmp/",
+		project:      "binman",
 		LinkName:     "none",
 		Os:           "linux",
 		Arch:         "amd64",
@@ -144,7 +144,7 @@ func TestSetArtifactPath(t *testing.T) {
 	var tests = []struct {
 		rel                 BinmanRelease
 		expectedLinkPath    string
-		exectedArtifactPath string
+		exectedartifactPath string
 		assetName           string
 		releasePath         string
 	}{
@@ -161,12 +161,12 @@ func TestSetArtifactPath(t *testing.T) {
 
 	for _, test := range tests {
 		test.rel.setArtifactPath(test.releasePath, test.assetName)
-		if test.rel.LinkPath != test.expectedLinkPath {
-			t.Fatalf("Link Path expected %s, got %s", test.expectedLinkPath, test.rel.LinkPath)
+		if test.rel.linkPath != test.expectedLinkPath {
+			t.Fatalf("Link Path expected %s, got %s", test.expectedLinkPath, test.rel.linkPath)
 		}
 
-		if test.rel.ArtifactPath != test.exectedArtifactPath {
-			t.Fatalf("Artifact Path expected %s, got %s", test.exectedArtifactPath, test.rel.ArtifactPath)
+		if test.rel.artifactPath != test.exectedartifactPath {
+			t.Fatalf("Artifact Path expected %s, got %s", test.exectedartifactPath, test.rel.artifactPath)
 		}
 	}
 }
@@ -186,7 +186,7 @@ func TestGetDataMap(t *testing.T) {
 	rel := BinmanRelease{
 		Os:         os,
 		Arch:       arch,
-		GithubData: &ghData,
+		githubData: &ghData,
 	}
 
 	testdataMap := make(map[string]string)

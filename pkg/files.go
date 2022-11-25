@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	log "github.com/rjbrown57/binman/pkg/logging"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // Test for filetypes
@@ -154,8 +154,7 @@ func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 	return uncompressedStream
 }
 
-
-func writeStringtoFile(path string, thestring string) error {
+func WriteStringtoFile(path string, thestring string) error {
 	return os.WriteFile(path, []byte(thestring), 0600)
 }
 

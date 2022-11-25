@@ -21,15 +21,15 @@ type BinmanMsg struct {
 }
 
 type UpxConfig struct {
-	Enabled string   `yaml:"enabled"` // Using a string here instead of a boolean to deal with an unset boolean defaulting to false
+	Enabled string   `yaml:"enabled,omitempty"` // Using a string here instead of a boolean to deal with an unset boolean defaulting to false
 	Args    []string `yaml:"args,omitempty"`
 }
 
 // BinmanConfig contains Global Config Options
 type BinmanConfig struct {
-	ReleasePath string    `yaml:"releasepath"`        //path to download/link releases from github
-	TokenVar    string    `yaml:"tokenvar,omitempty"` //Github Auth Token
-	UpxConfig   UpxConfig `yaml:"upx,omitempty"`      // Allow upx to shrink extracted
+	ReleasePath string    `yaml:"releasepath,omitempty"` //path to download/link releases from github
+	TokenVar    string    `yaml:"tokenvar,omitempty"`    //Github Auth Token
+	UpxConfig   UpxConfig `yaml:"upx,omitempty"`         // Allow upx to shrink extracted
 }
 
 // BinmanDefaults contains default config options. If a value is unset in releases array these will be used.
@@ -42,11 +42,11 @@ type BinmanDefaults struct {
 // Type that rolls up the above types into one happy family
 type GHBMConfig struct {
 	Config   BinmanConfig    `yaml:"config"`
-	Defaults BinmanDefaults  `yaml:"defaults"`
+	Defaults BinmanDefaults  `yaml:"defaults,omitempty"`
 	Releases []BinmanRelease `yaml:"releases"`
 }
 
-func newGHBMConfig(configPath string) *GHBMConfig {
+func NewGHBMConfig(configPath string) *GHBMConfig {
 	config := &GHBMConfig{}
 	mustUnmarshalYaml(configPath, config)
 	return config
