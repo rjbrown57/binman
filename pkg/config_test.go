@@ -82,7 +82,7 @@ func TestSetConfig(t *testing.T) {
 
 	os.Chdir(d)
 
-	config := setConfig(SetBaseConfig("noConfig"))
+	config := SetConfig(SetBaseConfig("noConfig"))
 	baseLength := len(config.Releases)
 
 	if baseLength != 1 {
@@ -91,9 +91,9 @@ func TestSetConfig(t *testing.T) {
 
 	// Add a default config
 	cf := fmt.Sprintf(d + "/" + ".binMan.yaml")
-	writeStringtoFile(cf, mergeConfig)
+	WriteStringtoFile(cf, mergeConfig)
 
-	mergedConfig := setConfig(SetBaseConfig("noConfig"))
+	mergedConfig := SetConfig(SetBaseConfig("noConfig"))
 	mergedLength := len(mergedConfig.Releases)
 
 	if baseLength == mergedLength {
@@ -118,7 +118,7 @@ func TestDetectRepoConfig(t *testing.T) {
 
 	// Add a default config
 	cf := fmt.Sprintf(d + "/" + ".binMan.yaml")
-	writeStringtoFile(cf, defaultConfig)
+	WriteStringtoFile(cf, defaultConfig)
 
 	// We should detect a .binMan.yaml this time
 	_, sb = detectRepoConfig()

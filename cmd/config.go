@@ -24,3 +24,13 @@ var configEditCmd = &cobra.Command{
 		binmanconfig.Edit(config)
 	},
 }
+
+// Config add sub command
+var configAddCmd = &cobra.Command{
+	Use:   "add",
+	Short: "Add a repo to your binman config",
+	Long:  `Add a repo to your binman config`,
+	Run: func(cmd *cobra.Command, args []string) {
+		binmanconfig.Add(config, repo)
+	},
+}

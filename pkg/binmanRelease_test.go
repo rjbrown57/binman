@@ -42,7 +42,7 @@ func TestFindTarget(t *testing.T) {
 	var testFileName string = "binman"
 	var version string = "v0.0.0"
 	afp := fmt.Sprintf("%s/%s", td, testFileName)
-	writeStringtoFile(afp, "test-test-test")
+	WriteStringtoFile(afp, "test-test-test")
 	if err != nil {
 		t.Fatalf("unable to write string to file %s", afp)
 	}

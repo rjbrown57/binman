@@ -40,7 +40,7 @@ func TestWriteStringtoFile(t *testing.T) {
 
 	writePath := fmt.Sprintf("%s/testString", d)
 
-	writeStringtoFile(writePath, testString)
+	WriteStringtoFile(writePath, testString)
 	if err != nil {
 		t.Fatalf("failed to write test config to %s", writePath)
 	}

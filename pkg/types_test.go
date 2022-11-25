@@ -66,12 +66,12 @@ func TestDeduplicate(t *testing.T) {
 
 	configPath := fmt.Sprintf("%s/config", d)
 
-	writeStringtoFile(configPath, dedupConfig)
+	WriteStringtoFile(configPath, dedupConfig)
 	if err != nil {
 		t.Fatalf("failed to write test config to %s", configPath)
 	}
 
-	c := newGHBMConfig(configPath)
+	c := NewGHBMConfig(configPath)
 	c.deDuplicate()
 
 	if len(c.Releases) != 2 {
@@ -106,11 +106,11 @@ func TestSetDefaults(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		writeStringtoFile(configPath, test.config)
+		WriteStringtoFile(configPath, test.config)
 		if err != nil {
 			t.Fatalf("failed to write test config to %s", configPath)
 		}
-		c := newGHBMConfig(configPath)
+		c := NewGHBMConfig(configPath)
 		c.setDefaults()
 
 		// test the defaults
@@ -158,7 +158,7 @@ func TestPopulateReleases(t *testing.T) {
 
 	configPath := fmt.Sprintf("%s/config", d)
 
-	writeStringtoFile(configPath, testConfigPopulateTest)
+	WriteStringtoFile(configPath, testConfigPopulateTest)
 	if err != nil {
 		t.Fatalf("failed to write test config to %s", configPath)
 	}
@@ -219,7 +219,7 @@ func TestPopulateReleases(t *testing.T) {
 		},
 	}
 
-	got := newGHBMConfig(configPath)
+	got := NewGHBMConfig(configPath)
 
 	expected := &GHBMConfig{
 		Config: BinmanConfig{

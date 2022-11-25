@@ -154,8 +154,7 @@ func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 	return uncompressedStream
 }
 
-
-func writeStringtoFile(path string, thestring string) error {
+func WriteStringtoFile(path string, thestring string) error {
 	return os.WriteFile(path, []byte(thestring), 0600)
 }
 

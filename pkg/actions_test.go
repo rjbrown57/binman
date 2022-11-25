@@ -72,7 +72,7 @@ func TestLinkFileAction(t *testing.T) {
 		LinkPath:     linkPath,
 	}
 
-	writeStringtoFile(rel.ArtifactPath, content)
+	WriteStringtoFile(rel.ArtifactPath, content)
 
 	// Add the link task twice, to confirm link is updated successfully
 	rel.tasks = append(rel.tasks, rel.AddLinkFileAction())
@@ -123,7 +123,7 @@ func TestMakeExecuteableAction(t *testing.T) {
 		ArtifactPath: filePath,
 	}
 
-	writeStringtoFile(rel.ArtifactPath, content)
+	WriteStringtoFile(rel.ArtifactPath, content)
 
 	rel.tasks = append(rel.tasks, rel.AddMakeExecuteableAction())
 

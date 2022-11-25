@@ -46,7 +46,7 @@ type GHBMConfig struct {
 	Releases []BinmanRelease `yaml:"releases"`
 }
 
-func newGHBMConfig(configPath string) *GHBMConfig {
+func NewGHBMConfig(configPath string) *GHBMConfig {
 	config := &GHBMConfig{}
 	mustUnmarshalYaml(configPath, config)
 	return config

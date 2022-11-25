@@ -114,7 +114,7 @@ func (action *WriteRelNotesAction) execute() error {
 	if relNotes != "" {
 		notePath := filepath.Join(action.r.PublishPath, "releaseNotes.txt")
 		log.Debugf("Notes written to %s", notePath)
-		return writeStringtoFile(notePath, relNotes)
+		return WriteStringtoFile(notePath, relNotes)
 	}
 
 	return nil
