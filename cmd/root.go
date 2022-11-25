@@ -52,6 +52,7 @@ func addSubcommands() {
 
 	// Setup repo flag and add to root
 	configAddCmd.Flags().StringVarP(&repo, "repo", "r", "", "Supply repo to add to config in format org/repo")
+	configAddCmd.MarkFlagRequired("repo")
 	configCmd.AddCommand(configAddCmd)
 
 	// add config to root

@@ -9,8 +9,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// https://github.com/kubernetes/kubectl/blob/da50ec2b223f5ec08bc34b700411c70b2bcc87fd/pkg/cmd/util/editor/editor.go
-
 func Edit(config string) {
 
 	editorPath := getEditor()
@@ -39,22 +37,28 @@ func getEditor() string {
 	return e
 }
 
-// Notes
-// verify repo exists ( this function maybe should be added into the binman general package)
-// Read config
-// Verify repo is not already present
-// Add repo
-// Write back to file path
-// Add a new repo
+// See if repo is already in config
+func releasesContains(r []binman.BinmanRelease, repo string) bool {
+	for _, v := range r {
+		if v.Repo == repo {
+			return true
+		}
+	}
+	return false
+}
+
 func Add(config string, repo string) {
 	cPath := binman.SetBaseConfig(config)
 	// We use NewGHBMConfig here to avoid grabbing contextual configs
 	currentConfig := binman.NewGHBMConfig(cPath)
 
-	// Test if repo is in c.Releases
+	// Verify release is not present
+	if releasesContains(currentConfig.Releases, repo) {
+		log.Fatalf("%s is already present in %s", repo, cPath)
+	}
 
-	// Add the repo
 	currentConfig.Releases = append(currentConfig.Releases, binman.BinmanRelease{Repo: repo})
+
 	newConfig, err := yaml.Marshal(&currentConfig)
 	if err != nil {
 		log.Fatalf("Unable to marshal new config %s", err)
@@ -67,7 +71,6 @@ func Add(config string, repo string) {
 	if err != nil {
 		log.Fatalf("Unable to update config file %s", err)
 	}
-
 }
 
 func Get(config string) {
