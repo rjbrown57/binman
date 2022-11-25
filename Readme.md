@@ -169,6 +169,20 @@ The following values are provided
 
 \* these values are only available to args in postcommands actions.
 
+
+## Binman Config subcommand
+
+The binman config can be used for operations related to your binman config file. The `-c` and `$BINMAN_CONFIG` are supported if you use a non standard config
+
+### get
+to view your config run `binman config get`
+
+### edit
+to edit your config run `binman config edit`. This command will make use of whatever editor your $EDITOR var is pointed at.
+
+### add
+To add a new repo to your config you can run `binman config add -r anchore/syft`. This will add `repo: anchore/syft` to our config file in the releases section. If further configuration is required do so with `binman config edit`
+
 ## Direct Repo sync
 
 Binman can also be used to grab a specifc repository with the syntax `binman -r rjbrown57/binman`
