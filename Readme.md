@@ -172,7 +172,7 @@ The following values are provided
 
 ## Binman Config subcommand
 
-The binman config can be used for operations related to your binman config file. The `-c` and `$BINMAN_CONFIG` are supported if you use a non standard config
+The `binman config` subcommand can be used for operations related to your binman config file. `-c` and `$BINMAN_CONFIG`  are allow for use a non standard config path.
 
 ### get
 to view your config run `binman config get`

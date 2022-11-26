@@ -16,11 +16,11 @@ flowchart LR
     A[-c arg supplied]
     B[ env var defined] 
     C[ default ] 
-    D((marshal config)) --> E
+    D((unmarshal config)) --> E
     E[[detect .binMan.yaml]] .-> F
     E .-> G
     F[[.binMan.yaml detected]] --> FA
-    FA(marshal .binMan.yaml) --> FB
+    FA(unmarshal .binMan.yaml) --> FB
     FB(merge .binMan.yaml with main config) --> H
     G[[.binMan.yaml not detected]] ----> H
     H([return config])
