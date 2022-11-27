@@ -71,6 +71,13 @@ func TestFindTarget(t *testing.T) {
 
 func TestSetartifactPath(t *testing.T) {
 
+	var version string = "v0.0.0"
+
+	// Create a fake release
+	ghData := github.RepositoryRelease{
+		TagName: &version,
+	}
+
 	// A release where we have set a specific target with releasefilename
 	relWithRelFilename := BinmanRelease{
 		Repo:            "rjbrown57/binman",
@@ -81,6 +88,10 @@ func TestSetartifactPath(t *testing.T) {
 		LinkName:        "",
 		Os:              "linux",
 		Arch:            "amd64",
+		linkPath:        "path",
+		assetName:       "binman",
+		org:             "rjbrown57",
+		githubData:      &ghData,
 	}
 
 	// A release where the asset is a tar/tgz/zip and we have specified a path internally
@@ -93,6 +104,10 @@ func TestSetartifactPath(t *testing.T) {
 		LinkName:        "",
 		Os:              "linux",
 		Arch:            "amd64",
+		linkPath:        "path",
+		assetName:       "binman",
+		org:             "rjbrown57",
+		githubData:      &ghData,
 	}
 
 	// A release with an external url that is a binary
@@ -105,6 +120,10 @@ func TestSetartifactPath(t *testing.T) {
 		LinkName:     "",
 		Os:           "linux",
 		Arch:         "amd64",
+		linkPath:     "path",
+		assetName:    "binman",
+		org:          "rjbrown57",
+		githubData:   &ghData,
 	}
 
 	// A release with an external url that is a tar/tgz/zip
@@ -117,6 +136,10 @@ func TestSetartifactPath(t *testing.T) {
 		LinkName:     "",
 		Os:           "linux",
 		Arch:         "amd64",
+		linkPath:     "path",
+		assetName:    "binman",
+		org:          "rjbrown57",
+		githubData:   &ghData,
 	}
 
 	// A basic release we use multiple times
@@ -128,6 +151,10 @@ func TestSetartifactPath(t *testing.T) {
 		project:      "binman",
 		Os:           "linux",
 		Arch:         "amd64",
+		linkPath:     "path",
+		assetName:    "binman",
+		org:          "rjbrown57",
+		githubData:   &ghData,
 	}
 
 	// A release with the link name set
@@ -139,6 +166,10 @@ func TestSetartifactPath(t *testing.T) {
 		LinkName:     "none",
 		Os:           "linux",
 		Arch:         "amd64",
+		linkPath:     "path",
+		assetName:    "binman",
+		org:          "rjbrown57",
+		githubData:   &ghData,
 	}
 
 	var tests = []struct {

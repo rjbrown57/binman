@@ -154,7 +154,7 @@ func (r *BinmanRelease) setArtifactPath(ReleasePath string, assetName string) {
 	// else if it's a tar/zip but we have specified the inside file via ExtractFileName. Use ExtractFileName for source and destination
 	// else we want default
 	if r.ReleaseFileName != "" {
-		r.artifactPath = filepath.Join(r.publishPath, r.ReleaseFileName)
+		r.artifactPath = filepath.Join(r.publishPath, formatString(r.ReleaseFileName, r.getDataMap()))
 		log.Debugf("ReleaseFileName set %s\n", r.artifactPath)
 	} else if r.ExtractFileName != "" {
 		r.artifactPath = filepath.Join(r.publishPath, r.ExtractFileName)
