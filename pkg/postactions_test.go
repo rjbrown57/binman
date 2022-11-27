@@ -18,6 +18,7 @@ func TestWriteRelNotesAction(t *testing.T) {
 	defer os.RemoveAll(d)
 
 	// Create a dummy asset to detect in a subdir of the temp
+	var actions []Action
 	var version string = "v0.0.0"
 	var bodyContent string = "test-test-test"
 
@@ -33,9 +34,9 @@ func TestWriteRelNotesAction(t *testing.T) {
 		githubData:  &ghData,
 	}
 
-	rel.tasks = append(rel.tasks, rel.AddWriteRelNotesAction())
+	actions = append(actions, rel.AddWriteRelNotesAction())
 
-	if err = rel.tasks[0].execute(); err != nil {
+	if err = actions[0].execute(); err != nil {
 		t.Fatal("Unable to write release notes")
 	}
 
@@ -53,6 +54,7 @@ func TestWriteRelNotesAction(t *testing.T) {
 
 func TestLinkFileAction(t *testing.T) {
 
+	var actions []Action
 	const content string = "stringcontent"
 	const linkname string = "test"
 
@@ -75,10 +77,10 @@ func TestLinkFileAction(t *testing.T) {
 	WriteStringtoFile(rel.artifactPath, content)
 
 	// Add the link task twice, to confirm link is updated successfully
-	rel.tasks = append(rel.tasks, rel.AddLinkFileAction())
-	rel.tasks = append(rel.tasks, rel.AddLinkFileAction())
+	actions = append(actions, rel.AddLinkFileAction())
+	actions = append(actions, rel.AddLinkFileAction())
 
-	for _, task := range rel.tasks {
+	for _, task := range actions {
 		if err = task.execute(); err != nil {
 			t.Fatal("Unable to create release link")
 		}
@@ -106,6 +108,8 @@ func TestLinkFileAction(t *testing.T) {
 
 func TestMakeExecuteableAction(t *testing.T) {
 
+	var actions []Action
+
 	const content string = "stringcontent"
 	testMode := os.FileMode(int(0750))
 
@@ -125,9 +129,9 @@ func TestMakeExecuteableAction(t *testing.T) {
 
 	WriteStringtoFile(rel.artifactPath, content)
 
-	rel.tasks = append(rel.tasks, rel.AddMakeExecuteableAction())
+	actions = append(actions, rel.AddMakeExecuteableAction())
 
-	if err = rel.tasks[0].execute(); err != nil {
+	if err = actions[0].execute(); err != nil {
 		t.Fatal("Unable to create make file executable")
 	}
 
@@ -142,6 +146,8 @@ func TestMakeExecuteableAction(t *testing.T) {
 
 // This test will only function properly on linux
 func TestOsCommandAction(t *testing.T) {
+
+	var actions []Action
 
 	coms := []PostCommand{
 		{
@@ -167,9 +173,9 @@ func TestOsCommandAction(t *testing.T) {
 		githubData:   &ghData,
 	}
 
-	rel.tasks = append(rel.tasks, rel.AddOsCommandAction(0))
-	rel.tasks = append(rel.tasks, rel.AddOsCommandAction(1))
-	for i, task := range rel.tasks {
+	actions = append(actions, rel.AddOsCommandAction(0))
+	actions = append(actions, rel.AddOsCommandAction(1))
+	for i, task := range actions {
 		if err := task.execute(); err != nil {
 			t.Fatalf("Unable to run post command %d", i)
 		}

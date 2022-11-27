@@ -26,64 +26,19 @@ type BinmanRelease struct {
 	PostCommands    []PostCommand `yaml:"postcommands,omitempty"`
 
 	githubData   *github.RepositoryRelease
-	assetName    string   // the target assetName
-	dlUrl        string   // the final donwload url
-	filepath     string   // the target filepath for download
-	org          string   // Will be provided by constuctor
-	project      string   // Will be provided by constuctor
-	publishPath  string   // Path Release will be set up at
-	linkPath     string   // Will be set by BinmanRelease.setPaths
-	artifactPath string   // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
-	tasks        []Action // the actions we will perform for this release
+	assetName    string // the target assetName
+	dlUrl        string // the final donwload url
+	filepath     string // the target filepath for download
+	org          string // Will be provided by constuctor
+	project      string // Will be provided by constuctor
+	publishPath  string // Path Release will be set up at
+	linkPath     string // Will be set by BinmanRelease.setPaths
+	artifactPath string // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
 }
 
 type PostCommand struct {
 	Command string   `yaml:"command"`
 	Args    []string `yaml:"args,omitempty"`
-}
-
-// getPostStepTasks will arrange all final work after we have selected an asset
-func (r *BinmanRelease) getPostStepTasks() {
-
-	// We will always download
-	r.tasks = append(r.tasks, r.AddDownloadAction())
-
-	// If we are not set to download only, set the rest of the post processing actions
-	if !r.DownloadOnly {
-		switch findfType(r.filepath) {
-		case "tar":
-			r.tasks = append(r.tasks, r.AddExtractAction())
-		case "zip":
-			r.tasks = append(r.tasks, r.AddExtractAction())
-		case "default":
-		}
-
-		r.tasks = append(r.tasks, r.AddFindTargetAction(),
-			r.AddMakeExecuteableAction(),
-			r.AddLinkFileAction(),
-			r.AddWriteRelNotesAction())
-
-		// Upx needs to be prepended to PostCommands if user has requested
-		if r.UpxConfig.Enabled == "true" {
-
-			// Merge any user args with upx
-			args := []string{r.artifactPath}
-			args = append(args, r.UpxConfig.Args...)
-
-			UpxCommand := PostCommand{
-				Command: "upx",
-				Args:    args,
-			}
-
-			r.PostCommands = append([]PostCommand{UpxCommand}, r.PostCommands...)
-		}
-	}
-
-	// Add post commands defined by user if specified
-	for index := range r.PostCommands {
-		r.tasks = append(r.tasks, r.AddOsCommandAction(index))
-	}
-
 }
 
 // set project and org vars
