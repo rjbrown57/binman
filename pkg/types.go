@@ -1,7 +1,6 @@
 package binman
 
 import (
-	b64 "encoding/base64"
 	"fmt"
 	"os"
 	"os/exec"
@@ -63,12 +62,11 @@ func (config *GHBMConfig) deDuplicate() {
 	// We iterate over the slice in reverse. This way if a contextual config contains a duplicate the version from the contexual config will be tossed out
 	for index := len(config.Releases) - 1; index >= 0; index-- {
 
-		// Convert text representation of all values per release to b64.
-		// This will allow multiple versions of one repo with different settings
-		relString := fmt.Sprintf("%v", config.Releases[index])
-		b64string := b64.StdEncoding.EncodeToString([]byte(relString))
+		// Convert string representation of all values to a string representation of the byte array
+		// This will allow multiple versions of one repo with different settings, but overwrite in case of duplicate
+		relString := fmt.Sprintf("%v", fmt.Sprintf("%v", config.Releases[index]))
 
-		releaseMap[b64string] = config.Releases[index]
+		releaseMap[relString] = config.Releases[index]
 	}
 
 	// Make the final release slice
