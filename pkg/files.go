@@ -144,6 +144,16 @@ func handleTar(publishDir string, tarpath string) error {
 	}
 }
 
+func CreateDirectory(path string) error {
+	// prepare directory path
+	err := os.MkdirAll(path, 0750)
+	if err != nil {
+		log.Warnf("Error creating %s - %v", path, err)
+		return err
+	}
+	return nil
+}
+
 // unzip gzip file
 func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 	uncompressedStream, err := gzip.NewReader(gzipFile)

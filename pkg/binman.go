@@ -1,9 +1,7 @@
 package binman
 
 import (
-	"context"
 	"os"
-	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
@@ -17,90 +15,37 @@ import (
 
 const timeout = 60 * time.Second
 
+// goSyncRepo calls setTasks to arrange all work, then execute each task sequentially
 func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	var err error
-	ctx := context.Background()
 
 	log.Debugf("release %s = %+v", rel.Repo, rel)
 
-	if rel.Version == "" {
-		log.Debugf("Querying github api for latest release of %s", rel.Repo)
-		// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
-		rel.githubData, _, err = ghClient.Repositories.GetLatestRelease(ctx, rel.org, rel.project)
-	} else {
-		log.Debugf("Querying github api for %s release of %s", rel.Version, rel.Repo)
-		// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
-		rel.githubData, _, err = ghClient.Repositories.GetReleaseByTag(ctx, rel.org, rel.project, rel.Version)
-	}
+	actions := rel.setPreActions(ghClient, releasePath)
+	log.Debugf("Performing %d pre actions for %s", len(actions), rel.Repo)
 
-	if err != nil {
-		log.Warnf("error listing releases %v", err)
-		c <- BinmanMsg{rel: rel, err: err}
-		return
-	}
-
-	// Get Path and Verify it DNE before digging through assets
-	// If publishPath is already set ignore these checks. This means we are doing a direct repo download
-	if rel.publishPath == "" {
-		rel.setPublisPath(releasePath, *rel.githubData.TagName)
-		_, err = os.Stat(rel.publishPath)
-		if err == nil {
-			log.Infof("Latest version is %s %s is up to date", *rel.githubData.TagName, rel.Repo)
+	for _, task := range actions {
+		log.Debugf("Executing %s for %s", reflect.TypeOf(task), rel.Repo)
+		err = task.execute()
+		// this is hacky, but catches error
+		if err != nil && err.Error() == "Noupdate" {
+			return
+		} else if err != nil {
+			log.Warnf("Unable to complete action %s : %v", reflect.TypeOf(task), err)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
 		}
 	}
 
-	// If user has set an external url use that to grab target
-	// Else Try to find the requested asset
-	// User can provide an exact asset name via releaseFilename
-	// binman will try to find the release via fileType,Arch
-	if rel.ExternalUrl != "" {
-		rel.dlUrl = formatString(rel.ExternalUrl, rel.getDataMap())
-		log.Debugf("User specified url %s", rel.dlUrl)
-		rel.assetName = filepath.Base(rel.dlUrl)
-	} else {
-		if rel.ReleaseFileName != "" {
-			rFilename := formatString(rel.ReleaseFileName, rel.getDataMap())
-			log.Debugf("Get asset by name %s", rFilename)
-			rel.assetName, rel.dlUrl = gh.GetAssetbyName(rFilename, rel.githubData.Assets)
-		} else {
-			log.Debugf("Attempt to find asset %s", rel.ReleaseFileName)
-			rel.assetName, rel.dlUrl = gh.FindAsset(rel.Arch, rel.Os, rel.githubData.Assets)
-		}
-	}
-
-	if rel.dlUrl == "" {
-		log.Warnf("Target release asset not found for %s", rel.Repo)
-		c <- BinmanMsg{rel: rel, err: nil}
-		return
-	}
-
-	// Set paths based on asset we selected
-	rel.setArtifactPath(releasePath, rel.assetName)
-
-	// prepare directory path
-	err = os.MkdirAll(rel.publishPath, 0750)
-	if err != nil {
-		log.Warnf("Error creating %s - %v", rel.publishPath, err)
-		c <- BinmanMsg{rel: rel, err: err}
-		return
-	}
-
-	// end pre steps
-
-	// Collect post step tasks
-	rel.getPostStepTasks()
-
-	log.Debugf("Performing %d tasks for %s", len(rel.tasks), rel.Repo)
-
-	for _, task := range rel.tasks {
-		log.Debugf("Running task %s for %s", reflect.TypeOf(task), rel.Repo)
-		err = task.execute()
+	actions = rel.setPostActions()
+	log.Debugf("Performing %d post actions for %s", len(actions), rel.Repo)
+	for _, action := range actions {
+		log.Debugf("Running task %s for %s", reflect.TypeOf(action), rel.Repo)
+		err = action.execute()
 		if err != nil {
-			log.Warnf("Unable to complete task %s : %v", reflect.TypeOf(task), err)
+			log.Warnf("Unable to complete task %s : %v", reflect.TypeOf(action), err)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
 		}

@@ -6,6 +6,20 @@ import (
 	"testing"
 )
 
+func TestCreateDirectory(t *testing.T) {
+	d := fmt.Sprintf("%s/%s", os.TempDir(), "createdtestdir")
+	CreateDirectory(d)
+	defer os.RemoveAll(d)
+	di, err := os.Stat(d)
+	if err != nil {
+		t.Fatalf("Issue getting directory info - %s", err)
+	}
+
+	if !di.IsDir() {
+		t.Fatalf("Expected directory isDir for %s is false", d)
+	}
+
+}
 func TestFindfType(t *testing.T) {
 	var tests = []struct {
 		testingString string

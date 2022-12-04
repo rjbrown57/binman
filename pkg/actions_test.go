@@ -1,177 +1,137 @@
 package binman
 
 import (
-	"os"
-	"path/filepath"
+	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/google/go-github/v48/github"
 )
 
-func TestWriteRelNotesAction(t *testing.T) {
+func TestSetPreActions(t *testing.T) {
 
-	d, err := os.MkdirTemp(os.TempDir(), "binmwrn")
-	if err != nil {
-		t.Fatalf("unable to make temp dir %s", d)
+	relWithOutPublish := BinmanRelease{
+		Repo: "rjbrown57/binman",
 	}
 
-	defer os.RemoveAll(d)
-
-	// Create a dummy asset to detect in a subdir of the temp
-	var version string = "v0.0.0"
-	var bodyContent string = "test-test-test"
-
-	// Create a fake release
-	ghData := github.RepositoryRelease{
-		TagName: &version,
-		Body:    &bodyContent,
-	}
-
-	rel := BinmanRelease{
+	relWithPublish := BinmanRelease{
 		Repo:        "rjbrown57/binman",
-		publishPath: d,
-		githubData:  &ghData,
+		publishPath: "binman",
 	}
 
-	rel.tasks = append(rel.tasks, rel.AddWriteRelNotesAction())
-
-	if err = rel.tasks[0].execute(); err != nil {
-		t.Fatal("Unable to write release notes")
-	}
-
-	// Read the written release notes
-	notesBytes, err := os.ReadFile(filepath.Join(rel.publishPath, "releaseNotes.txt"))
-	if err != nil {
-		t.Fatal("Unable to read written release notes")
-	}
-
-	if string(notesBytes) != bodyContent {
-		t.Fatalf("Want %s, got %s", bodyContent, notesBytes)
-	}
-
-}
-
-func TestLinkFileAction(t *testing.T) {
-
-	const content string = "stringcontent"
-	const linkname string = "test"
-
-	d, err := os.MkdirTemp(os.TempDir(), "binmwrn")
-	if err != nil {
-		t.Fatalf("unable to make temp dir %s", d)
-	}
-
-	filePath := filepath.Join(d, "testfile")
-	linkPath := filepath.Join(d, linkname)
-
-	defer os.RemoveAll(d)
-
-	rel := BinmanRelease{
-		Repo:         "rjbrown57/binman",
-		artifactPath: filePath,
-		linkPath:     linkPath,
-	}
-
-	WriteStringtoFile(rel.artifactPath, content)
-
-	// Add the link task twice, to confirm link is updated successfully
-	rel.tasks = append(rel.tasks, rel.AddLinkFileAction())
-	rel.tasks = append(rel.tasks, rel.AddLinkFileAction())
-
-	for _, task := range rel.tasks {
-		if err = task.execute(); err != nil {
-			t.Fatal("Unable to create release link")
-		}
-
-		if f, err := os.Stat(rel.linkPath); err == nil {
-			if f.Name() != linkname {
-				t.Fatalf("Expected link name %s got %s", linkname, f.Name())
-			}
-
-			// Read the written release notes
-			contentBytes, err := os.ReadFile(rel.linkPath)
-			if err != nil {
-				t.Fatal("Unable to read link contents")
-			}
-
-			if string(contentBytes) != content {
-				t.Fatalf("Want %s, got %s", content, contentBytes)
-			}
-		} else {
-			t.Fatal("Link was not created properly")
-		}
-	}
-
-}
-
-func TestMakeExecuteableAction(t *testing.T) {
-
-	const content string = "stringcontent"
-	testMode := os.FileMode(int(0750))
-
-	d, err := os.MkdirTemp(os.TempDir(), "binmwrn")
-	if err != nil {
-		t.Fatalf("unable to make temp dir %s", d)
-	}
-
-	filePath := filepath.Join(d, "testfile")
-
-	defer os.RemoveAll(d)
-
-	rel := BinmanRelease{
-		Repo:         "rjbrown57/binman",
-		artifactPath: filePath,
-	}
-
-	WriteStringtoFile(rel.artifactPath, content)
-
-	rel.tasks = append(rel.tasks, rel.AddMakeExecuteableAction())
-
-	if err = rel.tasks[0].execute(); err != nil {
-		t.Fatal("Unable to create make file executable")
-	}
-
-	if f, err := os.Stat(rel.artifactPath); err == nil {
-		if f.Mode().Perm() != testMode.Perm() {
-			t.Fatalf("Expected %s got %s", "0750", f.Mode().String())
-		}
-	} else {
-		t.Fatal("Test file was not properly created")
-	}
-}
-
-// This test will only function properly on linux
-func TestOsCommandAction(t *testing.T) {
-
-	coms := []PostCommand{
+	var tests = []struct {
+		ReturnedActions []Action
+		ExpectedActions []string
+	}{
 		{
-			Command: "echo",
-			Args:    []string{"hooray!"},
+			relWithOutPublish.setPreActions(github.NewClient(nil), "/tmp/"),
+			[]string{"*binman.GetGHReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction"},
 		},
 		{
-			Command: "echo",
-			Args:    []string{"Hooray2"},
+			relWithPublish.setPreActions(github.NewClient(nil), "/tmp/"),
+			[]string{"*binman.GetGHReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction"},
 		},
 	}
 
-	var version string = "v0.0.0"
+	for _, test := range tests {
+		for k := range test.ReturnedActions {
+			if reflect.TypeOf(test.ReturnedActions[k]).String() != test.ExpectedActions[k] {
+				t.Fatalf("Expected %s, got %s", reflect.TypeOf(test.ReturnedActions[k]).String(), test.ExpectedActions[k])
+			}
+		}
+	}
+}
 
-	// Create a fake release
-	ghData := github.RepositoryRelease{
-		TagName: &version,
+func TestSetPostActions(t *testing.T) {
+
+	testUpxConfig := UpxConfig{
+		Enabled: "true",
+		Args:    []string{"-k", "-v"},
 	}
 
-	rel := BinmanRelease{
+	tp := PostCommand{
+		Command: "echo",
+		Args:    []string{"arg1", "arg2"},
+	}
+
+	testPostCommands := []PostCommand{tp, tp}
+
+	relDlOnly := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		PostCommands: coms,
-		githubData:   &ghData,
+		DownloadOnly: true,
 	}
 
-	rel.tasks = append(rel.tasks, rel.AddOsCommandAction(0))
-	rel.tasks = append(rel.tasks, rel.AddOsCommandAction(1))
-	for i, task := range rel.tasks {
-		if err := task.execute(); err != nil {
-			t.Fatalf("Unable to run post command %d", i)
+	relBase := BinmanRelease{
+		Repo: "rjbrown57/binman",
+	}
+
+	// A release with an external url that is a tar/tgz/zip
+	relWithTar := BinmanRelease{
+		Repo:     "rjbrown57/binman",
+		filepath: "extractbinman.tar.gz",
+	}
+
+	relWithZip := BinmanRelease{
+		Repo:     "rjbrown57/binman",
+		filepath: "extractbinman.zip",
+	}
+
+	relWithUpx := BinmanRelease{
+		Repo:         "rjbrown57/binman",
+		publishPath:  "binman",
+		artifactPath: "path",
+		UpxConfig:    testUpxConfig,
+	}
+
+	relWithUpxandPostCommands := BinmanRelease{
+		Repo:         "rjbrown57/binman",
+		publishPath:  "binman",
+		PostCommands: testPostCommands,
+	}
+
+	var tests = []struct {
+		name            string
+		ReturnedActions []Action
+		ExpectedActions []string
+	}{
+		{
+			"downloadOnly",
+			relDlOnly.setPostActions(),
+			[]string{"*binman.DownloadAction"},
+		},
+		{
+			"basic",
+			relBase.setPostActions(),
+			[]string{"*binman.DownloadAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.LinkFileAction", "*binman.WriteRelNotesAction"},
+		},
+		{
+			"tar",
+			relWithTar.setPostActions(),
+			[]string{"*binman.DownloadAction", "*binman.ExtractAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.LinkFileAction", "*binman.WriteRelNotesAction"},
+		},
+		{
+			"zip",
+			relWithZip.setPostActions(),
+			[]string{"*binman.DownloadAction", "*binman.ExtractAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.LinkFileAction", "*binman.WriteRelNotesAction"},
+		},
+		{
+			"basicupx",
+			relWithUpx.setPostActions(),
+			[]string{"*binman.DownloadAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.LinkFileAction", "*binman.WriteRelNotesAction", "*binman.OsCommandAction"},
+		},
+		{
+			"basicmultiplepostcommands",
+			relWithUpxandPostCommands.setPostActions(),
+			[]string{"*binman.DownloadAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.LinkFileAction", "*binman.WriteRelNotesAction", "*binman.OsCommandAction", "*binman.OsCommandAction", "*binman.OsCommandAction"},
+		},
+	}
+
+	for _, test := range tests {
+		fmt.Printf("Testing %s\n", test.name)
+		for k := range test.ReturnedActions {
+			if reflect.TypeOf(test.ReturnedActions[k]).String() != test.ExpectedActions[k] {
+				t.Fatalf("Expected %s, got %s", reflect.TypeOf(test.ReturnedActions[k]).String(), test.ExpectedActions[k])
+			}
 		}
 	}
 }
