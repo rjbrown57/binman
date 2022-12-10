@@ -15,6 +15,27 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Create the link to new release
+func createLink(source string, target string) error {
+
+	// If target exists, remove it
+	if _, err := os.Stat(target); err == nil {
+		log.Warnf("Updating %s to %s\n", source, target)
+		err := os.Remove(target)
+		if err != nil {
+			log.Warnf("Unable to remove %s,%v", target, err)
+		}
+	}
+
+	err := os.Symlink(source, target)
+	if err != nil {
+		log.Infof("Creating link %s -> %s\n", source, target)
+		return err
+	}
+
+	return nil
+}
+
 // Test for filetypes
 func findfType(filepath string) string {
 

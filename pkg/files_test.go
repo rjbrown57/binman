@@ -69,3 +69,47 @@ func TestWriteStringtoFile(t *testing.T) {
 	}
 
 }
+
+func TestCreateLink(t *testing.T) {
+	var testString string = "test-test-test"
+
+	d, err := os.MkdirTemp(os.TempDir(), "binm")
+	if err != nil {
+		t.Fatalf("unable to make temp dir %s", d)
+	}
+
+	defer os.RemoveAll(d)
+
+	writePath := fmt.Sprintf("%s/testString", d)
+
+	WriteStringtoFile(writePath, testString)
+	if err != nil {
+		t.Fatalf("failed to write test config to %s", writePath)
+	}
+
+	linkPath := fmt.Sprintf("%s/linkFile", d)
+
+	createLink(writePath, linkPath)
+	s, err := os.Readlink(linkPath)
+	if err == nil {
+		if s != writePath {
+			t.Fatalf("%s != %s", s, writePath)
+		}
+
+	} else {
+		t.Fatalf("Unable to read link at %s", linkPath)
+	}
+
+	// One more time to test updating
+	createLink(writePath, linkPath)
+	s, err = os.Readlink(linkPath)
+	if err == nil {
+		if s != writePath {
+			t.Fatalf("%s != %s", s, writePath)
+		}
+
+	} else {
+		t.Fatalf("Unable to read link at %s", linkPath)
+	}
+
+}

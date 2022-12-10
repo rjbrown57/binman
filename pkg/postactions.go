@@ -62,24 +62,8 @@ func (r *BinmanRelease) AddLinkFileAction() Action {
 	}
 }
 
-// TODO move linkfile logic to it's own function and call it here
 func (action *LinkFileAction) execute() error {
-	// If target exists, remove it
-	if _, err := os.Stat(action.r.linkPath); err == nil {
-		log.Warnf("Updating %s to %s\n", action.r.artifactPath, action.r.linkPath)
-		err := os.Remove(action.r.linkPath)
-		if err != nil {
-			log.Warnf("Unable to remove %s,%v", action.r.linkPath, err)
-		}
-	}
-
-	err := os.Symlink(action.r.artifactPath, action.r.linkPath)
-	if err != nil {
-		log.Infof("Creating link %s -> %s\n", action.r.artifactPath, action.r.linkPath)
-		return err
-	}
-
-	return nil
+	return createLink(action.r.artifactPath, action.r.linkPath)
 }
 
 type MakeExecuteableAction struct {
