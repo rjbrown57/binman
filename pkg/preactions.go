@@ -53,7 +53,6 @@ func (r *BinmanRelease) AddSetUrlAction() Action {
 	}
 }
 
-// TODO This should be broken down into different actions and scheduled by the setpost/pre actions
 func (action *SetUrlAction) execute() error {
 	// If user has set an external url use that to grab target
 	if action.r.ExternalUrl != "" {
