@@ -70,7 +70,6 @@ type MakeExecuteableAction struct {
 	r *BinmanRelease
 }
 
-// TODO move MakeExecuteable logic to it's own function and call it here
 func (r *BinmanRelease) AddMakeExecuteableAction() Action {
 	return &MakeExecuteableAction{
 		r,
@@ -78,13 +77,7 @@ func (r *BinmanRelease) AddMakeExecuteableAction() Action {
 }
 
 func (action *MakeExecuteableAction) execute() error {
-	// make the file executable
-	err := os.Chmod(action.r.artifactPath, 0750)
-	if err != nil {
-		log.Warnf("Failed to set permissions on %s", action.r.publishPath)
-		return err
-	}
-	return nil
+	return MakeExecuteable(action.r.artifactPath)
 }
 
 // WriteReleaseNotes

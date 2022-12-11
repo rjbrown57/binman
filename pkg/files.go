@@ -185,6 +185,17 @@ func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 	return uncompressedStream
 }
 
+func MakeExecuteable(path string) error {
+	// make the file executable
+	err := os.Chmod(path, 0750)
+	if err != nil {
+		log.Warnf("Failed to set permissions on %s", path)
+		return err
+	}
+
+	return nil
+}
+
 func WriteStringtoFile(path string, thestring string) error {
 	return os.WriteFile(path, []byte(thestring), 0600)
 }

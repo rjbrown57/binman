@@ -113,3 +113,35 @@ func TestCreateLink(t *testing.T) {
 	}
 
 }
+
+func TestMakeExecutable(t *testing.T) {
+	var testString string = "test-test-test"
+
+	d, err := os.MkdirTemp(os.TempDir(), "binm")
+	if err != nil {
+		t.Fatalf("unable to make temp dir %s", d)
+	}
+
+	defer os.RemoveAll(d)
+
+	writePath := fmt.Sprintf("%s/testString", d)
+
+	WriteStringtoFile(writePath, testString)
+	if err != nil {
+		t.Fatalf("failed to write test config to %s", writePath)
+	}
+
+	err = MakeExecuteable(writePath)
+	if err != nil {
+		t.Fatalf("MakeExecutable failed with %s", err)
+	}
+
+	f, err := os.Stat(writePath)
+	if err != nil {
+		t.Fatalf("Unable to read %s", err)
+	}
+
+	if mode := f.Mode(); mode&os.ModePerm == 750 {
+		t.Fatalf("Permissions for %s are %o not 0750", writePath, mode)
+	}
+}
