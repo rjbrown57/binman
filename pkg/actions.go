@@ -41,6 +41,22 @@ func (r *BinmanRelease) setPreActions(ghClient *github.Client, releasePath strin
 
 }
 
+// Set common PostCommands. Currently this is only upx
+func (r *BinmanRelease) setCommonPostCommands() {
+	if r.UpxConfig.Enabled == "true" {
+		// Merge any user args with upx
+		args := []string{r.artifactPath}
+		args = append(args, r.UpxConfig.Args...)
+
+		UpxCommand := PostCommand{
+			Command: "upx",
+			Args:    args,
+		}
+
+		r.PostCommands = append([]PostCommand{UpxCommand}, r.PostCommands...)
+	}
+}
+
 // getPostActions will arrange all final work after we have selected an asset
 func (r *BinmanRelease) setPostActions() []Action {
 
@@ -68,22 +84,8 @@ func (r *BinmanRelease) setPostActions() []Action {
 		r.AddLinkFileAction(),
 		r.AddWriteRelNotesAction())
 
-	// Upx needs to be prepended to PostCommands if user has requested
-	// TODO this should be broken into it's own function
-	if r.UpxConfig.Enabled == "true" {
-
-		// Merge any user args with upx
-		args := []string{r.artifactPath}
-		args = append(args, r.UpxConfig.Args...)
-
-		UpxCommand := PostCommand{
-			Command: "upx",
-			Args:    args,
-		}
-
-		r.PostCommands = append([]PostCommand{UpxCommand}, r.PostCommands...)
-
-	}
+	// Common PostCommands user has requested. Currently UPX
+	r.setCommonPostCommands()
 
 	// Add post commands defined by user if specified
 	for index := range r.PostCommands {
