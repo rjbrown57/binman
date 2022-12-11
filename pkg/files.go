@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -14,6 +15,27 @@ import (
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"gopkg.in/yaml.v3"
 )
+
+// Create the link to new release
+func createLink(source string, target string) error {
+
+	// If target exists, remove it
+	if _, err := os.Stat(target); err == nil {
+		log.Warnf("Updating %s to %s\n", source, target)
+		err := os.Remove(target)
+		if err != nil {
+			log.Warnf("Unable to remove %s,%v", target, err)
+		}
+	}
+
+	err := os.Symlink(source, target)
+	if err != nil {
+		log.Infof("Creating link %s -> %s\n", source, target)
+		return err
+	}
+
+	return nil
+}
 
 // Test for filetypes
 func findfType(filepath string) string {
@@ -154,6 +176,31 @@ func CreateDirectory(path string) error {
 	return nil
 }
 
+func DownloadFile(url string, path string) error {
+	log.Infof("Downloading %s", url)
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	out, err := os.Create(filepath.Clean(path))
+	if err != nil {
+		return err
+	}
+
+	defer out.Close()
+
+	_, err = io.Copy(io.MultiWriter(out), resp.Body)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Download %s complete", url)
+	return nil
+}
+
 // unzip gzip file
 func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 	uncompressedStream, err := gzip.NewReader(gzipFile)
@@ -162,6 +209,17 @@ func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 	}
 
 	return uncompressedStream
+}
+
+func MakeExecuteable(path string) error {
+	// make the file executable
+	err := os.Chmod(path, 0750)
+	if err != nil {
+		log.Warnf("Failed to set permissions on %s", path)
+		return err
+	}
+
+	return nil
 }
 
 func WriteStringtoFile(path string, thestring string) error {

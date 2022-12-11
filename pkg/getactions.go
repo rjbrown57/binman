@@ -19,7 +19,6 @@ func (r *BinmanRelease) AddGetGHReleaseAction(ghClient *github.Client) Action {
 	}
 }
 
-// TODO refactor into two seperate actions
 func (action *GetGHReleaseAction) execute() error {
 
 	var err error

@@ -3,8 +3,6 @@ package binman
 import (
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,32 +20,8 @@ func (r *BinmanRelease) AddDownloadAction() Action {
 	}
 }
 
-// TODO move download logic to it's own function and call it here
 func (action *DownloadAction) execute() error {
-
-	log.Infof("Downloading %s", action.r.dlUrl)
-	resp, err := http.Get(action.r.dlUrl)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	out, err := os.Create(filepath.Clean(action.r.filepath))
-	if err != nil {
-		return err
-	}
-
-	defer out.Close()
-
-	_, err = io.Copy(io.MultiWriter(out), resp.Body)
-	if err != nil {
-		return err
-	}
-
-	log.Infof("Download %s complete", action.r.dlUrl)
-
-	return nil
+	return DownloadFile(action.r.dlUrl, action.r.filepath)
 }
 
 // link action
@@ -62,31 +36,14 @@ func (r *BinmanRelease) AddLinkFileAction() Action {
 	}
 }
 
-// TODO move linkfile logic to it's own function and call it here
 func (action *LinkFileAction) execute() error {
-	// If target exists, remove it
-	if _, err := os.Stat(action.r.linkPath); err == nil {
-		log.Warnf("Updating %s to %s\n", action.r.artifactPath, action.r.linkPath)
-		err := os.Remove(action.r.linkPath)
-		if err != nil {
-			log.Warnf("Unable to remove %s,%v", action.r.linkPath, err)
-		}
-	}
-
-	err := os.Symlink(action.r.artifactPath, action.r.linkPath)
-	if err != nil {
-		log.Infof("Creating link %s -> %s\n", action.r.artifactPath, action.r.linkPath)
-		return err
-	}
-
-	return nil
+	return createLink(action.r.artifactPath, action.r.linkPath)
 }
 
 type MakeExecuteableAction struct {
 	r *BinmanRelease
 }
 
-// TODO move MakeExecuteable logic to it's own function and call it here
 func (r *BinmanRelease) AddMakeExecuteableAction() Action {
 	return &MakeExecuteableAction{
 		r,
@@ -94,13 +51,7 @@ func (r *BinmanRelease) AddMakeExecuteableAction() Action {
 }
 
 func (action *MakeExecuteableAction) execute() error {
-	// make the file executable
-	err := os.Chmod(action.r.artifactPath, 0750)
-	if err != nil {
-		log.Warnf("Failed to set permissions on %s", action.r.publishPath)
-		return err
-	}
-	return nil
+	return MakeExecuteable(action.r.artifactPath)
 }
 
 // WriteReleaseNotes
