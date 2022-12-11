@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -172,6 +173,31 @@ func CreateDirectory(path string) error {
 		log.Warnf("Error creating %s - %v", path, err)
 		return err
 	}
+	return nil
+}
+
+func DownloadFile(url string, path string) error {
+	log.Infof("Downloading %s", url)
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	out, err := os.Create(filepath.Clean(path))
+	if err != nil {
+		return err
+	}
+
+	defer out.Close()
+
+	_, err = io.Copy(io.MultiWriter(out), resp.Body)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Download %s complete", url)
 	return nil
 }
 

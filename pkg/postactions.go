@@ -3,8 +3,6 @@ package binman
 import (
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,32 +20,8 @@ func (r *BinmanRelease) AddDownloadAction() Action {
 	}
 }
 
-// TODO move download logic to it's own function and call it here
 func (action *DownloadAction) execute() error {
-
-	log.Infof("Downloading %s", action.r.dlUrl)
-	resp, err := http.Get(action.r.dlUrl)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	out, err := os.Create(filepath.Clean(action.r.filepath))
-	if err != nil {
-		return err
-	}
-
-	defer out.Close()
-
-	_, err = io.Copy(io.MultiWriter(out), resp.Body)
-	if err != nil {
-		return err
-	}
-
-	log.Infof("Download %s complete", action.r.dlUrl)
-
-	return nil
+	return DownloadFile(action.r.dlUrl, action.r.filepath)
 }
 
 // link action
