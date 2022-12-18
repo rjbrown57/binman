@@ -101,8 +101,8 @@ func TestSetDefaults(t *testing.T) {
 		expectedReleasePath string
 		expectedTokenVar    string
 	}{
-		{testConfig, "linux", "amd64", "thereleasepath", "thetoken"},
-		{testConfigEmptyVals, "linux", "amd64", homeDir + "/" + "binMan", "none"},
+		{testConfig, runtime.GOOS, runtime.GOARCH, "thereleasepath", "thetoken"},
+		{testConfigEmptyVals, runtime.GOOS, runtime.GOARCH, homeDir + "/" + "binMan", "none"},
 	}
 
 	for _, test := range tests {
@@ -177,8 +177,8 @@ func TestPopulateReleases(t *testing.T) {
 			Repo:         "rjbrown57/binman",
 			org:          "rjbrown57",
 			project:      "binman",
-			Os:           "linux",
-			Arch:         "amd64",
+			Os:           runtime.GOOS,
+			Arch:         runtime.GOARCH,
 			CheckSum:     false,
 			DownloadOnly: false,
 			UpxConfig:    testUpxConfigTrue,
@@ -187,8 +187,8 @@ func TestPopulateReleases(t *testing.T) {
 			Repo:         "rjbrown57/binextractor",
 			org:          "rjbrown57",
 			project:      "extractor",
-			Os:           "linux",
-			Arch:         "amd64",
+			Os:           runtime.GOOS,
+			Arch:         runtime.GOARCH,
 			CheckSum:     false,
 			DownloadOnly: false,
 			UpxConfig: UpxConfig{
@@ -200,8 +200,8 @@ func TestPopulateReleases(t *testing.T) {
 			Repo:         "rjbrown57/lp",
 			org:          "rjbrown57",
 			project:      "lp",
-			Os:           "linux",
-			Arch:         "amd64",
+			Os:           runtime.GOOS,
+			Arch:         runtime.GOARCH,
 			CheckSum:     false,
 			DownloadOnly: false,
 			UpxConfig:    testUpxConfigFalse,
@@ -210,8 +210,8 @@ func TestPopulateReleases(t *testing.T) {
 			Repo:         "hashicorp/vault",
 			org:          "hashicorp",
 			project:      "vault",
-			Os:           "linux",
-			Arch:         "amd64",
+			Os:           runtime.GOOS,
+			Arch:         runtime.GOARCH,
 			CheckSum:     false,
 			DownloadOnly: false,
 			UpxConfig:    testUpxConfigTrue,
