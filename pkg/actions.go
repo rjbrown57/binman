@@ -62,30 +62,45 @@ func (r *BinmanRelease) setPostActions() []Action {
 
 	var actions []Action
 
-	// We will always download
-	actions = append(actions, r.AddDownloadAction())
+	// Notes for Post Only. A limited set of vars are available
+	// If the postOnly step fails, the directory for the release still exists. We should either clean this up, or make a more involved method of measuring success
+	/* Test config currently are
+		config:
+	  		tokenvar: GH_TOKEN
+		releases:
+	  	  - repo: anchore/syft
+	    	postonly: true
+	    	postcommands:
+	    	  - command: cp
+	    	  args: ["{{ .org }}","/tmp/copiedsyft"]
+		test command = ./binman -c "/Users/lookfar/Library/Application Support/binman/postOnly"
+	*/
+	if !r.PostOnly {
+		// We will always download
+		actions = append(actions, r.AddDownloadAction())
 
-	// If we are set to download only stop all postCommands
-	if r.DownloadOnly {
-		return actions
+		// If we are set to download only stop all postCommands
+		if r.DownloadOnly {
+			return actions
+		}
+
+		// If we are not set to download only, set the rest of the post processing actions
+		switch findfType(r.filepath) {
+		case "tar":
+			actions = append(actions, r.AddExtractAction())
+		case "zip":
+			actions = append(actions, r.AddExtractAction())
+		case "default":
+		}
+
+		actions = append(actions, r.AddFindTargetAction(),
+			r.AddMakeExecuteableAction(),
+			r.AddLinkFileAction(),
+			r.AddWriteRelNotesAction())
+
+		// Common PostCommands user has requested. Currently UPX
+		r.setCommonPostCommands()
 	}
-
-	// If we are not set to download only, set the rest of the post processing actions
-	switch findfType(r.filepath) {
-	case "tar":
-		actions = append(actions, r.AddExtractAction())
-	case "zip":
-		actions = append(actions, r.AddExtractAction())
-	case "default":
-	}
-
-	actions = append(actions, r.AddFindTargetAction(),
-		r.AddMakeExecuteableAction(),
-		r.AddLinkFileAction(),
-		r.AddWriteRelNotesAction())
-
-	// Common PostCommands user has requested. Currently UPX
-	r.setCommonPostCommands()
 
 	// Add post commands defined by user if specified
 	for index := range r.PostCommands {

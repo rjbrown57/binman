@@ -16,6 +16,7 @@ type BinmanRelease struct {
 	Arch            string        `yaml:"arch,omitempty"`
 	CheckSum        bool          `yaml:"checkSum,omitempty"`
 	DownloadOnly    bool          `yaml:"downloadonly,omitempty"`
+	PostOnly        bool          `yaml:"postonly,omitempty"`
 	UpxConfig       UpxConfig     `yaml:"upx,omitempty"`             // Allow shrinking with Upx
 	ExternalUrl     string        `yaml:"url,omitempty"`             // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
 	ExtractFileName string        `yaml:"extractfilename,omitempty"` // The file within the release you want
