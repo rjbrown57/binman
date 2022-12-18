@@ -25,15 +25,16 @@ type BinmanRelease struct {
 	Version         string        `yaml:"version,omitempty"`         // Pull a specific version
 	PostCommands    []PostCommand `yaml:"postcommands,omitempty"`
 
-	githubData   *github.RepositoryRelease
-	assetName    string // the target assetName
-	dlUrl        string // the final donwload url
-	filepath     string // the target filepath for download
-	org          string // Will be provided by constuctor
-	project      string // Will be provided by constuctor
-	publishPath  string // Path Release will be set up at
-	linkPath     string // Will be set by BinmanRelease.setPaths
-	artifactPath string // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
+	githubData       *github.RepositoryRelease
+	assetName        string // the target assetName
+	cleanupOnFailure bool   // mark true if we need to clean up on failure
+	dlUrl            string // the final donwload url
+	filepath         string // the target filepath for download
+	org              string // Will be provided by constuctor
+	project          string // Will be provided by constuctor
+	publishPath      string // Path Release will be set up at
+	linkPath         string // Will be set by BinmanRelease.setPaths
+	artifactPath     string // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
 }
 
 type PostCommand struct {
