@@ -33,7 +33,7 @@ func TestFindTarget(t *testing.T) {
 
 	// Create test file dir within temp dir
 	td := fmt.Sprintf("%s/%s", d, "test")
-	os.Mkdir(td, 0644)
+	os.Mkdir(td, 0744)
 	if err != nil {
 		t.Fatalf("unable to make temp dir %s", td)
 	}
