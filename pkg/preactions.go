@@ -97,5 +97,8 @@ func (r *BinmanRelease) AddSetArtifactPathAction(releasePath string) Action {
 func (action *SetArtifactPathAction) execute() error {
 	action.r.setArtifactPath(action.releasePath, action.r.assetName)
 	err := CreateDirectory(action.r.publishPath)
+	// At this point we have created something during the release process
+	// so we set cleanupOnFailure to true in case we hit an issue further down the line
+	action.r.cleanupOnFailure = true
 	return err
 }

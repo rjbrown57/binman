@@ -92,6 +92,21 @@ func (config *GHBMConfig) populateReleases() {
 			// set project/org variables
 			config.Releases[index].getOR()
 
+			// Configure the query type
+			// release is the default, if a version is set releasebytag
+			// for repos without releases we could offer getting via tag, but it's proven an ugly process
+			// https://github.com/rjbrown57/binman/tree/querybytag
+			switch config.Releases[index].QueryType {
+			case "release":
+				fallthrough
+			default:
+				config.Releases[index].QueryType = "release"
+
+				if config.Releases[index].Version != "" {
+					config.Releases[index].QueryType = "releasebytag"
+				}
+			}
+
 			// If the user has not supplied an external url check against our map of known external urls
 			if config.Releases[index].ExternalUrl == "" {
 				config.Releases[index].knownUrlCheck()

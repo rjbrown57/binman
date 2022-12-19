@@ -11,12 +11,20 @@ import (
 func TestSetPreActions(t *testing.T) {
 
 	relWithOutPublish := BinmanRelease{
-		Repo: "rjbrown57/binman",
+		Repo:      "rjbrown57/binman",
+		QueryType: "release",
 	}
 
 	relWithPublish := BinmanRelease{
 		Repo:        "rjbrown57/binman",
 		publishPath: "binman",
+		QueryType:   "release",
+	}
+
+	relQueryByTag := BinmanRelease{
+		Repo:        "rjbrown57/binman",
+		publishPath: "binman",
+		QueryType:   "releasebytag",
 	}
 
 	var tests = []struct {
@@ -25,15 +33,20 @@ func TestSetPreActions(t *testing.T) {
 	}{
 		{
 			relWithOutPublish.setPreActions(github.NewClient(nil), "/tmp/"),
-			[]string{"*binman.GetGHReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction"},
+			[]string{"*binman.GetGHLatestReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction"},
 		},
 		{
 			relWithPublish.setPreActions(github.NewClient(nil), "/tmp/"),
-			[]string{"*binman.GetGHReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction"},
+			[]string{"*binman.GetGHLatestReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction"},
+		},
+		{
+			relQueryByTag.setPreActions(github.NewClient(nil), "/tmp/"),
+			[]string{"*binman.GetGHReleaseByTagsAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction"},
 		},
 	}
 
 	for _, test := range tests {
+		t.Logf("returned actions == %s", test.ReturnedActions)
 		for k := range test.ReturnedActions {
 			if reflect.TypeOf(test.ReturnedActions[k]).String() != test.ExpectedActions[k] {
 				t.Fatalf("Expected %s, got %s", reflect.TypeOf(test.ReturnedActions[k]).String(), test.ExpectedActions[k])

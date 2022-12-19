@@ -16,6 +16,7 @@ type BinmanRelease struct {
 	Arch            string        `yaml:"arch,omitempty"`
 	CheckSum        bool          `yaml:"checkSum,omitempty"`
 	DownloadOnly    bool          `yaml:"downloadonly,omitempty"`
+	PostOnly        bool          `yaml:"postonly,omitempty"`
 	UpxConfig       UpxConfig     `yaml:"upx,omitempty"`             // Allow shrinking with Upx
 	ExternalUrl     string        `yaml:"url,omitempty"`             // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
 	ExtractFileName string        `yaml:"extractfilename,omitempty"` // The file within the release you want
@@ -24,16 +25,18 @@ type BinmanRelease struct {
 	LinkName        string        `yaml:"linkname,omitempty"`        // Set what the final link will be. Defaults to project name.
 	Version         string        `yaml:"version,omitempty"`         // Pull a specific version
 	PostCommands    []PostCommand `yaml:"postcommands,omitempty"`
+	QueryType       string        `yaml:"querytype,omitempty"`
 
-	githubData   *github.RepositoryRelease
-	assetName    string // the target assetName
-	dlUrl        string // the final donwload url
-	filepath     string // the target filepath for download
-	org          string // Will be provided by constuctor
-	project      string // Will be provided by constuctor
-	publishPath  string // Path Release will be set up at
-	linkPath     string // Will be set by BinmanRelease.setPaths
-	artifactPath string // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
+	githubData       *github.RepositoryRelease
+	assetName        string // the target assetName
+	cleanupOnFailure bool   // mark true if we need to clean up on failure
+	dlUrl            string // the final donwload url
+	filepath         string // the target filepath for download
+	org              string // Will be provided by constuctor
+	project          string // Will be provided by constuctor
+	publishPath      string // Path Release will be set up at
+	linkPath         string // Will be set by BinmanRelease.setPaths
+	artifactPath     string // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
 }
 
 type PostCommand struct {
