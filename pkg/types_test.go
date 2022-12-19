@@ -100,9 +100,10 @@ func TestSetDefaults(t *testing.T) {
 		expectedArch        string
 		expectedReleasePath string
 		expectedTokenVar    string
+		expectedQueryType   string
 	}{
-		{testConfig, runtime.GOOS, runtime.GOARCH, "thereleasepath", "thetoken"},
-		{testConfigEmptyVals, runtime.GOOS, runtime.GOARCH, homeDir + "/" + "binMan", "none"},
+		{testConfig, runtime.GOOS, runtime.GOARCH, "thereleasepath", "thetoken", "release"},
+		{testConfigEmptyVals, runtime.GOOS, runtime.GOARCH, homeDir + "/" + "binMan", "none", "release"},
 	}
 
 	for _, test := range tests {

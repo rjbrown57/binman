@@ -25,6 +25,7 @@ type BinmanRelease struct {
 	LinkName        string        `yaml:"linkname,omitempty"`        // Set what the final link will be. Defaults to project name.
 	Version         string        `yaml:"version,omitempty"`         // Pull a specific version
 	PostCommands    []PostCommand `yaml:"postcommands,omitempty"`
+	QueryType       string        `yaml:"querytype,omitempty"`
 
 	githubData       *github.RepositoryRelease
 	assetName        string // the target assetName
