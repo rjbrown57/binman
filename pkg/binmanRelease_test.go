@@ -22,6 +22,30 @@ func TestGetOr(t *testing.T) {
 
 }
 
+func prepTestDir(path string, executablefilematch string) error {
+	err := WriteStringtoFile(fmt.Sprintf("%s/%s", path, "binman.tar.gz"), "test-test-test")
+	if err != nil {
+		return err
+	}
+
+	err = WriteStringtoFile(fmt.Sprintf("%s/%s", path, "test.zip"), "test-test-test")
+	if err != nil {
+		return err
+	}
+
+	err = WriteStringtoFile(executablefilematch, "test-test-test")
+	if err != nil {
+		return err
+	}
+
+	err = os.Chmod(fmt.Sprintf(executablefilematch), 0755)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func TestFindTarget(t *testing.T) {
 
 	d, err := os.MkdirTemp(os.TempDir(), "binmft")
@@ -36,6 +60,14 @@ func TestFindTarget(t *testing.T) {
 	os.Mkdir(td, 0744)
 	if err != nil {
 		t.Fatalf("unable to make temp dir %s", td)
+	}
+
+	var executablefilematch string = fmt.Sprintf("%s/%s", td, "execmatch")
+
+	// add test files
+	err = prepTestDir(td, executablefilematch)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	// Create a dummy asset to detect in a subdir of the temp
@@ -64,8 +96,31 @@ func TestFindTarget(t *testing.T) {
 	rel.findTarget()
 
 	// We should find our file in the subdir
-	if rel.artifactPath != testFileName {
-		t.Fatalf("Expected %s got %s", rel.artifactPath, afp)
+	if afp != rel.artifactPath {
+		t.Fatalf("Expected %s got %s", afp, rel.artifactPath)
+	}
+
+	err = os.Remove(afp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rel.findTarget()
+
+	// we should detect the executable file
+	if executablefilematch != rel.artifactPath {
+		t.Fatalf("Expected %s got %s", executablefilematch, rel.artifactPath)
+	}
+
+	// Test we can detect .exe
+	wfp := fmt.Sprintf("%s/%s.exe", td, testFileName)
+	WriteStringtoFile(wfp, "test-test-test")
+	rel.artifactPath = "binman"
+	rel.Os = "windows"
+	rel.findTarget()
+
+	if wfp != rel.artifactPath {
+		t.Fatalf("Expected %s got %s", wfp, rel.artifactPath)
 	}
 }
 
