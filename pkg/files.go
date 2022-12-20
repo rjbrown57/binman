@@ -163,6 +163,12 @@ func handleTar(publishDir string, tarpath string) error {
 			return err
 		}
 
+		os.Chmod(filepath.Clean(publishPath), file.FileInfo().Mode())
+		if err != nil {
+			log.Warnf("Unable to set perms on file %s", publishPath)
+			return err
+		}
+
 	}
 }
 
