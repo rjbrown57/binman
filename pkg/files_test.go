@@ -168,7 +168,7 @@ func TestMakeExecutable(t *testing.T) {
 		t.Fatalf("Unable to read %s", err)
 	}
 
-	if mode := f.Mode(); mode&os.ModePerm == 750 {
-		t.Fatalf("Permissions for %s are %o not 0750", writePath, mode)
+	if mode := f.Mode(); mode&os.ModePerm == 755 {
+		t.Fatalf("Permissions for %s are %o not 0755", writePath, mode)
 	}
 }
