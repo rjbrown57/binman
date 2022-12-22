@@ -68,6 +68,7 @@ These options can be set per release
 | upx | see [upx Config](#upx-config) |
 | version | pin to a specific release version |
 | postcommands | see [post commands](#post-commands)|
+| postonly | only run [post commands](#post-commands) after we have checked for new versions. This allows binman to trigger apt/yum/brew or something like that|
 
 ## External Url Support
 
