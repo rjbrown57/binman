@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/google/go-github/v48/github"
@@ -55,14 +56,50 @@ func (r *BinmanRelease) findTarget() {
 
 	targetFileName := formatString(filepath.Base(r.artifactPath), r.getDataMap())
 
-	_ = filepath.Walk(r.publishPath, func(path string, info os.FileInfo, err error) error {
-		log.Debugf("Checking %s, against %s...", targetFileName, info.Name())
-		if err == nil && targetFileName == info.Name() {
-			log.Debugf("Found match! Using %s as the new artifact path.", path)
+	if r.Os == "windows" {
+		targetFileName = targetFileName + ".exe"
+		log.Debugf("Running on %s updating target to %s", r.Os, targetFileName)
+	}
+
+	tarRx := regexp.MustCompile(TarRegEx)
+	ZipRegEx := regexp.MustCompile(ZipRegEx)
+
+	_ = filepath.WalkDir(r.publishPath, func(path string, d os.DirEntry, err error) error {
+
+		// if it's something we should ignore, we ignore it
+		if d.IsDir() || tarRx.MatchString(d.Name()) || ZipRegEx.MatchString(d.Name()) {
+			log.Debugf("Ignoring %s", path)
+			return nil
+		}
+
+		log.Debugf("checking %s against %s for exact match", d.Name(), targetFileName)
+		if targetFileName == d.Name() {
+			log.Debugf("Found exact match! Using %s as the new artifact path.", path)
+
+			r.artifactPath = path
+			return fmt.Errorf("search complete")
+		}
+
+		// we short circuit at this point if the user is looking for an exact match only
+		if r.ExtractFileName != "" {
+			return nil
+		}
+
+		f, _ := d.Info()
+		log.Debugf("checking %s perms %o are 755", d.Name(), f.Mode())
+		if mode := f.Mode(); mode&os.ModePerm == 0755 {
+			log.Debugf("Possible match found(executable file)! Setting %s as the new artifact path and continuing search for exact match.", path)
 			r.artifactPath = path
 		}
+
 		return nil
 	})
+
+	// If we have selected a different asset internally than what is specified by r.Linkname we need to update
+	if filepath.Base(r.artifactPath) != r.LinkName && r.LinkName != r.Repo {
+		r.LinkName = filepath.Base(r.artifactPath)
+		r.linkPath = fmt.Sprintf("%s/%s", filepath.Dir(r.linkPath), r.LinkName)
+	}
 }
 
 // knownUrlCheck will see if binman is aware of a common external url for this repo.

@@ -111,7 +111,7 @@ func TestMakeExecuteableAction(t *testing.T) {
 	var actions []Action
 
 	const content string = "stringcontent"
-	testMode := os.FileMode(int(0750))
+	testMode := os.FileMode(int(0755))
 
 	d, err := os.MkdirTemp(os.TempDir(), "binmwrn")
 	if err != nil {
@@ -137,7 +137,7 @@ func TestMakeExecuteableAction(t *testing.T) {
 
 	if f, err := os.Stat(rel.artifactPath); err == nil {
 		if f.Mode().Perm() != testMode.Perm() {
-			t.Fatalf("Expected %s got %s", "0750", f.Mode().String())
+			t.Fatalf("Expected %o got %o", testMode, f.Mode())
 		}
 	} else {
 		t.Fatal("Test file was not properly created")

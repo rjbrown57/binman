@@ -126,13 +126,15 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 			continue
 		}
 
-		log.Debugf("Repo %s, Error %q, cleaning up %s\n", msg.rel.Repo, msg.err, msg.rel.publishPath)
+		log.Warnf("Repo %s, Error %q, cleaning up %s\n", msg.rel.Repo, msg.err, msg.rel.publishPath)
 		if msg.rel.cleanupOnFailure {
 			err := os.RemoveAll(msg.rel.publishPath)
 			if err != nil {
 				log.Warnf("Unable to clean up %s - %s", msg.rel.publishPath, err)
 			}
-			log.Debugf("cleaned %s\n", msg.rel.publishPath)
+			log.Warnf("cleaned %s\n", msg.rel.publishPath)
+			log.Debugf("Final release data  %+v\n", msg.rel)
+
 		}
 	}
 

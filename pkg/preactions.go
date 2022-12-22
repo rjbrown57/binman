@@ -67,12 +67,11 @@ func (action *SetUrlAction) execute() error {
 		rFilename := formatString(action.r.ReleaseFileName, action.r.getDataMap())
 		log.Debugf("Get asset by name %s", rFilename)
 		action.r.assetName, action.r.dlUrl = gh.GetAssetbyName(rFilename, action.r.githubData.Assets)
-		return nil
+	} else {
+		// Attempt to find the asset via arch/os
+		log.Debugf("Attempt to find asset %s", action.r.ReleaseFileName)
+		action.r.assetName, action.r.dlUrl = gh.FindAsset(action.r.Arch, action.r.Os, action.r.githubData.Assets)
 	}
-
-	// Attempt to find the asset via arch/os
-	log.Debugf("Attempt to find asset %s", action.r.ReleaseFileName)
-	action.r.assetName, action.r.dlUrl = gh.FindAsset(action.r.Arch, action.r.Os, action.r.githubData.Assets)
 
 	// If at this point dlUrl is not set we have an issue
 	if action.r.dlUrl == "" {

@@ -163,6 +163,12 @@ func handleTar(publishDir string, tarpath string) error {
 			return err
 		}
 
+		os.Chmod(filepath.Clean(publishPath), file.FileInfo().Mode())
+		if err != nil {
+			log.Warnf("Unable to set perms on file %s", publishPath)
+			return err
+		}
+
 	}
 }
 
@@ -213,10 +219,20 @@ func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 
 func MakeExecuteable(path string) error {
 	// make the file executable
-	err := os.Chmod(path, 0750)
+	f, err := os.Stat(path)
 	if err != nil {
-		log.Warnf("Failed to set permissions on %s", path)
+		log.Warnf("Failed to open %s", path)
 		return err
+	}
+
+	// Set perms if required
+	if mode := f.Mode(); mode&os.ModePerm != 0755 {
+		log.Debugf("Settings perms to 755 for %s", path)
+		err = os.Chmod(path, 0755)
+		if err != nil {
+			log.Warnf("Failed to set permissions on %s", path)
+			return err
+		}
 	}
 
 	return nil
