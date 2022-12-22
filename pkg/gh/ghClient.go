@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/google/go-github/v48/github"
+	log "github.com/rjbrown57/binman/pkg/logging"
 	"golang.org/x/oauth2"
 )
 
@@ -13,9 +14,11 @@ func GetGHCLient(tokenvar string) *github.Client {
 
 	// No auth client if user does not supply envvar
 	if tokenvar == "none" {
+		log.Debugf("Returning github client without auth")
 		return github.NewClient(nil)
 	}
 
+	log.Debugf("Returning github client using %s for auth", tokenvar)
 	ghtoken := os.Getenv(tokenvar)
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(

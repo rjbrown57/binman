@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v48/github"
+	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
@@ -17,6 +18,7 @@ const x86RegEx = `(amd64|x86_64)`
 func GetAssetbyName(relFileName string, assets []*github.ReleaseAsset) (string, string) {
 	for _, asset := range assets {
 		if *asset.Name == relFileName {
+			log.Debugf("Selected asset == %+v\n", *asset.Name)
 			return *asset.Name, *asset.BrowserDownloadURL
 		}
 	}
@@ -43,12 +45,14 @@ func FindAsset(relArch string, relOS string, assets []*github.ReleaseAsset) (str
 
 		// This asset matches our OS/Arch
 		if osRx.MatchString(an) && archRx.MatchString(an) {
+			log.Debugf("Evaluating asset %s\n", *asset.Name)
+
 			// If asset matches one of our supported styles return name+download url
 			// Current styles are tar,zip,exe,linux binary
 			switch {
 			case exeRx.MatchString(an), !strings.Contains(an, "."), tarRx.MatchString(an), zipRx.MatchString(an):
+				log.Debugf("Selected asset == %+v\n", asset)
 				return *asset.Name, *asset.BrowserDownloadURL
-
 			}
 
 		}
