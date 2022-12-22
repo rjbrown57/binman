@@ -67,21 +67,7 @@ func (r *BinmanRelease) setPostActions() []Action {
 
 	var actions []Action
 
-	// Notes for Post Only. A limited set of vars are available
-	// If the postOnly step fails, the directory for the release still exists. We should either clean this up, or make a more involved method of measuring success
-	/* Test config currently are
-		config:
-	  		tokenvar: GH_TOKEN
-		releases:
-	  	  - repo: anchore/syft
-	    	postonly: true
-	    	postcommands:
-	    	  - command: cp
-	    	  args: ["{{ .org }}","/tmp/copiedsyft"]
-		test command = ./binman -c "/Users/lookfar/Library/Application Support/binman/postOnly"
-	*/
 	if !r.PostOnly {
-		// We will always download
 		actions = append(actions, r.AddDownloadAction())
 
 		// If we are set to download only stop all postCommands
