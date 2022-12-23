@@ -23,6 +23,28 @@ func configTestHelper(t *testing.T) (string, string) {
 
 }
 
+// Helper to backup user config, and use default
+func prepConfig(t *testing.T) (string, string) {
+
+	binmanConfigPath, err := os.UserConfigDir()
+	if err != nil {
+		t.Fatal("unable to detect UserConfigDir")
+	}
+
+	binmanConfigFile := fmt.Sprintf("%s/%s", binmanConfigPath, "binman/config")
+	binmanConfigFileBack := fmt.Sprintf("%s/%s", binmanConfigPath, "binman/config.back")
+
+	if _, err := os.Stat(binmanConfigFile); err == nil {
+		if err = CopyFile(binmanConfigFile, binmanConfigFileBack); err != nil {
+			t.Fatalf("Error creating backup of %s", binmanConfigFile)
+		}
+		if err = os.Remove(binmanConfigFile); err != nil {
+			t.Fatalf("Failed to remove current file %s for test - %s", binmanConfigFile, err)
+		}
+	}
+	return binmanConfigFile, binmanConfigFileBack
+}
+
 func TestSetupConfigPath(t *testing.T) {
 	d, _ := configTestHelper(t)
 
@@ -82,10 +104,15 @@ func TestSetConfig(t *testing.T) {
 
 	os.Chdir(d)
 
+	binmanConfigFile, binmanConfigFileBack := prepConfig(t)
+
 	config := SetConfig(SetBaseConfig("noConfig"))
 	baseLength := len(config.Releases)
 
 	if baseLength != 1 {
+		if err := CopyFile(binmanConfigFileBack, binmanConfigFile); err != nil {
+			t.Fatalf("Error restoring backup of %s", binmanConfigFile)
+		}
 		t.Fatalf("base release length should be 1. Is %d", baseLength)
 	}
 
@@ -97,9 +124,15 @@ func TestSetConfig(t *testing.T) {
 	mergedLength := len(mergedConfig.Releases)
 
 	if baseLength == mergedLength {
+		if err := CopyFile(binmanConfigFileBack, binmanConfigFile); err != nil {
+			t.Fatalf("Error restoring backup of %s", binmanConfigFile)
+		}
 		t.Fatalf("config merge has failed. %d should not == %d", baseLength, mergedLength)
 	}
 
+	if err := CopyFile(binmanConfigFileBack, binmanConfigFile); err != nil {
+		t.Fatalf("Error restoring backup of %s", binmanConfigFile)
+	}
 }
 
 func TestDetectRepoConfig(t *testing.T) {
@@ -129,13 +162,7 @@ func TestDetectRepoConfig(t *testing.T) {
 
 func TestMustEnsureDefaultPaths(t *testing.T) {
 
-	binmanConfigPath, err := os.UserConfigDir()
-	if err != nil {
-		t.Fatal("unable to detect UserConfigDir")
-	}
-
-	binmanConfigPath = binmanConfigPath + "/binman"
-	binmanConfigFile := binmanConfigPath + "/config"
+	binmanConfigFile, binmanConfigFileBack := prepConfig(t)
 
 	mustEnsureDefaultPaths()
 
@@ -147,6 +174,13 @@ func TestMustEnsureDefaultPaths(t *testing.T) {
 	cfString := string(cf)
 
 	if cfString != defaultConfig {
+		if err = CopyFile(binmanConfigFileBack, binmanConfigFile); err != nil {
+			t.Fatalf("Error restoring backup of %s", binmanConfigFile)
+		}
 		t.Fatalf("Extracted data from %s does not equal default config", binmanConfigFile)
+	}
+
+	if err = CopyFile(binmanConfigFileBack, binmanConfigFile); err != nil {
+		t.Fatalf("Error restoring backup of %s", binmanConfigFile)
 	}
 }
