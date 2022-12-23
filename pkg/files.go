@@ -172,6 +172,15 @@ func handleTar(publishDir string, tarpath string) error {
 	}
 }
 
+func CopyFile(source string, target string) error {
+	f, err := os.ReadFile(source)
+	if err != nil {
+		return err
+	}
+
+	return WriteStringtoFile(target, string(f))
+}
+
 func CreateDirectory(path string) error {
 	// prepare directory path
 	err := os.MkdirAll(path, 0750)

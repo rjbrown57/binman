@@ -71,6 +71,47 @@ func TestWriteStringtoFile(t *testing.T) {
 
 }
 
+func TestCopyFile(t *testing.T) {
+
+	var testString string = "test-test-test"
+
+	d, err := os.MkdirTemp(os.TempDir(), "binm")
+	if err != nil {
+		t.Fatalf("unable to make temp dir %s", d)
+	}
+
+	defer os.RemoveAll(d)
+
+	writePath := fmt.Sprintf("%s/testString", d)
+
+	WriteStringtoFile(writePath, testString)
+	if err != nil {
+		t.Fatalf("failed to write test config to %s", writePath)
+	}
+
+	testBytes, err := os.ReadFile(writePath)
+	if err != nil {
+		t.Fatalf("failed to read test file at  %s", writePath)
+	}
+
+	copyTarget := fmt.Sprintf("%s/copyTarget", d)
+
+	err = CopyFile(writePath, copyTarget)
+	if err != nil {
+		t.Fatalf("failed to copy %s to %s", writePath, copyTarget)
+	}
+
+	copyBytes, err := os.ReadFile(copyTarget)
+	if err != nil {
+		t.Fatalf("failed to read test file at  %s", copyTarget)
+	}
+
+	if string(testBytes) != string(copyBytes) {
+		t.Fatalf("Expected %s got  %s", string(testBytes), testString)
+	}
+
+}
+
 func TestCreateLink(t *testing.T) {
 	var testString string = "test-test-test"
 
