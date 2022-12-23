@@ -4,7 +4,6 @@ import (
 	"os"
 	"reflect"
 	"runtime"
-	"strings"
 	"sync"
 	"time"
 
@@ -54,8 +53,32 @@ func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, 
 	c <- BinmanMsg{rel: rel, err: nil}
 }
 
+func BinmanGetReleasePrep(work map[string]string) []BinmanRelease {
+
+	log.Infof("direct repo download")
+
+	if f, err := os.Stat(work["path"]); !f.IsDir() || err != nil {
+		log.Fatalf("Issue detected with %s", work["path"])
+	}
+
+	rel := BinmanRelease{
+		Repo:         work["repo"],
+		Os:           runtime.GOOS,
+		Arch:         runtime.GOARCH,
+		publishPath:  work["path"],
+		QueryType:    "release",
+		DownloadOnly: true,
+		Version:      work["version"],
+	}
+
+	rel.getOR()
+
+	return []BinmanRelease{rel}
+
+}
+
 // Main does basic setup, then calls the appropriate functions for asset resolution
-func Main(work map[string]string, debug bool, jsonLog bool) {
+func Main(args map[string]string, debug bool, jsonLog bool, launchCommand string) {
 
 	// Set the logging options
 	log.ConfigureLog(jsonLog, debug)
@@ -70,45 +93,22 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 	// Create config object.
 	// setBaseConfig will return the appropriate base config file.
 	// setConfig will check for a contextual config and merge with our base config and return the result
-	config := SetConfig(SetBaseConfig(work["configFile"]))
+	config := SetConfig(SetBaseConfig(args["configFile"]))
 
 	log.Debugf("binman config = %+v", config)
 
 	// get github client
 	ghClient = gh.GetGHCLient(config.Config.TokenVar)
 
-	// This should be refactored to be simplified
-	if work["repo"] != "" {
-		var err error
-		log.Infof("direct repo download")
-
-		if !strings.Contains(work["repo"], "/") {
-			log.Fatalf("Provided repo %s must be in the format org/repo", work["repo"])
-		}
-
-		releasePath, err = os.Getwd()
-		if err != nil {
-			log.Fatalf("Unable to get current working directory")
-		}
-
-		rel := BinmanRelease{
-			Repo:         work["repo"],
-			Os:           runtime.GOOS,
-			Arch:         runtime.GOARCH,
-			publishPath:  releasePath,
-			DownloadOnly: true,
-			Version:      work["version"],
-		}
-
-		rel.getOR()
-
-		releases = []BinmanRelease{rel}
-	} else {
-		log.Debugf("config file based sync")
+	switch launchCommand {
+	case "get":
+		releases = BinmanGetReleasePrep(args)
+	case "config":
 		releases = config.Releases
-		log.Debugf("Process %v Releases", len(releases))
 		releasePath = config.Config.ReleasePath
 	}
+
+	log.Debugf("Process %v Releases", len(releases))
 
 	// https://github.com/lotusirous/go-concurrency-patterns/blob/main/2-chan/main.go
 	for _, rel := range releases {
@@ -121,6 +121,7 @@ func Main(work map[string]string, debug bool, jsonLog bool) {
 		close(c)
 	}(c, &wg)
 
+	// Process results
 	for msg := range c {
 		if msg.err == nil {
 			continue

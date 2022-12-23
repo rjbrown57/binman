@@ -12,6 +12,7 @@ var jsonLog bool
 var config string
 var repo string
 var version string
+var path string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -32,7 +33,7 @@ var rootCmd = &cobra.Command{
 		m["repo"] = repo
 		m["version"] = version
 
-		binman.Main(m, debug, jsonLog)
+		binman.Main(m, debug, jsonLog, "config")
 	},
 }
 
@@ -57,23 +58,25 @@ func addSubcommands() {
 
 	// add config to root
 	rootCmd.AddCommand(configCmd)
+
+	// Setup
+	wd, err := os.Getwd()
+	if err != nil {
+		os.Exit(1)
+	}
+
+	getCmd.Flags().StringVarP(&path, "path", "p", wd, "path to download file to")
+	getCmd.Flags().StringVarP(&version, "version", "v", "", "Specific version to grab via direct download")
+
+	// add config to root
+	rootCmd.AddCommand(getCmd)
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.rlman.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly
 
 	addSubcommands()
 
 	rootCmd.PersistentFlags().StringVarP(&config, "config", "c", "noConfig", "path to config file. Can be set with ${BINMAN_CONFIG} env var")
-	rootCmd.Flags().BoolVarP(&debug, "debug", "d", false, "enable debug logging")
-	rootCmd.Flags().BoolVarP(&jsonLog, "json", "j", false, "enable json style logging")
-	rootCmd.Flags().StringVarP(&repo, "repo", "r", "", "Github repo in format org/repo")
-	rootCmd.Flags().StringVarP(&version, "version", "v", "", "Specific version to grab via direct download")
+	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "enable debug logging")
+	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json", "j", false, "enable json style logging")
 }
