@@ -64,8 +64,7 @@ func (config *GHBMConfig) deDuplicate() {
 
 		// Convert string representation of all values to a string representation of the byte array
 		// This will allow multiple versions of one repo with different settings, but overwrite in case of duplicate
-		relString := fmt.Sprintf("%v", fmt.Sprintf("%v", config.Releases[index]))
-
+		relString := fmt.Sprintf("%x", fmt.Sprintf("%v", config.Releases[index]))
 		releaseMap[relString] = config.Releases[index]
 	}
 
