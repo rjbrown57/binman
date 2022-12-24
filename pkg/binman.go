@@ -62,13 +62,18 @@ func BinmanGetReleasePrep(work map[string]string) []BinmanRelease {
 	}
 
 	rel := BinmanRelease{
-		Repo:         work["repo"],
-		Os:           runtime.GOOS,
-		Arch:         runtime.GOARCH,
-		publishPath:  work["path"],
-		QueryType:    "release",
-		DownloadOnly: true,
-		Version:      work["version"],
+		Repo:             work["repo"],
+		Os:               runtime.GOOS,
+		Arch:             runtime.GOARCH,
+		publishPath:      work["path"],
+		QueryType:        "release",
+		DownloadOnly:     true,
+		cleanupOnFailure: false,
+		Version:          work["version"],
+	}
+
+	if rel.Version != "" {
+		rel.QueryType = "releasebytag"
 	}
 
 	rel.getOR()

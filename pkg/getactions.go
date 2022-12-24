@@ -27,7 +27,9 @@ func (action *GetGHLatestReleaseAction) execute() error {
 
 	log.Debugf("Querying github api for latest release of %s", action.r.Repo)
 	// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
-	action.r.githubData, _, err = action.ghClient.Repositories.GetLatestRelease(ctx, action.r.org, action.r.project)
+	if action.r.githubData, _, err = action.ghClient.Repositories.GetLatestRelease(ctx, action.r.org, action.r.project); err == nil {
+		action.r.Version = action.r.githubData.GetTagName()
+	}
 
 	return err
 }
