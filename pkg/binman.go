@@ -132,7 +132,7 @@ func Main(args map[string]string, debug bool, jsonLog bool, launchCommand string
 			continue
 		}
 
-		log.Warnf("Repo %s, Error %q, cleaning up %s\n", msg.rel.Repo, msg.err, msg.rel.publishPath)
+		log.Warnf("Repo %s, Error %q\n", msg.rel.Repo, msg.err)
 		if msg.rel.cleanupOnFailure {
 			err := os.RemoveAll(msg.rel.publishPath)
 			if err != nil {
@@ -140,7 +140,6 @@ func Main(args map[string]string, debug bool, jsonLog bool, launchCommand string
 			}
 			log.Warnf("cleaned %s\n", msg.rel.publishPath)
 			log.Debugf("Final release data  %+v\n", msg.rel)
-
 		}
 	}
 
