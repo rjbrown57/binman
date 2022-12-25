@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	binman "github.com/rjbrown57/binman/pkg"
 	"github.com/spf13/cobra"
@@ -46,14 +48,17 @@ func Execute() {
 	}
 }
 
+func validateRepo(repo string) {
+	if !strings.Contains(repo, "/") {
+		fmt.Printf("Error: %s must be in the format org/repo\n", repo)
+		os.Exit(1)
+	}
+}
+
 func addSubcommands() {
 	// add edit/get to config
 	configCmd.AddCommand(configEditCmd)
 	configCmd.AddCommand(configGetCmd)
-
-	// Setup repo flag and add to root
-	configAddCmd.Flags().StringVarP(&repo, "repo", "r", "", "Supply repo to add to config in format org/repo")
-	configAddCmd.MarkFlagRequired("repo")
 	configCmd.AddCommand(configAddCmd)
 
 	// add config to root

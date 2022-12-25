@@ -30,8 +30,10 @@ var configAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add a repo to your binman config",
 	Long:  `Add a repo to your binman config`,
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		binmanconfig.Add(config, repo)
+		validateRepo(args[0])
+		binmanconfig.Add(config, args[0])
 	},
 }
 

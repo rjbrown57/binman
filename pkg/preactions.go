@@ -70,7 +70,7 @@ func (action *SetUrlAction) execute() error {
 	} else {
 		// Attempt to find the asset via arch/os
 		log.Debugf("Attempt to find asset %s", action.r.ReleaseFileName)
-		action.r.assetName, action.r.dlUrl = gh.FindAsset(action.r.Arch, action.r.Os, action.r.githubData.Assets)
+		action.r.assetName, action.r.dlUrl = gh.FindAsset(action.r.Arch, action.r.Os, action.r.Version, action.r.project, action.r.githubData.Assets)
 	}
 
 	// If at this point dlUrl is not set we have an issue
