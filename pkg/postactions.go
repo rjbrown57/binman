@@ -93,14 +93,14 @@ func (action *ExtractAction) execute() error {
 		log.Debugf("tar extract start")
 		err := handleTar(action.r.publishPath, action.r.filepath)
 		if err != nil {
-			log.Warnf("Failed to extract tar file: %v", err)
+			log.Debugf("Failed to extract tar file: %v", err)
 			return err
 		}
 	case "zip":
 		log.Debugf("zip extract start")
 		err := handleZip(action.r.publishPath, action.r.filepath)
 		if err != nil {
-			log.Warnf("Failed to extract zip file: %v", err)
+			log.Debugf("Failed to extract zip file: %v", err)
 			return err
 		}
 	}
@@ -167,7 +167,7 @@ func (action *OsCommandAction) execute() error {
 	out, err := exec.Command(command, action.r.PostCommands[action.index].Args...).Output()
 
 	if err != nil {
-		log.Warnf("error output for %s with args %s is %s", command, action.r.PostCommands[action.index].Args, out)
+		log.Debugf("error output for %s with args %s is %s", command, action.r.PostCommands[action.index].Args, out)
 		return err
 	}
 

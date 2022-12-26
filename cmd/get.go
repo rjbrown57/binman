@@ -20,6 +20,6 @@ var getCmd = &cobra.Command{
 		m["version"] = version
 		m["path"] = path
 
-		binman.Main(m, debug, jsonLog, "get")
+		binman.Main(m, debug, jsonLog, table, "get")
 	},
 }

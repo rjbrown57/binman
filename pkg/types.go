@@ -7,7 +7,9 @@ import (
 	"runtime"
 	"sync"
 
+	"github.com/fatih/color"
 	log "github.com/rjbrown57/binman/pkg/logging"
+	"github.com/rodaine/table"
 )
 
 const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
@@ -17,6 +19,23 @@ const ZipRegEx = `(\.zip$)`
 type BinmanMsg struct {
 	err error
 	rel BinmanRelease
+}
+
+func OutputResults(out map[string][]BinmanMsg, debug bool) {
+
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
+
+	upToDateTable := table.New("Repo", "Version", "State")
+	upToDateTable.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
+	for key, msgSlice := range out {
+		for _, msg := range msgSlice {
+			upToDateTable.AddRow(msg.rel.Repo, msg.rel.Version, key)
+		}
+	}
+
+	upToDateTable.Print()
 }
 
 type UpxConfig struct {
@@ -154,7 +173,7 @@ func (config *GHBMConfig) setDefaults() {
 	}
 
 	if config.Config.TokenVar == "" {
-		log.Warnf("config.tokenvar is not set. Using anonymous authentication. Please be aware you can quickly be rate limited by github. Instructions here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
+		log.Debugf("config.tokenvar is not set. Using anonymous authentication. Please be aware you can quickly be rate limited by github. Instructions here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
 		config.Config.TokenVar = "none"
 	}
 

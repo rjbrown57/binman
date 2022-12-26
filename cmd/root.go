@@ -15,6 +15,7 @@ var config string
 var repo string
 var version string
 var path string
+var table bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -35,7 +36,7 @@ var rootCmd = &cobra.Command{
 		m["repo"] = repo
 		m["version"] = version
 
-		binman.Main(m, debug, jsonLog, "config")
+		binman.Main(m, debug, jsonLog, table, "config")
 	},
 }
 
@@ -84,4 +85,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&config, "config", "c", "noConfig", "path to config file. Can be set with ${BINMAN_CONFIG} env var")
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "enable debug logging")
 	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json", "j", false, "enable json style logging")
+	rootCmd.PersistentFlags().BoolVarP(&table, "table", "t", false, "Output table after sync completion")
+
 }
