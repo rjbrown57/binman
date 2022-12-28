@@ -130,6 +130,11 @@ func (config *GHBMConfig) populateReleases() {
 			if config.Releases[index].Arch == "" {
 				config.Releases[index].Arch = config.Defaults.Arch
 			}
+
+			if config.Releases[index].ReleasePath == "" {
+				config.Releases[index].ReleasePath = config.Config.ReleasePath
+			}
+
 		}(k)
 	}
 	// Wait until all defaults have been set

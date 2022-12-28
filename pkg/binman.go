@@ -15,14 +15,14 @@ import (
 const timeout = 60 * time.Second
 
 // goSyncRepo calls setTasks to arrange all work, then execute each task sequentially
-func goSyncRepo(ghClient *github.Client, releasePath string, rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
+func goSyncRepo(ghClient *github.Client, rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	var err error
 
 	log.Debugf("release %s = %+v", rel.Repo, rel)
 
-	actions := rel.setPreActions(ghClient, releasePath)
+	actions := rel.setPreActions(ghClient, rel.ReleasePath)
 	log.Debugf("Performing %d pre actions for %s", len(actions), rel.Repo)
 
 	for _, task := range actions {
@@ -93,7 +93,6 @@ func Main(args map[string]string, debug bool, jsonLog bool, launchCommand string
 	var wg sync.WaitGroup
 	var releases []BinmanRelease
 	var ghClient *github.Client
-	var releasePath string
 
 	// Create config object.
 	// setBaseConfig will return the appropriate base config file.
@@ -110,7 +109,6 @@ func Main(args map[string]string, debug bool, jsonLog bool, launchCommand string
 		releases = BinmanGetReleasePrep(args)
 	case "config":
 		releases = config.Releases
-		releasePath = config.Config.ReleasePath
 	}
 
 	log.Debugf("Process %v Releases", len(releases))
@@ -118,7 +116,7 @@ func Main(args map[string]string, debug bool, jsonLog bool, launchCommand string
 	// https://github.com/lotusirous/go-concurrency-patterns/blob/main/2-chan/main.go
 	for _, rel := range releases {
 		wg.Add(1)
-		go goSyncRepo(ghClient, releasePath, rel, c, &wg)
+		go goSyncRepo(ghClient, rel, c, &wg)
 	}
 
 	go func(c chan BinmanMsg, wg *sync.WaitGroup) {
