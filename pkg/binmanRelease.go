@@ -27,6 +27,7 @@ type BinmanRelease struct {
 	Version         string        `yaml:"version,omitempty"`         // Pull a specific version
 	PostCommands    []PostCommand `yaml:"postcommands,omitempty"`
 	QueryType       string        `yaml:"querytype,omitempty"`
+	ReleasePath     string        `yaml:"releasepath,omitempty"`
 
 	githubData       *github.RepositoryRelease
 	assetName        string // the target assetName

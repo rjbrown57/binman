@@ -183,6 +183,7 @@ func TestPopulateReleases(t *testing.T) {
 			CheckSum:     false,
 			DownloadOnly: false,
 			UpxConfig:    testUpxConfigTrue,
+			ReleasePath:  "/tmp/",
 		},
 		{
 			Repo:         "rjbrown57/binextractor",
@@ -196,6 +197,7 @@ func TestPopulateReleases(t *testing.T) {
 				Enabled: "true",
 				Args:    []string{"-k", "-v"},
 			},
+			ReleasePath: "/tmp/",
 		},
 		{
 			Repo:         "rjbrown57/lp",
@@ -206,6 +208,7 @@ func TestPopulateReleases(t *testing.T) {
 			CheckSum:     false,
 			DownloadOnly: false,
 			UpxConfig:    testUpxConfigFalse,
+			ReleasePath:  "/tmp/",
 		},
 		{
 			Repo:         "hashicorp/vault",
@@ -217,6 +220,7 @@ func TestPopulateReleases(t *testing.T) {
 			DownloadOnly: false,
 			UpxConfig:    testUpxConfigTrue,
 			ExternalUrl:  `https://releases.hashicorp.com/vault/{{ trimPrefix "v" .version }}/vault_{{ trimPrefix "v" .version }}_{{.os}}_{{.arch}}.zip`,
+			ReleasePath:  "/tmp/",
 		},
 	}
 
@@ -261,8 +265,11 @@ func TestPopulateReleases(t *testing.T) {
 			t.Fatalf("\n UpxConfig Args: Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
 		}
 
-		fmt.Println(got.Releases[k].ExternalUrl)
 		if got.Releases[k].ExternalUrl != expected.Releases[k].ExternalUrl {
+			t.Fatalf("\n ExternalUrl Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+		}
+
+		if got.Releases[k].ReleasePath != expected.Releases[k].ReleasePath {
 			t.Fatalf("\n ExternalUrl Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
 		}
 

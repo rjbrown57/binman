@@ -33,7 +33,7 @@ func (action *ReleaseStatusAction) execute() error {
 	// Default to capture any other error cases
 	switch err {
 	case nil:
-		log.Infof("Latest version is %s %s is up to date", *action.r.githubData.TagName, action.r.Repo)
+		//log.Infof("Latest version is %s %s is up to date", *action.r.githubData.TagName, action.r.Repo)
 		return fmt.Errorf("%s", "Noupdate")
 	default:
 		if errors.Is(err, fs.ErrNotExist) {

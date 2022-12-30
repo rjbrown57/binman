@@ -51,6 +51,6 @@ Type "# First you need a config file"  Sleep 2s  Enter
 Type "cat examples/demo.yaml"  Sleep 2s  Enter
 Type "binman -c examples/demo.yaml" Sleep 2s Enter
 Sleep 15s
-Type "# One more time"  Sleep 2s  Enter
-Type "binman -c examples/demo.yaml" Sleep 2s Enter
+Type "# One more time + table output"  Sleep 2s  Enter
+Type "binman -c examples/demo.yaml -t" Sleep 2s Enter
 Sleep 15s

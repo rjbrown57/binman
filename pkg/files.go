@@ -21,16 +21,16 @@ func createLink(source string, target string) error {
 
 	// If target exists, remove it
 	if _, err := os.Stat(target); err == nil {
-		log.Warnf("Updating %s to %s\n", source, target)
+		log.Debugf("Updating %s to %s\n", source, target)
 		err := os.Remove(target)
 		if err != nil {
-			log.Warnf("Unable to remove %s,%v", target, err)
+			log.Debugf("Unable to remove %s,%v", target, err)
 		}
 	}
 
 	err := os.Symlink(source, target)
 	if err != nil {
-		log.Infof("Creating link %s -> %s\n", source, target)
+		log.Debugf("Creating link %s -> %s\n", source, target)
 		return err
 	}
 
@@ -56,7 +56,7 @@ func findfType(filepath string) string {
 func handleZip(publishDir string, zippath string) error {
 	archive, err := zip.OpenReader(zippath)
 	if err != nil {
-		log.Warnf("Unable to open %s", zippath)
+		log.Debugf("Unable to open %s", zippath)
 		return err
 	}
 	defer archive.Close()
@@ -65,7 +65,7 @@ func handleZip(publishDir string, zippath string) error {
 		dstPath := filepath.Join(publishDir, f.Name)
 
 		if !strings.HasPrefix(dstPath, filepath.Clean(publishDir)+string(os.PathSeparator)) {
-			log.Warnf("Extracted file would have had an invalid path, cannot continue")
+			log.Debugf("Extracted file would have had an invalid path, cannot continue")
 			return fmt.Errorf("extracted file would have had an invalid path, cannot continue")
 		}
 
@@ -73,33 +73,33 @@ func handleZip(publishDir string, zippath string) error {
 			log.Debugf("creating directory for %s", dstPath)
 			err := os.MkdirAll(dstPath, 0750)
 			if err != nil {
-				log.Warnf("Error creating %s, %v", dstPath, err)
+				log.Debugf("Error creating %s, %v", dstPath, err)
 				return fmt.Errorf("error creating %s, %v", dstPath, err)
 			}
 			continue
 		}
 
 		if err := os.MkdirAll(filepath.Dir(dstPath), os.ModePerm); err != nil {
-			log.Warnf("Error creating %s, %v", filepath.Dir(dstPath), err)
+			log.Debugf("Error creating %s, %v", filepath.Dir(dstPath), err)
 			return fmt.Errorf("error creating %s, %v", filepath.Dir(dstPath), err)
 		}
 
 		dstFile, err := os.OpenFile(dstPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
-			log.Warnf("Error creating %s, %v", dstPath, err)
+			log.Debugf("Error creating %s, %v", dstPath, err)
 			return fmt.Errorf("error creating %s, %v", dstPath, err)
 		}
 		defer dstFile.Close()
 
 		fileInArchive, err := f.Open()
 		if err != nil {
-			log.Warnf("Could not read file inside zip: %s, %v", f.Name, err)
+			log.Debugf("Could not read file inside zip: %s, %v", f.Name, err)
 			return fmt.Errorf("could not read file inside zip: %s, %v", f.Name, err)
 		}
 		defer fileInArchive.Close()
 
 		if _, err := io.Copy(dstFile, fileInArchive); err != nil {
-			log.Warnf("Could not copy file inside zip: %s, %v", f.Name, err)
+			log.Debugf("Could not copy file inside zip: %s, %v", f.Name, err)
 			return fmt.Errorf("could not copy file inside zip: %s, %v", f.Name, err)
 		}
 	}
@@ -110,7 +110,7 @@ func handleZip(publishDir string, zippath string) error {
 func handleTar(publishDir string, tarpath string) error {
 	f, err := os.Open(filepath.Clean(tarpath))
 	if err != nil {
-		log.Warnf("Unable to open %s", tarpath)
+		log.Debugf("Unable to open %s", tarpath)
 		return err
 	}
 
@@ -128,7 +128,7 @@ func handleTar(publishDir string, tarpath string) error {
 		case nil:
 			break
 		default:
-			log.Warnf("Error on %s - %v", tarpath, err)
+			log.Debugf("Error on %s - %v", tarpath, err)
 
 		}
 
@@ -142,7 +142,7 @@ func handleTar(publishDir string, tarpath string) error {
 			log.Debugf("creating directory for %s", newDir)
 			err := os.MkdirAll(newDir, 0750)
 			if err != nil {
-				log.Warnf("Error creating %s,%v", newDir, err)
+				log.Debugf("Error creating %s,%v", newDir, err)
 			}
 		}
 
@@ -152,20 +152,20 @@ func handleTar(publishDir string, tarpath string) error {
 
 		wf, err := os.Create(filepath.Clean(publishPath))
 		if err != nil {
-			log.Warnf("Unable to write file %s", publishPath)
+			log.Debugf("Unable to write file %s", publishPath)
 			return err
 		}
 
 		log.Debugf("tar extract file %s", publishPath)
 		_, err = io.Copy(wf, tar)
 		if err != nil {
-			log.Warnf("Unable to write file %s", publishPath)
+			log.Debugf("Unable to write file %s", publishPath)
 			return err
 		}
 
 		os.Chmod(filepath.Clean(publishPath), file.FileInfo().Mode())
 		if err != nil {
-			log.Warnf("Unable to set perms on file %s", publishPath)
+			log.Debugf("Unable to set perms on file %s", publishPath)
 			return err
 		}
 
@@ -185,14 +185,14 @@ func CreateDirectory(path string) error {
 	// prepare directory path
 	err := os.MkdirAll(path, 0750)
 	if err != nil {
-		log.Warnf("Error creating %s - %v", path, err)
+		log.Debugf("Error creating %s - %v", path, err)
 		return err
 	}
 	return nil
 }
 
 func DownloadFile(url string, path string) error {
-	log.Infof("Downloading %s", url)
+	log.Debugf("Downloading %s", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -212,7 +212,7 @@ func DownloadFile(url string, path string) error {
 		return err
 	}
 
-	log.Infof("Download %s complete", url)
+	log.Debugf("Download %s complete", url)
 	return nil
 }
 
@@ -230,7 +230,7 @@ func MakeExecuteable(path string) error {
 	// make the file executable
 	f, err := os.Stat(path)
 	if err != nil {
-		log.Warnf("Failed to open %s", path)
+		log.Debugf("Failed to open %s", path)
 		return err
 	}
 
@@ -239,7 +239,7 @@ func MakeExecuteable(path string) error {
 		log.Debugf("Settings perms to 755 for %s", path)
 		err = os.Chmod(path, 0755)
 		if err != nil {
-			log.Warnf("Failed to set permissions on %s", path)
+			log.Debugf("Failed to set permissions on %s", path)
 			return err
 		}
 	}

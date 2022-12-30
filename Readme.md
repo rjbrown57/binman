@@ -65,6 +65,7 @@ These options can be set per release
 | linkname | by default binman will create a symlink matching the project name. This can be overidden with linkname set per release |
 | releasefilename | in some cases project publish assets that have different names than the github project. For example [cilium-cli](github.com/cilium/cilium-cli) publishs a cli `cilium`. We would set `cilium` here so binman knows what to look for |
 | os | target OS  |
+| releasepath | Alternate releasepath from what is set in the main config |
 | upx | see [upx Config](#upx-config) |
 | version | pin to a specific release version |
 | postcommands | see [post commands](#post-commands)|
