@@ -64,9 +64,6 @@ func setStopMessage(out map[string][]BinmanMsg) string {
 
 	if errorLength > 0 {
 		stopMsg = stopMsg + fmt.Sprintf("✕ %d repos errored %s during execution ", errorLength, repoList(out["Error"]))
-		for _, msg := range out["Error"] {
-			fmt.Printf("%s : error = %s", msg.rel.Repo, msg.err)
-		}
 	}
 
 	return stopMsg

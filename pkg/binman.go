@@ -137,7 +137,7 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 	// Process results
 	for msg := range c {
 
-		setMessage(spin, "Downloading new releases", 0)
+		setMessage(spin, "Finalizing releases ", 0)
 
 		if msg.err == nil {
 			setMessage(spin, fmt.Sprintf("Downloaded %s ✅", msg.rel.Repo), 100)
@@ -169,8 +169,11 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 		OutputResults(output, debug)
 	}
 
-	for _, msg := range output["Error"] {
-		fmt.Printf("%s : error = %v\n", msg.rel.Repo, msg.err)
+	if e := len(output["Error"]); e > 0 {
+		fmt.Printf("\nErrors(%d): \n", e)
+		for _, msg := range output["Error"] {
+			fmt.Printf("%s : error = %v\n", msg.rel.Repo, msg.err)
+		}
 	}
 
 	log.Debugf("binman finished!")
