@@ -15,6 +15,9 @@ import (
 
 const timeout = 60 * time.Second
 
+var spinChan = make(chan string)
+var swg sync.WaitGroup
+
 // goSyncRepo calls setTasks to arrange all work, then execute each task sequentially
 func goSyncRepo(ghClient *github.Client, rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	defer wg.Done()
@@ -31,6 +34,7 @@ func goSyncRepo(ghClient *github.Client, rel BinmanRelease, c chan<- BinmanMsg, 
 		err = task.execute()
 		// this is hacky, but catches error
 		if err != nil && err.Error() == "Noupdate" {
+			log.Debugf("%s(%s) is up to date", rel.Repo, rel.Version)
 			c <- BinmanMsg{rel: rel, err: err}
 			return
 		} else if err != nil {
@@ -85,13 +89,6 @@ func BinmanGetReleasePrep(work map[string]string) []BinmanRelease {
 // Main does basic setup, then calls the appropriate functions for asset resolution
 func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCommand string) {
 
-	spin, err := getSpinner(debug)
-	if err != nil {
-		log.Fatalf("Unable to get spinner - %s", err)
-	}
-
-	spin.Message("Binman sync begin")
-
 	// Set the logging options
 	log.ConfigureLog(jsonLog, debug)
 	log.Debugf("binman sync begin\n")
@@ -119,13 +116,16 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 		releases = config.Releases
 	}
 
+	go getSpinner(debug)
+
 	relLength := len(releases)
 	log.Debugf("Process %v Releases", relLength)
+	swg.Add(1)
+	spinChan <- fmt.Sprintf("Processing %d repos", relLength)
 
 	// https://github.com/lotusirous/go-concurrency-patterns/blob/main/2-chan/main.go
-	for index, rel := range releases {
+	for _, rel := range releases {
 		wg.Add(1)
-		setMessage(spin, fmt.Sprintf("Processing %d/%d %s", index+1, relLength, rel.Repo), 100)
 		go goSyncRepo(ghClient, rel, c, &wg)
 	}
 
@@ -137,10 +137,7 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 	// Process results
 	for msg := range c {
 
-		setMessage(spin, "Finalizing releases ", 0)
-
 		if msg.err == nil {
-			setMessage(spin, fmt.Sprintf("Downloaded %s ✅", msg.rel.Repo), 100)
 			output["Synced"] = append(output["Synced"], msg)
 			continue
 		}
@@ -161,19 +158,20 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 		}
 	}
 
-	spin.Suffix("")
-	spin.StopMessage(setStopMessage(output))
-	spin.Stop()
-
-	if table {
-		OutputResults(output, debug)
-	}
+	swg.Add(1)
+	spinChan <- fmt.Sprintf("spinstop%s", setStopMessage(output))
+	close(spinChan)
+	swg.Wait()
 
 	if e := len(output["Error"]); e > 0 {
 		fmt.Printf("\nErrors(%d): \n", e)
 		for _, msg := range output["Error"] {
 			fmt.Printf("%s : error = %v\n", msg.rel.Repo, msg.err)
 		}
+	}
+
+	if table {
+		OutputResults(output, debug)
 	}
 
 	log.Debugf("binman finished!")

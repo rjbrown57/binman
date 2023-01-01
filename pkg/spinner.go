@@ -2,17 +2,19 @@ package binman
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/theckman/yacspin"
 )
 
-func getSpinner(debug bool) (*yacspin.Spinner, error) {
+func getSpinner(debug bool) {
+
 	cfg := yacspin.Config{
 		Frequency:       100 * time.Millisecond,
 		CharSet:         yacspin.CharSets[52],
-		Suffix:          " binman",
+		Suffix:          "binman",
 		SuffixAutoColon: true,
 		Colors:          []string{"fgGreen"},
 		StopColors:      []string{"fgGreen"},
@@ -22,11 +24,26 @@ func getSpinner(debug bool) (*yacspin.Spinner, error) {
 	if err != nil {
 		log.Debugf("Unable to get spinner - %s", err)
 	}
+
 	if !debug {
+		swg.Add(1)
 		spinner.Start()
 	}
 
-	return spinner, err
+	for msg := range spinChan {
+
+		if !strings.Contains(msg, "spinstop") {
+			spinner.Message(msg)
+		} else {
+			spinner.StopMessage(strings.Trim(msg, "spinstop"))
+		}
+		swg.Done()
+		time.Sleep(time.Millisecond * 500)
+
+	}
+	spinner.Suffix("")
+	spinner.Stop()
+	swg.Done()
 }
 
 func repoList(bmsg []BinmanMsg) []string {
@@ -38,11 +55,6 @@ func repoList(bmsg []BinmanMsg) []string {
 	}
 
 	return a
-}
-
-func setMessage(s *yacspin.Spinner, msg string, delay int) {
-	s.Message(fmt.Sprintf(msg))
-	time.Sleep(time.Duration(delay) * time.Millisecond)
 }
 
 // Set the stop message based on work completed
