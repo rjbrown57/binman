@@ -21,7 +21,19 @@ func (r *BinmanRelease) AddDownloadAction() Action {
 }
 
 func (action *DownloadAction) execute() error {
-	return DownloadFile(action.r.dlUrl, action.r.filepath)
+	swg.Add(1)
+	spinChan <- fmt.Sprintf("Downloading %s from %s", action.r.Repo, action.r.dlUrl)
+	err := DownloadFile(action.r.dlUrl, action.r.filepath)
+	if err != nil {
+		swg.Add(1)
+		spinChan <- fmt.Sprintf("Error Downloading %s from %s", action.r.Repo, action.r.dlUrl)
+		return err
+	} else {
+		swg.Add(1)
+		spinChan <- fmt.Sprintf("Download of %s finished", action.r.Repo)
+	}
+
+	return nil
 }
 
 // link action
