@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"sync"
 
@@ -153,6 +154,12 @@ func (config *GHBMConfig) populateReleases() {
 			if config.Releases[index].ReleasePath == "" {
 				config.Releases[index].ReleasePath = config.Config.ReleasePath
 			}
+
+			p, err := filepath.Abs(config.Config.ReleasePath)
+			if err != nil {
+				log.Fatalf("Unable to get absolute path of %s", config.Config.ReleasePath)
+			}
+			config.Releases[index].ReleasePath = p
 
 		}(k)
 	}
