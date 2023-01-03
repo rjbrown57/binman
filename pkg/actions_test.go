@@ -115,27 +115,27 @@ func TestSetPostActions(t *testing.T) {
 		{
 			"basic",
 			relBase.setPostActions(),
-			[]string{"*binman.DownloadAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.LinkFileAction", "*binman.WriteRelNotesAction"},
+			[]string{"*binman.DownloadAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.WriteRelNotesAction"},
 		},
 		{
 			"tar",
 			relWithTar.setPostActions(),
-			[]string{"*binman.DownloadAction", "*binman.ExtractAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.LinkFileAction", "*binman.WriteRelNotesAction"},
+			[]string{"*binman.DownloadAction", "*binman.ExtractAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.WriteRelNotesAction"},
 		},
 		{
 			"zip",
 			relWithZip.setPostActions(),
-			[]string{"*binman.DownloadAction", "*binman.ExtractAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.LinkFileAction", "*binman.WriteRelNotesAction"},
+			[]string{"*binman.DownloadAction", "*binman.ExtractAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.WriteRelNotesAction"},
 		},
 		{
 			"basicupx",
 			relWithUpx.setPostActions(),
-			[]string{"*binman.DownloadAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.LinkFileAction", "*binman.WriteRelNotesAction", "*binman.OsCommandAction"},
+			[]string{"*binman.DownloadAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.WriteRelNotesAction", "*binman.OsCommandAction"},
 		},
 		{
 			"basicmultiplepostcommands",
 			relWithUpxandPostCommands.setPostActions(),
-			[]string{"*binman.DownloadAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.LinkFileAction", "*binman.WriteRelNotesAction", "*binman.OsCommandAction", "*binman.OsCommandAction", "*binman.OsCommandAction"},
+			[]string{"*binman.DownloadAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.WriteRelNotesAction", "*binman.OsCommandAction", "*binman.OsCommandAction", "*binman.OsCommandAction"},
 		},
 	}
 

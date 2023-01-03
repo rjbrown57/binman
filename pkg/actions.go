@@ -95,10 +95,15 @@ func (r *BinmanRelease) setPostActions() []Action {
 
 		actions = append(actions, r.AddFindTargetAction(),
 			r.AddMakeExecuteableAction(),
-			r.AddLinkFileAction(),
 			r.AddWriteRelNotesAction())
 	}
 
 	return actions
 
+}
+
+// setFinalActions assuming that all previous post and OS related actions have been successful perform final actions
+// (like linking the binary to the new release)
+func (r *BinmanRelease) setFinalActions() []Action {
+	return []Action{r.AddLinkFileAction()}
 }

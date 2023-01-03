@@ -69,6 +69,19 @@ func goSyncRepo(ghClient *github.Client, rel BinmanRelease, c chan<- BinmanMsg, 
 		}
 	}
 
+	actions = rel.setFinalActions()
+	if len(actions) > 0 {
+		log.Debugf("Performing %d final actions for %s", len(actions), rel.Repo)
+		for _, action := range actions {
+			err = action.execute()
+			if err != nil {
+				log.Debugf("Unable to complete task %s : %v", reflect.TypeOf(action), err)
+				c <- BinmanMsg{rel: rel, err: err}
+				return
+			}
+		}
+	}
+
 	c <- BinmanMsg{rel: rel, err: nil}
 }
 
