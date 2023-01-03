@@ -124,7 +124,7 @@ func mustEnsureDefaultPaths() string {
 		if err != nil {
 			log.Fatalf("Unable to create %s", binmanConfigFile)
 		}
-		log.Infof("Populating default config at %s", binmanConfigFile)
+		log.Debugf("Populating default config at %s", binmanConfigFile)
 	}
 	return binmanConfigFile
 }

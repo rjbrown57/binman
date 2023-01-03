@@ -174,7 +174,7 @@ func (action *OsCommandAction) execute() error {
 		action.r.PostCommands[action.index].Args[i] = formatString(arg, dataMap)
 	}
 
-	log.Infof("Starting OS command %s with args %s for %s ", command, action.r.PostCommands[action.index].Args, action.r.Repo)
+	log.Debugf("Starting OS command %s with args %s for %s ", command, action.r.PostCommands[action.index].Args, action.r.Repo)
 
 	out, err := exec.Command(command, action.r.PostCommands[action.index].Args...).Output()
 
@@ -183,7 +183,6 @@ func (action *OsCommandAction) execute() error {
 		return err
 	}
 
-	log.Infof("%s with args %s complete on %s", command, action.r.PostCommands[action.index].Args, action.r.Repo)
 	log.Debugf("%s with args %s output: \n %s", command, action.r.PostCommands[action.index].Args, out)
 
 	return nil
