@@ -3,6 +3,7 @@ package binman
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 )
@@ -183,7 +184,7 @@ func TestPopulateReleases(t *testing.T) {
 			CheckSum:     false,
 			DownloadOnly: false,
 			UpxConfig:    testUpxConfigTrue,
-			ReleasePath:  "/tmp/",
+			ReleasePath:  filepath.Clean("/tmp/"),
 		},
 		{
 			Repo:         "rjbrown57/binextractor",
@@ -197,7 +198,7 @@ func TestPopulateReleases(t *testing.T) {
 				Enabled: "true",
 				Args:    []string{"-k", "-v"},
 			},
-			ReleasePath: "/tmp/",
+			ReleasePath: filepath.Clean("/tmp/"),
 		},
 		{
 			Repo:         "rjbrown57/lp",
@@ -208,7 +209,7 @@ func TestPopulateReleases(t *testing.T) {
 			CheckSum:     false,
 			DownloadOnly: false,
 			UpxConfig:    testUpxConfigFalse,
-			ReleasePath:  "/tmp/",
+			ReleasePath:  filepath.Clean("/tmp/"),
 		},
 		{
 			Repo:         "hashicorp/vault",
@@ -220,7 +221,7 @@ func TestPopulateReleases(t *testing.T) {
 			DownloadOnly: false,
 			UpxConfig:    testUpxConfigTrue,
 			ExternalUrl:  `https://releases.hashicorp.com/vault/{{ trimPrefix "v" .version }}/vault_{{ trimPrefix "v" .version }}_{{.os}}_{{.arch}}.zip`,
-			ReleasePath:  "/tmp/",
+			ReleasePath:  filepath.Clean("/tmp/"),
 		},
 	}
 
@@ -229,7 +230,7 @@ func TestPopulateReleases(t *testing.T) {
 	expected := &GHBMConfig{
 		Config: BinmanConfig{
 
-			ReleasePath: "/tmp/",
+			ReleasePath: filepath.Clean("/tmp/"),
 			TokenVar:    "none",
 			UpxConfig:   testUpxConfigTrue,
 		},
@@ -246,31 +247,31 @@ func TestPopulateReleases(t *testing.T) {
 	for k := range got.Releases {
 
 		if got.Releases[k].Repo != expected.Releases[k].Repo {
-			t.Fatalf("\n Repo: Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+			t.Fatalf("\n Repo: Got %+v != \n Expected %+v", got.Releases[k].Repo, expected.Releases[k].Repo)
 		}
 
 		if got.Releases[k].Arch != expected.Releases[k].Arch {
-			t.Fatalf("\n Arch: Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+			t.Fatalf("\n Arch: Got %+v != \n Expected %+v", got.Releases[k].Arch, expected.Releases[k].Arch)
 		}
 
 		if got.Releases[k].Os != expected.Releases[k].Os {
-			t.Fatalf("\n Os: Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+			t.Fatalf("\n Os: Got %+v != \n Expected %+v", got.Releases[k].Os, expected.Releases[k].Os)
 		}
 
 		if got.Releases[k].UpxConfig.Enabled != expected.Releases[k].UpxConfig.Enabled {
-			t.Fatalf("\n UpxConfig: Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+			t.Fatalf("\n UpxConfig: Got %+v != \n Expected %+v", got.Releases[k].UpxConfig.Enabled, expected.Releases[k].UpxConfig.Enabled)
 		}
 
 		if len(got.Releases[k].UpxConfig.Args) != len(expected.Releases[k].UpxConfig.Args) {
-			t.Fatalf("\n UpxConfig Args: Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+			t.Fatalf("\n UpxConfig Args: Got %+v != \n Expected %+v", got.Releases[k].UpxConfig.Args, expected.Releases[k])
 		}
 
 		if got.Releases[k].ExternalUrl != expected.Releases[k].ExternalUrl {
-			t.Fatalf("\n ExternalUrl Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+			t.Fatalf("\n ExternalUrl Got %+v != \n Expected %+v", got.Releases[k].ExternalUrl, expected.Releases[k].ExternalUrl)
 		}
 
 		if got.Releases[k].ReleasePath != expected.Releases[k].ReleasePath {
-			t.Fatalf("\n ExternalUrl Got %+v != \n Expected %+v", got.Releases[k], expected.Releases[k])
+			t.Fatalf("\n ReleasePath Got %+v != Expected %+v", got.Releases[k].ReleasePath, expected.Releases[k].ReleasePath)
 		}
 
 	}
