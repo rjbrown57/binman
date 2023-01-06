@@ -96,9 +96,12 @@ func (r *BinmanRelease) findTarget() {
 		return nil
 	})
 
-	// If we have selected a different asset internally than what is specified by r.Linkname we need to update
+	// If we have selected a different asset internally than what is specified by r.LinkPath we need to update
 	if filepath.Base(r.artifactPath) != r.LinkName && r.LinkName != r.Repo {
-		r.LinkName = filepath.Base(r.artifactPath)
+		// If the user has not specified a LinkName we should set a default here
+		if r.LinkName == "" {
+			r.LinkName = filepath.Base(r.artifactPath)
+		}
 		r.linkPath = fmt.Sprintf("%s/%s", filepath.Dir(r.linkPath), r.LinkName)
 	}
 }
