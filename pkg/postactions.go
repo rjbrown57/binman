@@ -134,7 +134,8 @@ func (r *BinmanRelease) AddFindTargetAction() Action {
 
 func (action *FindTargetAction) execute() error {
 	// If the file still doesn't exist, attempt to find it in sub-directories
-	if _, err := os.Stat(action.r.artifactPath); errors.Is(err, os.ErrNotExist) {
+
+	if f, err := os.Stat(action.r.artifactPath); errors.Is(err, os.ErrNotExist) || f.IsDir() {
 		log.Debugf("Wasn't able to find the artifact at %s, walking the directory to see if we can find it",
 			action.r.artifactPath)
 
