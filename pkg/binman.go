@@ -135,6 +135,11 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 	// get github client
 	ghClient = gh.GetGHCLient(config.Config.TokenVar)
 
+	gh.ShowLimits(ghClient)
+	if err := gh.CheckLimits(ghClient); err != nil {
+		log.Fatalf("Unable to check limits against GH api")
+	}
+
 	switch launchCommand {
 	case "get":
 		releases = BinmanGetReleasePrep(args)
@@ -200,5 +205,6 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 		OutputResults(output, debug)
 	}
 
+	gh.ShowLimits(ghClient)
 	log.Debugf("binman finished!")
 }

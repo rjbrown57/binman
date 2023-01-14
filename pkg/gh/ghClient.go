@@ -20,6 +20,11 @@ func GetGHCLient(tokenvar string) *github.Client {
 
 	log.Debugf("Returning github client using %s for auth", tokenvar)
 	ghtoken := os.Getenv(tokenvar)
+
+	if len(ghtoken) == 0 {
+		log.Fatalf("Specified environment variable %s is empty", tokenvar)
+	}
+
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: ghtoken},
