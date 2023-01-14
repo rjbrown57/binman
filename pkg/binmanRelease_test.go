@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/google/go-github/v48/github"
+	"github.com/google/go-github/v49/github"
 )
 
 func TestGetOr(t *testing.T) {

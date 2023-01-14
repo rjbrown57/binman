@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v48/github"
+	"github.com/google/go-github/v49/github"
 	"github.com/rjbrown57/binman/pkg/gh"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )

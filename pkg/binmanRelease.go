@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/google/go-github/v48/github"
+	"github.com/google/go-github/v49/github"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 

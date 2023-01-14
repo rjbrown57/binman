@@ -1,6 +1,6 @@
 package binman
 
-import "github.com/google/go-github/v48/github"
+import "github.com/google/go-github/v49/github"
 
 /*
 All binman work is done by implementations of the Action interface. Work is ordered depending on user request and then executed sequentially.

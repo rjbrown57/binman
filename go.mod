@@ -3,7 +3,6 @@ module github.com/rjbrown57/binman
 go 1.19
 
 require (
-	github.com/google/go-github/v48 v48.0.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.4.0
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
@@ -29,6 +28,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/fatih/color v1.13.0
 	github.com/golang/protobuf v1.4.2 // indirect
+	github.com/google/go-github/v49 v49.1.0
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/rodaine/table v1.1.0
