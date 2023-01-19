@@ -3,7 +3,6 @@ package binman
 import (
 	"fmt"
 	"os"
-	"reflect"
 	"runtime"
 	"sync"
 	"time"
@@ -18,64 +17,30 @@ const timeout = 60 * time.Second
 var spinChan = make(chan string)
 var swg sync.WaitGroup
 
-// goSyncRepo calls setTasks to arrange all work, then execute each task sequentially
+// goSyncRepo executes all Actions required by a repo. Action are executed sequentially
+// Actions are executed in 4 phases
+// Pre -> Post -> Os -> Final
+// The last action of each phase sets the actions for the next phase
+// The Final actions is to set rel.actions = nil and conlude the loop
 func goSyncRepo(ghClient *github.Client, rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	var err error
 
+	rel.actions = rel.setPreActions(ghClient, rel.ReleasePath)
+
 	log.Debugf("release %s = %+v", rel.Repo, rel)
 
-	actions := rel.setPreActions(ghClient, rel.ReleasePath)
-	log.Debugf("Performing %d pre actions for %s", len(actions), rel.Repo)
+	// While we have actions we continue to execute
+	for rel.actions != nil {
+		log.Debugf("task queue = %d", len(rel.actions))
 
-	for _, task := range actions {
-		log.Debugf("Executing %s for %s", reflect.TypeOf(task), rel.Repo)
-		err = task.execute()
-		// this is hacky, but catches error
-		if err != nil && err.Error() == "Noupdate" {
-			log.Debugf("%s(%s) is up to date", rel.Repo, rel.Version)
-			c <- BinmanMsg{rel: rel, err: err}
-			return
-		} else if err != nil {
-			log.Debugf("Unable to complete action %s : %v", reflect.TypeOf(task), err)
-			c <- BinmanMsg{rel: rel, err: err}
-			return
-		}
-	}
-
-	actions = rel.setPostActions()
-	log.Debugf("Performing %d post actions for %s", len(actions), rel.Repo)
-	for _, action := range actions {
-		log.Debugf("Running task %s for %s", reflect.TypeOf(action), rel.Repo)
-		err = action.execute()
-		if err != nil {
-			log.Debugf("Unable to complete task %s : %v", reflect.TypeOf(action), err)
-			c <- BinmanMsg{rel: rel, err: err}
-			return
-		}
-	}
-
-	actions = rel.setOsCommands()
-	if len(actions) > 0 {
-		log.Debugf("Performing %d OS commands for %s", len(actions), rel.Repo)
-		for _, action := range actions {
-			err = action.execute()
-			if err != nil {
-				log.Debugf("Unable to complete task %s : %v", reflect.TypeOf(action), err)
+		if err = rel.runTasks(); err != nil {
+			switch err.Error() {
+			case "Noupdate":
 				c <- BinmanMsg{rel: rel, err: err}
 				return
-			}
-		}
-	}
-
-	actions = rel.setFinalActions()
-	if len(actions) > 0 {
-		log.Debugf("Performing %d final actions for %s", len(actions), rel.Repo)
-		for _, action := range actions {
-			err = action.execute()
-			if err != nil {
-				log.Debugf("Unable to complete task %s : %v", reflect.TypeOf(action), err)
+			default:
 				c <- BinmanMsg{rel: rel, err: err}
 				return
 			}

@@ -39,6 +39,7 @@ type BinmanRelease struct {
 	publishPath      string // Path Release will be set up at
 	linkPath         string // Will be set by BinmanRelease.setPaths
 	artifactPath     string // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
+	actions          []Action
 }
 
 type PostCommand struct {
