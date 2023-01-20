@@ -8,6 +8,19 @@ import (
 	"github.com/google/go-github/v49/github"
 )
 
+func TestRunActions(t *testing.T) {
+
+	relBase := BinmanRelease{
+		Repo: "rjbrown57/binman",
+	}
+
+	relBase.actions = []Action{relBase.AddEndWorkAction()}
+
+	if relBase.runActions(); relBase.actions != nil {
+		t.Fatalf("Test of action array should == nil")
+	}
+}
+
 func TestSetPreActions(t *testing.T) {
 
 	relWithOutPublish := BinmanRelease{
@@ -33,15 +46,15 @@ func TestSetPreActions(t *testing.T) {
 	}{
 		{
 			relWithOutPublish.setPreActions(github.NewClient(nil), "/tmp/"),
-			[]string{"*binman.GetGHLatestReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction"},
+			[]string{"*binman.GetGHLatestReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
 			relWithPublish.setPreActions(github.NewClient(nil), "/tmp/"),
-			[]string{"*binman.GetGHLatestReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction"},
+			[]string{"*binman.GetGHLatestReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
 			relQueryByTag.setPreActions(github.NewClient(nil), "/tmp/"),
-			[]string{"*binman.GetGHReleaseByTagsAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction"},
+			[]string{"*binman.GetGHReleaseByTagsAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 	}
 
@@ -57,21 +70,14 @@ func TestSetPreActions(t *testing.T) {
 
 func TestSetPostActions(t *testing.T) {
 
-	testUpxConfig := UpxConfig{
-		Enabled: "true",
-		Args:    []string{"-k", "-v"},
-	}
-
-	tp := PostCommand{
-		Command: "echo",
-		Args:    []string{"arg1", "arg2"},
-	}
-
-	testPostCommands := []PostCommand{tp, tp}
-
 	relDlOnly := BinmanRelease{
 		Repo:         "rjbrown57/binman",
 		DownloadOnly: true,
+	}
+
+	relPostOnly := BinmanRelease{
+		Repo:     "rjbrown57/binman",
+		PostOnly: true,
 	}
 
 	relBase := BinmanRelease{
@@ -88,6 +94,66 @@ func TestSetPostActions(t *testing.T) {
 		Repo:     "rjbrown57/binman",
 		filepath: "extractbinman.zip",
 	}
+
+	var tests = []struct {
+		name            string
+		ReturnedActions []Action
+		ExpectedActions []string
+	}{
+		{
+			"downloadOnly",
+			relDlOnly.setPostActions(),
+			[]string{"*binman.DownloadAction"},
+		},
+		{
+			"postOnly",
+			relPostOnly.setPostActions(),
+			[]string{"*binman.SetOsActions"},
+		},
+		{
+			"basic",
+			relBase.setPostActions(),
+			[]string{"*binman.DownloadAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.WriteRelNotesAction", "*binman.SetOsActions"},
+		},
+		{
+			"tar",
+			relWithTar.setPostActions(),
+			[]string{"*binman.DownloadAction", "*binman.ExtractAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.WriteRelNotesAction", "*binman.SetOsActions"},
+		},
+		{
+			"zip",
+			relWithZip.setPostActions(),
+			[]string{"*binman.DownloadAction", "*binman.ExtractAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.WriteRelNotesAction", "*binman.SetOsActions"},
+		},
+	}
+
+	for _, test := range tests {
+		fmt.Printf("Testing %s\n", test.name)
+		for k := range test.ReturnedActions {
+			if reflect.TypeOf(test.ReturnedActions[k]).String() != test.ExpectedActions[k] {
+				t.Fatalf("Expected %s, got %s", reflect.TypeOf(test.ReturnedActions[k]).String(), test.ExpectedActions[k])
+			}
+		}
+	}
+}
+
+func TestSetOsActions(t *testing.T) {
+
+	relBase := BinmanRelease{
+		Repo: "rjbrown57/binman",
+	}
+
+	testUpxConfig := UpxConfig{
+		Enabled: "true",
+		Args:    []string{"-k", "-v"},
+	}
+
+	tp := PostCommand{
+		Command: "echo",
+		Args:    []string{"arg1", "arg2"},
+	}
+
+	testPostCommands := []PostCommand{tp, tp}
 
 	relWithUpx := BinmanRelease{
 		Repo:         "rjbrown57/binman",
@@ -108,34 +174,47 @@ func TestSetPostActions(t *testing.T) {
 		ExpectedActions []string
 	}{
 		{
-			"downloadOnly",
-			relDlOnly.setPostActions(),
-			[]string{"*binman.DownloadAction"},
-		},
-		{
-			"basic",
-			relBase.setPostActions(),
-			[]string{"*binman.DownloadAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.WriteRelNotesAction"},
-		},
-		{
-			"tar",
-			relWithTar.setPostActions(),
-			[]string{"*binman.DownloadAction", "*binman.ExtractAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.WriteRelNotesAction"},
-		},
-		{
-			"zip",
-			relWithZip.setPostActions(),
-			[]string{"*binman.DownloadAction", "*binman.ExtractAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.WriteRelNotesAction"},
+			"none",
+			relBase.setOsCommands(),
+			[]string{"*binman.SetFinalActions"},
 		},
 		{
 			"basicupx",
-			relWithUpx.setPostActions(),
-			[]string{"*binman.DownloadAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.WriteRelNotesAction", "*binman.OsCommandAction"},
+			relWithUpx.setOsCommands(),
+			[]string{"*binman.OsCommandAction", "*binman.SetFinalActions"},
 		},
 		{
 			"basicmultiplepostcommands",
-			relWithUpxandPostCommands.setPostActions(),
-			[]string{"*binman.DownloadAction", "*binman.FindTargetAction", "*binman.MakeExecuteableAction", "*binman.WriteRelNotesAction", "*binman.OsCommandAction", "*binman.OsCommandAction", "*binman.OsCommandAction"},
+			relWithUpxandPostCommands.setOsCommands(),
+			[]string{"*binman.OsCommandAction", "*binman.OsCommandAction", "*binman.SetFinalActions"},
+		},
+	}
+
+	for _, test := range tests {
+		fmt.Printf("Testing %s\n", test.name)
+		for k := range test.ReturnedActions {
+			if reflect.TypeOf(test.ReturnedActions[k]).String() != test.ExpectedActions[k] {
+				t.Fatalf("Expected %s, got %s", reflect.TypeOf(test.ReturnedActions[k]).String(), test.ExpectedActions[k])
+			}
+		}
+	}
+}
+
+func TestSetFinalActions(t *testing.T) {
+
+	relBase := BinmanRelease{
+		Repo: "rjbrown57/binman",
+	}
+
+	var tests = []struct {
+		name            string
+		ReturnedActions []Action
+		ExpectedActions []string
+	}{
+		{
+			"basic",
+			relBase.setFinalActions(),
+			[]string{"*binman.LinkFileAction", "*binman.EndWorkAction"},
 		},
 	}
 

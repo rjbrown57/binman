@@ -16,8 +16,8 @@ type BinmanRelease struct {
 	Os              string        `yaml:"os,omitempty"`
 	Arch            string        `yaml:"arch,omitempty"`
 	CheckSum        bool          `yaml:"checkSum,omitempty"`
-	DownloadOnly    bool          `yaml:"downloadonly,omitempty"`
-	PostOnly        bool          `yaml:"postonly,omitempty"`
+	DownloadOnly    bool          `yaml:"downloadonly,omitempty"`    // Download but do not extract/find/link
+	PostOnly        bool          `yaml:"postonly,omitempty"`        // Gather information from source, but perform no actions save os commands
 	UpxConfig       UpxConfig     `yaml:"upx,omitempty"`             // Allow shrinking with Upx
 	ExternalUrl     string        `yaml:"url,omitempty"`             // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
 	ExtractFileName string        `yaml:"extractfilename,omitempty"` // The file within the release you want
@@ -39,6 +39,7 @@ type BinmanRelease struct {
 	publishPath      string // Path Release will be set up at
 	linkPath         string // Will be set by BinmanRelease.setPaths
 	artifactPath     string // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
+	actions          []Action
 }
 
 type PostCommand struct {

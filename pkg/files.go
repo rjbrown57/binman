@@ -194,8 +194,8 @@ func CreateDirectory(path string) error {
 func DownloadFile(url string, path string) error {
 	log.Debugf("Downloading %s", url)
 	resp, err := http.Get(url)
-	if err != nil {
-		return err
+	if err != nil || resp.StatusCode > 200 {
+		return fmt.Errorf("failed to download from %s - %v , %d", url, err, resp.StatusCode)
 	}
 
 	defer resp.Body.Close()
