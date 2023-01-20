@@ -220,7 +220,7 @@ func DownloadFile(url string, path string) error {
 func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 	uncompressedStream, err := gzip.NewReader(gzipFile)
 	if err != nil {
-		log.Fatalf("ExtractTarGz: NewReader failed")
+		log.Fatalf("ExtractTarGz: NewReader failed - %s", err)
 	}
 
 	return uncompressedStream
