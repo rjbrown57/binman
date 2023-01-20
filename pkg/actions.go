@@ -98,6 +98,7 @@ func (r *BinmanRelease) setPostActions() []Action {
 
 		// If we are set to download only stop all postCommands
 		if r.DownloadOnly {
+			actions = append(actions, r.AddSetOsActions())
 			return actions
 		}
 
@@ -186,7 +187,7 @@ func (action *SetFinalActions) execute() error {
 func (r *BinmanRelease) setFinalActions() []Action {
 
 	// If PostOnly or DownloadOnly we only need EndWorkAction
-	if r.PostOnly && r.DownloadOnly {
+	if r.PostOnly || r.DownloadOnly {
 		return []Action{r.AddEndWorkAction()}
 	}
 
