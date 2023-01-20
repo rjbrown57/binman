@@ -103,7 +103,7 @@ func TestSetPostActions(t *testing.T) {
 		{
 			"downloadOnly",
 			relDlOnly.setPostActions(),
-			[]string{"*binman.DownloadAction"},
+			[]string{"*binman.DownloadAction", "*binman.SetOsActions"},
 		},
 		{
 			"postOnly",
@@ -128,7 +128,7 @@ func TestSetPostActions(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		fmt.Printf("Testing %s\n", test.name)
+		fmt.Printf("Testing %s\n, %T", test.name, test.ReturnedActions[0])
 		for k := range test.ReturnedActions {
 			if reflect.TypeOf(test.ReturnedActions[k]).String() != test.ExpectedActions[k] {
 				t.Fatalf("Expected %s, got %s", reflect.TypeOf(test.ReturnedActions[k]).String(), test.ExpectedActions[k])
