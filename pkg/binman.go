@@ -31,11 +31,8 @@ func goSyncRepo(ghClient *github.Client, rel BinmanRelease, c chan<- BinmanMsg, 
 
 	log.Debugf("release %s = %+v", rel.Repo, rel)
 
-	// While we have actions we continue to execute
 	for rel.actions != nil {
-		log.Debugf("task queue = %d", len(rel.actions))
-
-		if err = rel.runTasks(); err != nil {
+		if err = rel.runActions(); err != nil {
 			switch err.Error() {
 			case "Noupdate":
 				c <- BinmanMsg{rel: rel, err: err}

@@ -22,7 +22,7 @@ type Action interface {
 	execute() error
 }
 
-func (r *BinmanRelease) runTasks() error {
+func (r *BinmanRelease) runActions() error {
 
 	var err error
 

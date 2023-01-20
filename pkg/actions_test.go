@@ -8,6 +8,19 @@ import (
 	"github.com/google/go-github/v49/github"
 )
 
+func TestRunActions(t *testing.T) {
+
+	relBase := BinmanRelease{
+		Repo: "rjbrown57/binman",
+	}
+
+	relBase.actions = []Action{relBase.AddEndWorkAction()}
+
+	if relBase.runActions(); relBase.actions != nil {
+		t.Fatalf("Test of action array should == nil")
+	}
+}
+
 func TestSetPreActions(t *testing.T) {
 
 	relWithOutPublish := BinmanRelease{
