@@ -1,6 +1,0 @@
-config:
-  tokenvar: GH_TOKEN
-  releasepath: /tmp/ 
-releases:
-  - repo: anchore/syft 
-  - repo: google/ko

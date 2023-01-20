@@ -8,7 +8,7 @@ Binman is a tool to sync release assets from github to your local workstation. T
 
 Grab the latest release [here](https://github.com/rjbrown57/binman/releases), and let binman grab it for you next time :rocket:
 
-Binman will attempt to find a release asset that matches your OS and architecture and one of the types of files we handle currently. Currently handled file types are "zip", "tar", "binary", "exe".
+Binman will attempt to find a release asset that matches your OS and architecture and one of the types of files we handle currently. Currently handled file types are "zip", "tar", "binary", "exe". 
 
 When a matching release asset is found it will be downloaded to your `releasepath` or the default `$HOME/binMan`. The download file will be placed at `$releasepath/repos/${githuborg}/${githubproject}/${version}/`. If the asset is an archive all files will be extracted. Binman will then attempt to find a binary and will link it to `$releasepath/${githubproject}`.
 
@@ -71,6 +71,19 @@ These options can be set per release
 | postcommands | see [post commands](#post-commands)|
 | postonly | only run [post commands](#post-commands) after we have checked for new versions. This allows binman to trigger apt/yum/brew or something like that|
 
+## Binman Config subcommand
+
+The `binman config` subcommand can be used for operations related to your binman config file. Use`-c` or `$BINMAN_CONFIG`  for a non standard config path.
+
+### get
+to view your config run `binman config get`
+
+### edit
+to edit your config run `binman config edit`. This command will make use of whatever editor your $EDITOR var is pointed at.
+
+### add
+To add a new repo to your config you can run `binman config add anchore/syft`. This will add `repo: anchore/syft` to our config file in the releases section. If further configuration is required do so with `binman config edit`
+
 ## External Url Support
 
 binman currently supports fetching version information from github, and then downloading the asset from a seperate url. Templating via go templates and [sprig](https://masterminds.github.io/sprig/) can be performed on the url to allow substitution of the fetched tag.
@@ -102,7 +115,7 @@ releases:
 
 ## Post Commands
 
-binman supports executing arbitrary os commands after it has fetched and set up a release artifact for you. The templating detailed in [string templating](#string-templating) is available to postcommand args. A simple example is to copy the file to a new location.
+binman supports executing arbitrary os commands after it has fetched a release artifact. The templating detailed in [string templating](#string-templating) is available to postcommand args. A simple example is to copy the file to a new location.
 
 ```yaml
 releases:
@@ -124,7 +137,7 @@ releases:
       args: ["build","-t","{{ .project }}","--build-arg","VERSION={{ .version }}","--build-arg","FILENAME={{ .filename }}","/home/myuser/binMan/repos/{{ .org }}/{{ .project }}/"]
 ```
 
-For this to work you must pace a docker file at `~/binMan/repos/rjbrown57/binman/Dockerfile`. An example of the Dockerfile is
+For this to work you must place a docker file at `~/binMan/repos/rjbrown57/binman/Dockerfile`. An example of the Dockerfile is
 
 ```Dockerfile
 FROM ubuntu:22.04
@@ -149,7 +162,7 @@ config:
 
 ## String Templating
 
-Binman supports templating via go templates and [sprig](https://masterminds.github.io/sprig/) can be performed on several fields in your config file.
+Binman supports templating via go templates and [sprig](https://masterminds.github.io/sprig/).
 
 Templating is available on the following fields
 
@@ -171,32 +184,9 @@ The following values are provided
 
 \* these values are only available to args in postcommands actions.
 
-
-## Binman Config subcommand
-
-The `binman config` subcommand can be used for operations related to your binman config file. `-c` and `$BINMAN_CONFIG`  are allow for use a non standard config path.
-
-### get
-to view your config run `binman config get`
-
-### edit
-to edit your config run `binman config edit`. This command will make use of whatever editor your $EDITOR var is pointed at.
-
-### add
-To add a new repo to your config you can run `binman config add -r anchore/syft`. This will add `repo: anchore/syft` to our config file in the releases section. If further configuration is required do so with `binman config edit`
-
 ## Direct Repo sync
 
-Binman can also be used to grab a specifc repository with the syntax `binman -r rjbrown57/binman`
-
-```Shell
-binman -r rjbrown57/binman                                                         
-INFO[0000] binman sync begin                            
-INFO[0000] direct repo download                         
-INFO[0000] Downloading https://github.com/rjbrown57/binman/releases/download/v0.0.12/binman_linux_amd64 
-INFO[0002] Download https://github.com/rjbrown57/binman/releases/download/v0.0.12/binman_linux_amd64 complete 
-INFO[0002] binman finished!          
-```
+Binman can be used to grab a specifc repository with the syntax `binman get rjbrown57/binman`
 
 ## Using "ghcr.io/rjbrown57/binman:latest" container image
 
@@ -204,7 +194,7 @@ You can use the binman image in a multi-stage build to grab binaries for docker 
 
 ```Dockerfile
 FROM ghcr.io/rjbrown57/binman:latest AS binman
-RUN binman -r "sigstore/cosign"
+RUN binman get "sigstore/cosign"
 FROM ubuntu:latest
 COPY --from=binman /cosign-linux-amd64 /usr/bin/cosign
 RUN chmod 755 /usr/bin/cosign
