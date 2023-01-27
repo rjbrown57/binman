@@ -29,7 +29,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/fatih/color v1.13.0
 	github.com/golang/protobuf v1.4.2 // indirect
-	github.com/google/go-github/v49 v49.1.0
+	github.com/google/go-github/v50 v50.0.0
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/rodaine/table v1.1.0
