@@ -117,7 +117,7 @@ func (r *BinmanRelease) knownUrlCheck() {
 
 // Helper method to set artifactPath for a requested release object
 // This will be called early in a main loop iteration so we can check if we already have a release
-func (r *BinmanRelease) setPublisPath(ReleasePath string, tag string) {
+func (r *BinmanRelease) setPublishPath(ReleasePath string, tag string) {
 	// Trim trailing / if user provided
 	ReleasePath = strings.TrimSuffix(ReleasePath, "/")
 	r.publishPath = filepath.Join(ReleasePath, "repos", r.org, r.project, tag)

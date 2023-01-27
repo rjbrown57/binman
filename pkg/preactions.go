@@ -26,7 +26,7 @@ func (r *BinmanRelease) AddReleaseStatusAction(releasePath string) Action {
 // ReleaseStatusAction verifies whether we have work to do
 func (action *ReleaseStatusAction) execute() error {
 
-	action.r.setPublisPath(action.releasePath, *action.r.githubData.TagName)
+	action.r.setPublishPath(action.releasePath, *action.r.githubData.TagName)
 	_, err := os.Stat(action.r.publishPath)
 
 	// If err nil we already have this version, send custom error so gosyncrepo knows to end actions
