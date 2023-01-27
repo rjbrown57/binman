@@ -1,0 +1,9 @@
+releases:
+ # Some repos do not publish assets, via github or external url. In such a case you could use the below to get the binary via go get"
+    - repo: google/gops
+      postonly: true
+      postcommands:
+      - command: go
+        args: ["get","github.com/google/gops"]
+      - command: cp
+        args: ["/home/user/go/bin/gopls","/home/user/binMan/repos/{{ .org }}/{{ .project }}/{{ .version }}"]
