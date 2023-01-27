@@ -40,6 +40,13 @@ func TestSetPreActions(t *testing.T) {
 		QueryType:   "releasebytag",
 	}
 
+	relPostOnly := BinmanRelease{
+		Repo:        "rjbrown57/binman",
+		publishPath: "binman",
+		QueryType:   "release",
+		PostOnly:    true,
+	}
+
 	var tests = []struct {
 		ReturnedActions []Action
 		ExpectedActions []string
@@ -55,6 +62,10 @@ func TestSetPreActions(t *testing.T) {
 		{
 			relQueryByTag.setPreActions(github.NewClient(nil), "/tmp/"),
 			[]string{"*binman.GetGHReleaseByTagsAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+		},
+		{
+			relPostOnly.setPreActions(github.NewClient(nil), "/tmp/"),
+			[]string{"*binman.GetGHLatestReleaseAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 	}
 

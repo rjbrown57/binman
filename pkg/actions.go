@@ -60,9 +60,15 @@ func (r *BinmanRelease) setPreActions(ghClient *github.Client, releasePath strin
 		actions = append(actions, r.AddReleaseStatusAction(releasePath))
 	}
 
+	// If PostOnly is true, we don't need to select an asset
+	if !r.PostOnly {
+		actions = append(actions,
+			r.AddSetUrlAction(),
+		)
+	}
+
 	// Add remaining preDownload actions
 	actions = append(actions,
-		r.AddSetUrlAction(),
 		r.AddSetArtifactPathAction(releasePath),
 		r.AddSetPostActions(),
 	)
