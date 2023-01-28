@@ -1,0 +1,7 @@
+releases:
+ # systeroid a rust based alternative for sysctl contains a tar with two selectable binaries systeroid and systeroid-tui.
+ # Setting `extractfilename:systeoid-tui` will instruct binman to search for that file name in the extracted archive
+ # `linkname systeroid` will set the created link to systeroid instead of systeroid-tui   
+  - repo: orhun/systeroid
+    extractfilename: systeroid-tui
+    linkname: systeroid
