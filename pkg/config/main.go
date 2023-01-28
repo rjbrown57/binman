@@ -5,6 +5,7 @@ import (
 	"os/exec"
 
 	binman "github.com/rjbrown57/binman/pkg"
+	gh "github.com/rjbrown57/binman/pkg/gh"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"gopkg.in/yaml.v3"
 )
@@ -52,6 +53,11 @@ func Add(config string, repo string) {
 	// We use NewGHBMConfig here to avoid grabbing contextual configs
 	currentConfig := binman.NewGHBMConfig(cPath)
 
+	err := gh.CheckRepo(gh.GetGHCLient(currentConfig.Config.TokenVar), repo)
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+
 	// Verify release is not present
 	if releasesContains(currentConfig.Releases, repo) {
 		log.Fatalf("%s is already present in %s", repo, cPath)
@@ -64,7 +70,7 @@ func Add(config string, repo string) {
 		log.Fatalf("Unable to marshal new config %s", err)
 	}
 
-	log.Infof("Adding %s to %s", repo, cPath)
+	log.Infof("Adding %s to %s. Latest version is ", repo, cPath)
 
 	// Write back
 	err = binman.WriteStringtoFile(cPath, string(newConfig))
