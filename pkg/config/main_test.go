@@ -43,7 +43,7 @@ func TestReleasesContains(t *testing.T) {
 const testConfig = `
 config:
   releasepath: thereleasepath
-  tokenvar: thetoken
+  tokenvar: none # we set to 'none' here so ci based test will function
   upx:
     enabled: true
     args: []
@@ -52,7 +52,7 @@ releases:
 `
 
 func TestAdd(t *testing.T) {
-	var testRepo = "mytest/repo"
+	var testRepo = "rjbrown57/lp"
 
 	d := getTestDir(t)
 	defer os.Remove(d)
