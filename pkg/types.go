@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 
 	"github.com/fatih/color"
@@ -72,7 +73,7 @@ func NewGHBMConfig(configPath string) *GHBMConfig {
 }
 
 // Deduplicate releases
-func (config *GHBMConfig) deDuplicate() {
+func (config *GHBMConfig) cleanReleases() {
 
 	var deduplicatedReleases []BinmanRelease
 
@@ -85,7 +86,11 @@ func (config *GHBMConfig) deDuplicate() {
 		// Convert string representation of all values to a string representation of the byte array
 		// This will allow multiple versions of one repo with different settings, but overwrite in case of duplicate
 		relString := fmt.Sprintf("%x", fmt.Sprintf("%v", config.Releases[index]))
-		releaseMap[relString] = config.Releases[index]
+		if config.Releases[index].Repo != "" && strings.Contains(config.Releases[index].Repo, "/") {
+			releaseMap[relString] = config.Releases[index]
+		} else {
+			log.Debugf("release %d is malformed. Skipping for now, - %v", index, config.Releases[index])
+		}
 	}
 
 	// Make the final release slice

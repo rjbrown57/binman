@@ -56,7 +56,7 @@ releases:
   - repo: rjbrown57/binman
 `
 
-func TestDeduplicate(t *testing.T) {
+func TestCleanReleases(t *testing.T) {
 
 	d, err := os.MkdirTemp(os.TempDir(), "binmantest")
 	if err != nil {
@@ -73,7 +73,7 @@ func TestDeduplicate(t *testing.T) {
 	}
 
 	c := NewGHBMConfig(configPath)
-	c.deDuplicate()
+	c.cleanReleases()
 
 	if len(c.Releases) != 2 {
 		t.Fatal("failed to dedeuplicate release array")

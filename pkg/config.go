@@ -73,7 +73,7 @@ func SetConfig(suppliedConfig string) *GHBMConfig {
 	}
 
 	binMancfg.setDefaults()
-	binMancfg.deDuplicate()
+	binMancfg.cleanReleases()
 	binMancfg.populateReleases()
 	return binMancfg
 }
