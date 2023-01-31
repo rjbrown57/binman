@@ -12,16 +12,8 @@ const defaultConfig = `
 config:
   releasepath:  #path to keep fetched releases. $HOME/binMan is the default
   tokenvar: #environment variable that contains github token
-  upx: #Compress binaries with upx
-    enabled: false
-    args: [] # arrary of args for upx
 releases:
   - repo: rjbrown57/binman
-    linkname: # Set link name to be created. Default is to match project name.
-    extractfilename: # If the published binary does not match the project name within the tar/zip set the binary name here
-    upx: # Upx can also be set per release
-      args: [] #["-k","-v"]
-    downloadonly: false # binman will only download the file. You take care of the rest ;)
 `
 
 // setupConfig will create ~/.config/binman and populate ~/.config/binman/config as needed
