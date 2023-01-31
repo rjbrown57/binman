@@ -4,6 +4,8 @@ releases:
       postonly: true
       postcommands:
       - command: go
-        args: ["get","github.com/google/gops"]
+        args: ["install","github.com/google/gops@{{ .version }}"]
       - command: cp
-        args: ["/home/user/go/bin/gopls","/home/user/binMan/repos/{{ .org }}/{{ .project }}/{{ .version }}"]
+        args: ["/home/lookfar/go/bin/gopls","/home/lookfar/binMan/repos/{{ .org }}/{{ .project }}/{{ .version }}"]
+      - command: ln
+        args: ["-s","/home/lookfar/binMan/repos/{{ .org }}/{{ .project }}/{{ .version }}/gopls","/home/lookfar/binMan/gopls"]
