@@ -53,7 +53,7 @@ func Add(config string, repo string) {
 	// We use NewGHBMConfig here to avoid grabbing contextual configs
 	currentConfig := binman.NewGHBMConfig(cPath)
 
-	err := gh.CheckRepo(gh.GetGHCLient(currentConfig.Config.TokenVar), repo)
+	tag, err := gh.CheckRepo(gh.GetGHCLient(currentConfig.Config.TokenVar), repo)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
@@ -70,7 +70,7 @@ func Add(config string, repo string) {
 		log.Fatalf("Unable to marshal new config %s", err)
 	}
 
-	log.Infof("Adding %s to %s. Latest version is ", repo, cPath)
+	log.Infof("Adding %s to %s. Latest version is %s", repo, cPath, tag)
 
 	// Write back
 	err = binman.WriteStringtoFile(cPath, string(newConfig))

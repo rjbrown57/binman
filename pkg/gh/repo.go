@@ -32,20 +32,20 @@ func getOR(repo string) (string, string) {
 	return n[0], n[1]
 }
 
-func CheckRepo(ghClient *github.Client, repo string) error {
+func CheckRepo(ghClient *github.Client, repo string) (string, error) {
 
 	ctx := context.Background()
 
 	if !strings.Contains(repo, "/") {
-		return &BadRepoFormat{repo}
+		return "", &BadRepoFormat{repo}
 	}
 
 	org, project := getOR(repo)
 
-	_, resp, err := ghClient.Repositories.GetLatestRelease(ctx, org, project)
+	ghData, resp, err := ghClient.Repositories.GetLatestRelease(ctx, org, project)
 	if err != nil || resp.StatusCode > 200 {
-		return &InvalidGhResponse{resp, err, repo}
+		return "", &InvalidGhResponse{resp, err, repo}
 	}
 
-	return nil
+	return ghData.GetTagName(), nil
 }

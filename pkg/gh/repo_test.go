@@ -30,7 +30,7 @@ func TestCheckRepo(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test.Got = CheckRepo(GetGHCLient("none"), test.Repo)
+		_, test.Got = CheckRepo(GetGHCLient("none"), test.Repo)
 
 		if test.Expected != nil {
 			if errors.Is(test.Expected, test.Got) {
