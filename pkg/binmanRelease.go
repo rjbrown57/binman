@@ -16,6 +16,7 @@ type BinmanRelease struct {
 	Os              string        `yaml:"os,omitempty"`
 	Arch            string        `yaml:"arch,omitempty"`
 	CheckSum        bool          `yaml:"checkSum,omitempty"`
+	CleanupArchive  bool          `yaml:"cleanup,omitempty"`         // mark true if archive should be cleaned after extraction
 	DownloadOnly    bool          `yaml:"downloadonly,omitempty"`    // Download but do not extract/find/link
 	PostOnly        bool          `yaml:"postonly,omitempty"`        // Gather information from source, but perform no actions save os commands
 	UpxConfig       UpxConfig     `yaml:"upx,omitempty"`             // Allow shrinking with Upx

@@ -112,8 +112,14 @@ func (r *BinmanRelease) setPostActions() []Action {
 		switch findfType(r.filepath) {
 		case "tar":
 			actions = append(actions, r.AddExtractAction())
+			if r.CleanupArchive {
+				actions = append(actions, r.AddCleanArchive())
+			}
 		case "zip":
 			actions = append(actions, r.AddExtractAction())
+			if r.CleanupArchive {
+				actions = append(actions, r.AddCleanArchive())
+			}
 		case "default":
 		}
 

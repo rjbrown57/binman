@@ -47,9 +47,10 @@ type UpxConfig struct {
 
 // BinmanConfig contains Global Config Options
 type BinmanConfig struct {
-	ReleasePath string    `yaml:"releasepath,omitempty"` //path to download/link releases from github
-	TokenVar    string    `yaml:"tokenvar,omitempty"`    //Github Auth Token
-	UpxConfig   UpxConfig `yaml:"upx,omitempty"`         // Allow upx to shrink extracted
+	CleanupArchive bool      `yaml:"cleanup,omitempty"`     // mark true if archive should be cleaned after extraction
+	ReleasePath    string    `yaml:"releasepath,omitempty"` //path to download/link releases from github
+	TokenVar       string    `yaml:"tokenvar,omitempty"`    //Github Auth Token
+	UpxConfig      UpxConfig `yaml:"upx,omitempty"`         // Allow upx to shrink extracted
 }
 
 // BinmanDefaults contains default config options. If a value is unset in releases array these will be used.
@@ -146,6 +147,10 @@ func (config *GHBMConfig) populateReleases() {
 				if len(config.Releases[index].UpxConfig.Args) == 0 {
 					config.Releases[index].UpxConfig.Args = config.Config.UpxConfig.Args
 				}
+			}
+
+			if config.Config.CleanupArchive {
+				config.Releases[index].CleanupArchive = true
 			}
 
 			if config.Releases[index].Os == "" {
