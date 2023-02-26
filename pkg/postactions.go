@@ -52,6 +52,22 @@ func (action *LinkFileAction) execute() error {
 	return createLink(action.r.artifactPath, action.r.linkPath)
 }
 
+// Remove downloaded archive after extraction
+type CleanArchiveAction struct {
+	r *BinmanRelease
+}
+
+func (r *BinmanRelease) AddCleanArchive() Action {
+	return &CleanArchiveAction{
+		r,
+	}
+}
+
+func (action *CleanArchiveAction) execute() error {
+	log.Debugf("cleaning up %s", action.r.filepath)
+	return os.Remove(action.r.filepath)
+}
+
 type MakeExecuteableAction struct {
 	r *BinmanRelease
 }

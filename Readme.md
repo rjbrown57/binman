@@ -30,6 +30,7 @@ Here's an example config file
 config:
   releasepath:  #path to keep fetched releases. $HOME/binMan is the default
   tokenvar: #environment variable that contains github token
+  cleanup: true # remove downloaded archive
   upx: #Compress binaries with upx
     enabled: false
     args: [] # arrary of args for upx
@@ -37,6 +38,7 @@ releases:
   - repo: rjbrown57/binman
     linkname: mybinman  
     downloadonly: false 
+    cleanup: true
     upx: 
       args: [] #["-k","-v"]
 ```
@@ -49,9 +51,11 @@ Top level `config:` options
 
 | key      | Description |
 | ----------- | ----------- |
+| cleanup   | Remove .zip/.tar files after we have extracted something. Useful in container builds / CI |
 | releasepath | Path to publish files to |
 | tokenvar   | github token to use for auth. You can get yourself rate limited if you have a sizeable config. Instructions to [generate a token are here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token") |
 | upx   | config to enable upx shrinking. Details below |
+
 
 ### Release options
 
@@ -60,6 +64,7 @@ These options can be set per release
 | key      | Description |
 | ----------- | ----------- |
 | arch   | target architecture |
+| cleanup   | Remove .zip/.tar files after we have extracted something. Useful in container builds / CI |
 | downloadonly   | default `false`. Set to true if you don't want binman to try to extract and link the asset |
 | externalurl | see [externalurl support](#external-url-support) |
 | linkname | by default binman will create a symlink matching the project name. This can be overidden with linkname set per release |
@@ -146,7 +151,7 @@ ARG FILENAME
 COPY $VERSION/$FILENAME /usr/local/bin/$FILENAME
 ```
 
-These are just a pair of possible postcommands. See what trouble you can get yoruself into :rocket:
+These are just a pair of possible postcommands. See what trouble you can get yourself into :rocket:
 
 ### Upx Config
 
@@ -198,4 +203,13 @@ RUN binman get "sigstore/cosign"
 FROM ubuntu:latest
 COPY --from=binman /cosign-linux-amd64 /usr/bin/cosign
 RUN chmod 755 /usr/bin/cosign
+```
+
+Or use with a config file
+```Dockerfile
+FROM ghcr.io/rjbrown57/binman:latest AS binman
+ADD myconfig.yaml examples/basicExample.yaml
+RUN binman -c examples/basicExample.yaml
+FROM ubuntu:latest
+COPY --from=binman /root/binMan/ /usr/local/bin/
 ```
