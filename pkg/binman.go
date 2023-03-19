@@ -111,6 +111,13 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 
 	go getSpinner(debug)
 
+	// start download workers
+	var numWorkers = config.Config.NumWorkers
+	log.Debugf("launching %d download workers", numWorkers)
+	for worker := 1; worker <= numWorkers; worker++ {
+		go getDownloader(worker)
+	}
+
 	relLength := len(releases)
 	log.Debugf("Process %v Releases", relLength)
 	swg.Add(1)
@@ -150,6 +157,8 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 			log.Debugf("Final release data  %+v\n", msg.rel)
 		}
 	}
+
+	close(downloadChan)
 
 	swg.Add(1)
 	spinChan <- fmt.Sprintf("spinstop%s", setStopMessage(output))

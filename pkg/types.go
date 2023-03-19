@@ -47,10 +47,11 @@ type UpxConfig struct {
 
 // BinmanConfig contains Global Config Options
 type BinmanConfig struct {
-	CleanupArchive bool      `yaml:"cleanup,omitempty"`     // mark true if archive should be cleaned after extraction
-	ReleasePath    string    `yaml:"releasepath,omitempty"` //path to download/link releases from github
-	TokenVar       string    `yaml:"tokenvar,omitempty"`    //Github Auth Token
-	UpxConfig      UpxConfig `yaml:"upx,omitempty"`         // Allow upx to shrink extracted
+	CleanupArchive bool      `yaml:"cleanup,omitempty"`      // mark true if archive should be cleaned after extraction
+	ReleasePath    string    `yaml:"releasepath,omitempty"`  // path to download/link releases from github
+	TokenVar       string    `yaml:"tokenvar,omitempty"`     // Github Auth Token
+	NumWorkers     int       `yaml:"maxdownloads,omitempty"` // maximum number of concurrent downloads the user will allow
+	UpxConfig      UpxConfig `yaml:"upx,omitempty"`          // Allow upx to shrink extracted
 }
 
 // BinmanDefaults contains default config options. If a value is unset in releases array these will be used.
@@ -187,6 +188,10 @@ func (config *GHBMConfig) setDefaults() {
 			log.Fatalf("Unable to detect home directory %v", err)
 		}
 		config.Config.ReleasePath = hDir + "/binMan"
+	}
+
+	if config.Config.NumWorkers == 0 {
+		config.Config.NumWorkers = len(config.Releases)
 	}
 
 	if config.Config.TokenVar == "" {

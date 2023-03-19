@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
@@ -22,8 +23,20 @@ func (r *BinmanRelease) AddDownloadAction() Action {
 
 func (action *DownloadAction) execute() error {
 	swg.Add(1)
+
+	// Created a buffered channel since we will not run a recieving goroutine
+	// size will always be 1
+	confirmChan := make(chan error, 1)
+	var rWg sync.WaitGroup
+
+	rWg.Add(1)
+	downloadChan <- dlMsg{action.r.dlUrl, action.r.filepath, &rWg, confirmChan}
 	spinChan <- fmt.Sprintf("Downloading %s(%s)", action.r.Repo, action.r.Version)
-	err := DownloadFile(action.r.dlUrl, action.r.filepath)
+	rWg.Wait()
+	close(confirmChan)
+
+	err := <-confirmChan
+
 	if err != nil {
 		swg.Add(1)
 		spinChan <- fmt.Sprintf("Error Downloading %s(%s)", action.r.Repo, action.r.Version)
