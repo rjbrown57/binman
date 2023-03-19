@@ -31,6 +31,7 @@ config:
   releasepath:  #path to keep fetched releases. $HOME/binMan is the default
   tokenvar: #environment variable that contains github token
   cleanup: true # remove downloaded archive
+  maxdownloads: 10 # number of concurrent downloads allowed. Default is 3
   upx: #Compress binaries with upx
     enabled: false
     args: [] # arrary of args for upx
@@ -52,6 +53,7 @@ Top level `config:` options
 | key      | Description |
 | ----------- | ----------- |
 | cleanup   | Remove .zip/.tar files after we have extracted something. Useful in container builds / CI |
+| maxdownloads | number of concurrent downloads to allow. Default is number of releases |
 | releasepath | Path to publish files to |
 | tokenvar   | github token to use for auth. You can get yourself rate limited if you have a sizeable config. Instructions to [generate a token are here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token") |
 | upx   | config to enable upx shrinking. Details below |

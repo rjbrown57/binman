@@ -1,6 +1,7 @@
 config:
   #releasepath: /set/path/heretopublishto/ # Default is homeDirectory/binMan 
   tokenvar: GH_TOKEN # GITHUB API TOKEN
+  maxdownloads: 1 # maximum amount of concurent downloads. The default is the number of releases.
 releases:
   - repo: anchore/syft # Easy mode!
   - repo: google/go-containerregistry
