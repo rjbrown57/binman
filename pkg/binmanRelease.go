@@ -13,24 +13,26 @@ import (
 
 // BinmanRelease contains info on specifc releases to hunt for
 type BinmanRelease struct {
-	Os              string        `yaml:"os,omitempty"`
-	Arch            string        `yaml:"arch,omitempty"`
-	CheckSum        bool          `yaml:"checkSum,omitempty"`
-	CleanupArchive  bool          `yaml:"cleanup,omitempty"`         // mark true if archive should be cleaned after extraction
-	DownloadOnly    bool          `yaml:"downloadonly,omitempty"`    // Download but do not extract/find/link
-	PostOnly        bool          `yaml:"postonly,omitempty"`        // Gather information from source, but perform no actions save os commands
-	UpxConfig       UpxConfig     `yaml:"upx,omitempty"`             // Allow shrinking with Upx
-	ExternalUrl     string        `yaml:"url,omitempty"`             // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
-	ExtractFileName string        `yaml:"extractfilename,omitempty"` // The file within the release you want
-	ReleaseFileName string        `yaml:"releasefilename,omitempty"` // Specifc Release filename to look for. This is useful if a project publishes a binary and not a tarball.
-	Repo            string        `yaml:"repo"`                      // The specific repo name in github. e.g achore/syft
-	LinkName        string        `yaml:"linkname,omitempty"`        // Set what the final link will be. Defaults to project name.
-	Version         string        `yaml:"version,omitempty"`         // Pull a specific version
-	PostCommands    []PostCommand `yaml:"postcommands,omitempty"`
-	QueryType       string        `yaml:"querytype,omitempty"`
-	ReleasePath     string        `yaml:"releasepath,omitempty"`
+	Os               string        `yaml:"os,omitempty"`
+	Arch             string        `yaml:"arch,omitempty"`
+	CheckSum         bool          `yaml:"checkSum,omitempty"`
+	CleanupArchive   bool          `yaml:"cleanup,omitempty"`         // mark true if archive should be cleaned after extraction
+	DownloadOnly     bool          `yaml:"downloadonly,omitempty"`    // Download but do not extract/find/link
+	PostOnly         bool          `yaml:"postonly,omitempty"`        // Gather information from source, but perform no actions save os commands
+	UpxConfig        UpxConfig     `yaml:"upx,omitempty"`             // Allow shrinking with Upx
+	ExternalUrl      string        `yaml:"url,omitempty"`             // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
+	ExtractFileName  string        `yaml:"extractfilename,omitempty"` // The file within the release you want
+	ReleaseFileName  string        `yaml:"releasefilename,omitempty"` // Specifc Release filename to look for. This is useful if a project publishes a binary and not a tarball.
+	Repo             string        `yaml:"repo"`                      // The specific repo name in github. e.g achore/syft
+	LinkName         string        `yaml:"linkname,omitempty"`        // Set what the final link will be. Defaults to project name.
+	Version          string        `yaml:"version,omitempty"`         // Pull a specific version
+	PostCommands     []PostCommand `yaml:"postcommands,omitempty"`
+	QueryType        string        `yaml:"querytype,omitempty"`
+	ReleasePath      string        `yaml:"releasepath,omitempty"`
+	SourceIdentifier string        `yaml:"source,omitempty"` // Allow setting of source individually
 
 	githubData       *github.RepositoryRelease
+	source           *Source
 	assetName        string // the target assetName
 	cleanupOnFailure bool   // mark true if we need to clean up on failure
 	dlUrl            string // the final donwload url

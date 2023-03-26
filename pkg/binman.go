@@ -29,7 +29,7 @@ func goSyncRepo(ghClient *github.Client, rel BinmanRelease, c chan<- BinmanMsg, 
 
 	rel.actions = rel.setPreActions(ghClient, rel.ReleasePath)
 
-	log.Debugf("release %s = %+v", rel.Repo, rel)
+	log.Debugf("release %s = %+v source = %+v", rel.Repo, rel, rel.source)
 
 	for rel.actions != nil {
 		if err = rel.runActions(); err != nil {
