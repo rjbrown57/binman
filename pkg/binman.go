@@ -123,7 +123,6 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 	swg.Add(1)
 	spinChan <- fmt.Sprintf("Processing %d repos", relLength)
 
-	// https://github.com/lotusirous/go-concurrency-patterns/blob/main/2-chan/main.go
 	for _, rel := range releases {
 		wg.Add(1)
 		go goSyncRepo(ghClient, rel, c, &wg)
