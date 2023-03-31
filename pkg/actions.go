@@ -3,7 +3,7 @@ package binman
 import (
 	"reflect"
 
-	"github.com/google/go-github/v50/github"
+	"github.com/rjbrown57/binman/pkg/gh"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -42,16 +42,29 @@ func (r *BinmanRelease) runActions() error {
 }
 
 // SetPreActions handles query and asset Selection
-func (r *BinmanRelease) setPreActions(ghClient *github.Client, releasePath string) []Action {
+func (r *BinmanRelease) setPreActions(releasePath string) []Action {
 
 	var actions []Action
 
-	// Add query task
-	switch r.QueryType {
-	case "release":
-		actions = append(actions, r.AddGetGHLatestReleaseAction(ghClient))
-	case "releasebytag":
-		actions = append(actions, r.AddGetGHReleaseByTagsAction(ghClient))
+	switch r.source.Apitype {
+	case "gitlab":
+		fallthrough
+	case "github":
+
+		log.Debugf("url %s - token %s\n", r.source.URL, r.source.Tokenvar)
+		ghClient := gh.GetGHCLient(r.source.URL, r.source.Tokenvar)
+		gh.ShowLimits(ghClient)
+		if err := gh.CheckLimits(ghClient); err != nil {
+			log.Fatalf("Unable to check limits against GH api")
+		}
+
+		// Add query task
+		switch r.QueryType {
+		case "release":
+			actions = append(actions, r.AddGetGHLatestReleaseAction(ghClient))
+		case "releasebytag":
+			actions = append(actions, r.AddGetGHReleaseByTagsAction(ghClient))
+		}
 	}
 
 	// If publishPath is already set we are doing a direct repo download and don't need to set a release path

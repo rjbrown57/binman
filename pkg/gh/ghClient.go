@@ -2,6 +2,7 @@ package gh
 
 import (
 	"context"
+	"net/url"
 	"os"
 
 	"github.com/google/go-github/v50/github"
@@ -10,20 +11,28 @@ import (
 )
 
 // GetGHClient will get a go-github client with auth for api access
-func GetGHCLient(tokenvar string) *github.Client {
+func GetGHCLient(baseUrl string, tokenvar string) *github.Client {
+
+	ghUrl, err := url.Parse(baseUrl)
+	if err != nil {
+		log.Fatalf("Unable to parse configured github url %s", baseUrl)
+	}
 
 	// No auth client if user does not supply envvar
 	if tokenvar == "none" {
 		log.Debugf("Returning github client without auth")
-		return github.NewClient(nil)
+		gh := github.NewClient(nil)
+		gh.BaseURL = ghUrl
+		return gh
 	}
 
-	log.Debugf("Returning github client using %s for auth", tokenvar)
 	ghtoken := os.Getenv(tokenvar)
 
 	if len(ghtoken) == 0 {
 		log.Fatalf("Specified environment variable %s is empty", tokenvar)
 	}
+
+	log.Debugf("Returning github client using %s for auth", tokenvar)
 
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
@@ -32,5 +41,8 @@ func GetGHCLient(tokenvar string) *github.Client {
 
 	tc := oauth2.NewClient(ctx, ts)
 
-	return github.NewClient(tc)
+	gh := github.NewClient(tc)
+	gh.BaseURL = ghUrl
+
+	return gh
 }

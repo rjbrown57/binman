@@ -53,7 +53,8 @@ func Add(config string, repo string) {
 	// We use NewGHBMConfig here to avoid grabbing contextual configs
 	currentConfig := binman.NewGHBMConfig(cPath)
 
-	tag, err := gh.CheckRepo(gh.GetGHCLient(currentConfig.Config.TokenVar), repo)
+	// todo fix this hack
+	tag, err := gh.CheckRepo(gh.GetGHCLient("https://api.github.com", currentConfig.Config.TokenVar), repo)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}

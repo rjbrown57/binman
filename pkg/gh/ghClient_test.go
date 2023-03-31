@@ -10,9 +10,11 @@ import (
 // This is the default value for TokenExpiration for an anonymous user
 const anonymousTokenExpiration = "0001-01-01 00:00:00 +0000 UTC"
 
+const defaultGHBaseURL = "https://api.github.com/"
+
 // TestGetGHClientAnonymous will verify we get an anonymous client when expected
 func TestGetGHClientAnonymous(t *testing.T) {
-	client := GetGHCLient("none")
+	client := GetGHCLient(defaultGHBaseURL, "none")
 	_, response, _ := client.APIMeta(context.Background())
 
 	expirationValue := fmt.Sprintf("%v", response.TokenExpiration)
@@ -25,7 +27,7 @@ func TestGetGHClientAnonymous(t *testing.T) {
 func TestGetClientWithAuth(t *testing.T) {
 
 	if os.Getenv("GH_TOKEN") != "" {
-		client := GetGHCLient("GH_TOKEN")
+		client := GetGHCLient(defaultGHBaseURL, "GH_TOKEN")
 		_, response, _ := client.APIMeta(context.Background())
 
 		expirationValue := fmt.Sprintf("%v", response.TokenExpiration)

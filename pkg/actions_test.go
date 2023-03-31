@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
-
-	"github.com/google/go-github/v50/github"
 )
 
 func TestRunActions(t *testing.T) {
@@ -23,21 +21,26 @@ func TestRunActions(t *testing.T) {
 
 func TestSetPreActions(t *testing.T) {
 
+	s := Source{Name: "github.com", URL: defaultGHBaseURL, Apitype: "github", Tokenvar: "none"}
+
 	relWithOutPublish := BinmanRelease{
 		Repo:      "rjbrown57/binman",
 		QueryType: "release",
+		source:    &s,
 	}
 
 	relWithPublish := BinmanRelease{
 		Repo:        "rjbrown57/binman",
 		publishPath: "binman",
 		QueryType:   "release",
+		source:      &s,
 	}
 
 	relQueryByTag := BinmanRelease{
 		Repo:        "rjbrown57/binman",
 		publishPath: "binman",
 		QueryType:   "releasebytag",
+		source:      &s,
 	}
 
 	relPostOnly := BinmanRelease{
@@ -45,6 +48,7 @@ func TestSetPreActions(t *testing.T) {
 		publishPath: "binman",
 		QueryType:   "release",
 		PostOnly:    true,
+		source:      &s,
 	}
 
 	var tests = []struct {
@@ -52,19 +56,19 @@ func TestSetPreActions(t *testing.T) {
 		ExpectedActions []string
 	}{
 		{
-			relWithOutPublish.setPreActions(github.NewClient(nil), "/tmp/"),
+			relWithOutPublish.setPreActions("/tmp/"),
 			[]string{"*binman.GetGHLatestReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
-			relWithPublish.setPreActions(github.NewClient(nil), "/tmp/"),
+			relWithPublish.setPreActions("/tmp/"),
 			[]string{"*binman.GetGHLatestReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
-			relQueryByTag.setPreActions(github.NewClient(nil), "/tmp/"),
+			relQueryByTag.setPreActions("/tmp/"),
 			[]string{"*binman.GetGHReleaseByTagsAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
-			relPostOnly.setPreActions(github.NewClient(nil), "/tmp/"),
+			relPostOnly.setPreActions("/tmp/"),
 			[]string{"*binman.GetGHLatestReleaseAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 	}

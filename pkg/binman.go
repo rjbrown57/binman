@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v50/github"
-	"github.com/rjbrown57/binman/pkg/gh"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -22,12 +20,12 @@ var swg sync.WaitGroup
 // Pre -> Post -> Os -> Final
 // The last action of each phase sets the actions for the next phase
 // The Final actions is to set rel.actions = nil and conlude the loop
-func goSyncRepo(ghClient *github.Client, rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
+func goSyncRepo(rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	var err error
 
-	rel.actions = rel.setPreActions(ghClient, rel.ReleasePath)
+	rel.actions = rel.setPreActions(rel.ReleasePath)
 
 	log.Debugf("release %s = %+v source = %+v", rel.Repo, rel, rel.source)
 
@@ -85,7 +83,6 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 	output := make(map[string][]BinmanMsg)
 	var wg sync.WaitGroup
 	var releases []BinmanRelease
-	var ghClient *github.Client
 
 	// Create config object.
 	// setBaseConfig will return the appropriate base config file.
@@ -93,14 +90,6 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 	config := SetConfig(SetBaseConfig(args["configFile"]))
 
 	log.Debugf("binman config = %+v", config)
-
-	// get github client
-	ghClient = gh.GetGHCLient(config.Config.TokenVar)
-
-	gh.ShowLimits(ghClient)
-	if err := gh.CheckLimits(ghClient); err != nil {
-		log.Fatalf("Unable to check limits against GH api")
-	}
 
 	switch launchCommand {
 	case "get":
@@ -125,7 +114,7 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 
 	for _, rel := range releases {
 		wg.Add(1)
-		go goSyncRepo(ghClient, rel, c, &wg)
+		go goSyncRepo(rel, c, &wg)
 	}
 
 	go func(c chan BinmanMsg, wg *sync.WaitGroup) {
@@ -175,6 +164,5 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 		OutputResults(output, debug)
 	}
 
-	gh.ShowLimits(ghClient)
 	log.Debugf("binman finished!")
 }
