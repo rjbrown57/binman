@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/rjbrown57/binman/pkg/gh"
+	"github.com/rjbrown57/binman/pkg/gl"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -48,10 +49,16 @@ func (r *BinmanRelease) setPreActions(releasePath string) []Action {
 
 	switch r.source.Apitype {
 	case "gitlab":
-		fallthrough
-	case "github":
+		glClient := gl.GetGLClient(r.source.URL, r.source.Tokenvar)
 
-		log.Debugf("url %s - token %s\n", r.source.URL, r.source.Tokenvar)
+		switch r.QueryType {
+		case "release":
+			actions = append(actions, r.AddGetGLLatestReleaseAction(glClient))
+		case "releasebytag":
+			actions = append(actions, r.AddGetGLReleaseByTagsAction(glClient))
+		}
+
+	case "github":
 		ghClient := gh.GetGHCLient(r.source.URL, r.source.Tokenvar)
 		gh.ShowLimits(ghClient)
 		if err := gh.CheckLimits(ghClient); err != nil {
