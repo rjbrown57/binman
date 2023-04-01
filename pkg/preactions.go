@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rjbrown57/binman/pkg/gh"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -26,7 +25,7 @@ func (r *BinmanRelease) AddReleaseStatusAction(releasePath string) Action {
 // ReleaseStatusAction verifies whether we have work to do
 func (action *ReleaseStatusAction) execute() error {
 
-	action.r.setPublishPath(action.releasePath, *action.r.githubData.TagName)
+	action.r.setPublishPath(action.releasePath, action.r.Version)
 	_, err := os.Stat(action.r.publishPath)
 
 	// If err nil we already have this version, send custom error so gosyncrepo knows to end actions
@@ -59,17 +58,6 @@ func (action *SetUrlAction) execute() error {
 		action.r.dlUrl = formatString(action.r.ExternalUrl, action.r.getDataMap())
 		action.r.assetName = filepath.Base(action.r.dlUrl)
 		return nil
-	}
-
-	// If the user has requested a specifc asset check for that
-	if action.r.ReleaseFileName != "" {
-		rFilename := formatString(action.r.ReleaseFileName, action.r.getDataMap())
-		log.Debugf("Get asset by name %s", rFilename)
-		action.r.assetName, action.r.dlUrl = gh.GetAssetbyName(rFilename, action.r.githubData.Assets)
-	} else {
-		// Attempt to find the asset via arch/os
-		log.Debugf("Attempt to find asset %s", action.r.ReleaseFileName)
-		action.r.assetName, action.r.dlUrl = gh.FindAsset(action.r.Arch, action.r.Os, action.r.Version, action.r.project, action.r.githubData.Assets)
 	}
 
 	// If at this point dlUrl is not set we have an issue

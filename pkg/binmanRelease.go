@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/google/go-github/v50/github"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -31,7 +30,7 @@ type BinmanRelease struct {
 	ReleasePath      string        `yaml:"releasepath,omitempty"`
 	SourceIdentifier string        `yaml:"source,omitempty"` // Allow setting of source individually
 
-	githubData       *github.RepositoryRelease
+	relNotes         string
 	source           *Source
 	assetName        string // the target assetName
 	cleanupOnFailure bool   // mark true if we need to clean up on failure
@@ -129,7 +128,7 @@ func (r *BinmanRelease) setPublishPath(ReleasePath string, tag string) {
 // getDataMap is a helper function to provide data to be used with templating
 func (r *BinmanRelease) getDataMap() map[string]string {
 	dataMap := make(map[string]string)
-	dataMap["version"] = *r.githubData.TagName
+	dataMap["version"] = r.Version
 	dataMap["os"] = r.Os
 	dataMap["arch"] = r.Arch
 	dataMap["org"] = r.org

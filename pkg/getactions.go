@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/go-github/v50/github"
+	"github.com/rjbrown57/binman/pkg/gh"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -27,8 +28,21 @@ func (action *GetGHLatestReleaseAction) execute() error {
 
 	log.Debugf("Querying github api for latest release of %s", action.r.Repo)
 	// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
-	if action.r.githubData, _, err = action.ghClient.Repositories.GetLatestRelease(ctx, action.r.org, action.r.project); err == nil {
-		action.r.Version = action.r.githubData.GetTagName()
+	ghd, _, err := action.ghClient.Repositories.GetLatestRelease(ctx, action.r.org, action.r.project)
+	if err == nil {
+		action.r.Version = ghd.GetTagName()
+		action.r.relNotes = ghd.GetBody()
+	}
+
+	// If the user has requested a specifc asset check for that
+	if action.r.ReleaseFileName != "" {
+		rFilename := formatString(action.r.ReleaseFileName, action.r.getDataMap())
+		log.Debugf("Get asset by name %s", rFilename)
+		action.r.assetName, action.r.dlUrl = gh.GetAssetbyName(rFilename, ghd.Assets)
+	} else {
+		// Attempt to find the asset via arch/os
+		log.Debugf("Attempt to find asset %s", action.r.ReleaseFileName)
+		action.r.assetName, action.r.dlUrl = gh.FindAsset(action.r.Arch, action.r.Os, action.r.Version, action.r.project, ghd.Assets)
 	}
 
 	return err
@@ -46,6 +60,7 @@ func (r *BinmanRelease) AddGetGHReleaseByTagsAction(ghClient *github.Client) Act
 	}
 }
 
+// Verify specified version exists
 func (action *GetGHReleaseByTagsAction) execute() error {
 
 	var err error
@@ -54,7 +69,19 @@ func (action *GetGHReleaseByTagsAction) execute() error {
 
 	log.Debugf("Querying github api for %s release of %s", action.r.Version, action.r.Repo)
 	// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
-	action.r.githubData, _, err = action.ghClient.Repositories.GetReleaseByTag(ctx, action.r.org, action.r.project, action.r.Version)
+	ghd, _, err := action.ghClient.Repositories.GetReleaseByTag(ctx, action.r.org, action.r.project, action.r.Version)
+	action.r.relNotes = ghd.GetBody()
+
+	// If the user has requested a specifc asset check for that
+	if action.r.ReleaseFileName != "" {
+		rFilename := formatString(action.r.ReleaseFileName, action.r.getDataMap())
+		log.Debugf("Get asset by name %s", rFilename)
+		action.r.assetName, action.r.dlUrl = gh.GetAssetbyName(rFilename, ghd.Assets)
+	} else {
+		// Attempt to find the asset via arch/os
+		log.Debugf("Attempt to find asset %s", action.r.ReleaseFileName)
+		action.r.assetName, action.r.dlUrl = gh.FindAsset(action.r.Arch, action.r.Os, action.r.Version, action.r.project, ghd.Assets)
+	}
 
 	return err
 }

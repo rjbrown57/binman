@@ -54,7 +54,7 @@ func Add(config string, repo string) {
 	currentConfig := binman.NewGHBMConfig(cPath)
 
 	// todo fix this hack
-	tag, err := gh.CheckRepo(gh.GetGHCLient("https://api.github.com", currentConfig.Config.TokenVar), repo)
+	tag, err := gh.CheckRepo(gh.GetGHCLient("https://api.github.com/", currentConfig.Config.TokenVar), repo)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
