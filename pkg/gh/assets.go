@@ -5,13 +5,9 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v50/github"
+	"github.com/rjbrown57/binman/pkg/constants"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
-
-const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
-const ZipRegEx = `(\.zip$)`
-const ExeRegex = `.*\.exe$`
-const x86RegEx = `(amd64|x86_64)`
 
 // I should refactor this a bit to use a regex for Arch to interchange amd64 v x86_64
 // rel* vars should come in a interface
@@ -33,12 +29,12 @@ func FindAsset(relArch string, relOS string, version string, project string, ass
 
 	// sometimes amd64 is represented as x86_64, so we substitute a regex here that covers both
 	if relArch == "amd64" {
-		relArch = x86RegEx
+		relArch = constants.X86RegEx
 	}
 
-	zipRx := regexp.MustCompile(ZipRegEx)
-	tarRx := regexp.MustCompile(TarRegEx)
-	exeRx := regexp.MustCompile(ExeRegex)
+	zipRx := regexp.MustCompile(constants.ZipRegEx)
+	tarRx := regexp.MustCompile(constants.TarRegEx)
+	exeRx := regexp.MustCompile(constants.ExeRegex)
 	osRx := regexp.MustCompile(relOS)
 	archRx := regexp.MustCompile(relArch)
 

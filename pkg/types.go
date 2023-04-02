@@ -10,12 +10,10 @@ import (
 	"sync"
 
 	"github.com/fatih/color"
+	"github.com/rjbrown57/binman/pkg/constants"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/rodaine/table"
 )
-
-const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
-const ZipRegEx = `(\.zip$)`
 
 // BinmanMsg contains return messages for binman's concurrent workers
 type BinmanMsg struct {
@@ -254,8 +252,8 @@ func setDefaultSources(config *GHBMConfig) {
 
 	config.Config.sourceMap = make(map[string]*Source)
 
-	var githubDefault = Source{Name: "github.com", URL: defaultGHBaseURL, Apitype: "github", Tokenvar: config.Config.TokenVar}
-	var gitlabDefault = Source{Name: "gitlab.com", URL: defaultGLBaseURL, Apitype: "gitlab"}
+	var githubDefault = Source{Name: "github.com", URL: constants.DefaultGHBaseURL, Apitype: "github", Tokenvar: config.Config.TokenVar}
+	var gitlabDefault = Source{Name: "gitlab.com", URL: constants.DefaultGLBaseURL, Apitype: "gitlab"}
 
 	log.Debugf("sources = %s", config.Config.Sources)
 

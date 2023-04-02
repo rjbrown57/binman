@@ -3,6 +3,7 @@ package gl
 import (
 	"os"
 
+	"github.com/rjbrown57/binman/pkg/constants"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/xanzy/go-gitlab"
 )
@@ -18,7 +19,7 @@ func GetGLClient(baseUrl string, tokenvar string) *gitlab.Client {
 	gl, err := gitlab.NewClient(glToken,
 
 		// something is wrong with the default gitlab url
-		gitlab.WithBaseURL("https://gitlab.com"),
+		gitlab.WithBaseURL(constants.DefaultGLBaseURL),
 	)
 
 	if err != nil {

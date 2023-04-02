@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/rjbrown57/binman/pkg/constants"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/xanzy/go-gitlab"
 )
@@ -18,12 +19,6 @@ func GLGetReleaseAssets(glClient *gitlab.Client, repo string, tag string) []*git
 
 	return rel.Assets.Links
 }
-
-const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
-const ZipRegEx = `(\.zip$)`
-const ExeRegex = `.*\.exe$`
-const x86RegEx = `(amd64|x86_64)`
-const macOsRx = `(darwin|macos)`
 
 func GetAssetbyName(relFileName string, assets []*gitlab.ReleaseLink) (string, string) {
 	for _, asset := range assets {
@@ -45,17 +40,17 @@ func FindAsset(relArch string, relOS string, version string, project string, ass
 
 	// sometimes amd64 is represented as x86_64, so we substitute a regex here that covers both
 	if relArch == "amd64" {
-		relArch = x86RegEx
+		relArch = constants.X86RegEx
 	}
 
 	// gitlab refers to darwin and "macos"  so we substitute a regex here that covers both
 	if relOS == "darwin" {
-		relOS = macOsRx
+		relOS = constants.MacOsRx
 	}
 
-	zipRx := regexp.MustCompile(ZipRegEx)
-	tarRx := regexp.MustCompile(TarRegEx)
-	exeRx := regexp.MustCompile(ExeRegex)
+	zipRx := regexp.MustCompile(constants.ZipRegEx)
+	tarRx := regexp.MustCompile(constants.TarRegEx)
+	exeRx := regexp.MustCompile(constants.ExeRegex)
 	osRx := regexp.MustCompile(relOS)
 	archRx := regexp.MustCompile(relArch)
 

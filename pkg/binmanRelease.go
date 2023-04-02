@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	log "github.com/rjbrown57/binman/pkg/logging"
+	"github.com/rjbrown57/binman/pkg/constants"
+
 )
 
 // BinmanRelease contains info on specifc releases to hunt for
@@ -65,8 +67,8 @@ func (r *BinmanRelease) findTarget() {
 		log.Debugf("Running on %s updating target to %s", r.Os, targetFileName)
 	}
 
-	tarRx := regexp.MustCompile(TarRegEx)
-	ZipRegEx := regexp.MustCompile(ZipRegEx)
+	tarRx := regexp.MustCompile(constants.TarRegEx)
+	ZipRegEx := regexp.MustCompile(constants.ZipRegEx)
 
 	_ = filepath.WalkDir(r.publishPath, func(path string, d os.DirEntry, err error) error {
 
