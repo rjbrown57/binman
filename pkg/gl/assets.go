@@ -13,11 +13,13 @@ import (
 func GLGetReleaseAssets(glClient *gitlab.Client, repo string, tag string) []*gitlab.ReleaseLink {
 	rel, _, err := glClient.Releases.GetRelease(repo, tag)
 
-	if err != nil {
-		log.Debugf("Error getting release for %s:%s - %v", repo, tag, err)
+	if err == nil {
+		return rel.Assets.Links
 	}
 
-	return rel.Assets.Links
+	log.Debugf("Error getting release for %s:%s - %v", repo, tag, err)
+
+	return nil
 }
 
 func GetAssetbyName(relFileName string, assets []*gitlab.ReleaseLink) (string, string) {

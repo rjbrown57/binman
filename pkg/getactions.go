@@ -2,6 +2,7 @@ package binman
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/go-github/v50/github"
 	"github.com/rjbrown57/binman/pkg/gl"
@@ -63,13 +64,31 @@ func (action *GetGLReleaseAction) execute() error {
 
 	var err error
 
+	// Get latest tag or Confirm tag exsits
 	switch action.r.QueryType {
 	case "release":
-		log.Debugf("Querying github api for latest release of %s", action.r.Repo)
+		log.Debugf("Querying gitlab api for latest release of %s", action.r.Repo)
 		action.r.Version = gl.GLGetLatestTag(action.glClient, action.r.Repo)
+		if action.r.Version == "" {
+			err = fmt.Errorf("Unable to find latest tag for %s", action.r.Repo)
+			return err
+		}
+		log.Debugf("Latest release of %s == %s", action.r.Repo, action.r.Version)
+	case "releasebytag":
+		log.Debugf("Querying gitlab api for tag %s of %s", action.r.Version, action.r.Repo)
+		if !gl.GLGetTag(action.glClient, action.r.Repo, action.r.Version) {
+			err = fmt.Errorf("Unable to find tag %s for %s", action.r.Version, action.r.Repo)
+			return err
+		}
 	}
 
-	action.r.relData = gl.GLGetReleaseAssets(action.glClient, action.r.Repo, action.r.Version)
+	//Fetch release data
+	releaseLinks := gl.GLGetReleaseAssets(action.glClient, action.r.Repo, action.r.Version)
+	action.r.relData = releaseLinks
+
+	if action.r.relData == nil || len(releaseLinks) == 0 {
+		err = fmt.Errorf("No release data found for %s", action.r.Repo)
+	}
 
 	return err
 }

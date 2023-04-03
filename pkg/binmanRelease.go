@@ -31,7 +31,7 @@ type BinmanRelease struct {
 	ReleasePath      string        `yaml:"releasepath,omitempty"`
 	SourceIdentifier string        `yaml:"source,omitempty"` // Allow setting of source individually
 
-	relData          interface{} // Data gathered from source we
+	relData          interface{} // Data gathered from source
 	relNotes         string
 	source           *Source
 	assetName        string // the target assetName
