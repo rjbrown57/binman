@@ -7,9 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/rjbrown57/binman/pkg/constants"
-
+	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
 // BinmanRelease contains info on specifc releases to hunt for
@@ -32,6 +31,7 @@ type BinmanRelease struct {
 	ReleasePath      string        `yaml:"releasepath,omitempty"`
 	SourceIdentifier string        `yaml:"source,omitempty"` // Allow setting of source individually
 
+	relData          interface{} // Data gathered from source we
 	relNotes         string
 	source           *Source
 	assetName        string // the target assetName

@@ -50,14 +50,7 @@ func (r *BinmanRelease) setPreActions(releasePath string) []Action {
 	switch r.source.Apitype {
 	case "gitlab":
 		glClient := gl.GetGLClient(r.source.URL, r.source.Tokenvar)
-
-		switch r.QueryType {
-		case "release":
-			actions = append(actions, r.AddGetGLLatestReleaseAction(glClient))
-		case "releasebytag":
-			actions = append(actions, r.AddGetGLReleaseByTagsAction(glClient))
-		}
-
+		actions = append(actions, r.AddGetGLReleaseAction(glClient))
 	case "github":
 		ghClient := gh.GetGHCLient(r.source.URL, r.source.Tokenvar)
 		gh.ShowLimits(ghClient)
@@ -65,13 +58,7 @@ func (r *BinmanRelease) setPreActions(releasePath string) []Action {
 			log.Fatalf("Unable to check limits against GH api")
 		}
 
-		// Add query task
-		switch r.QueryType {
-		case "release":
-			actions = append(actions, r.AddGetGHLatestReleaseAction(ghClient))
-		case "releasebytag":
-			actions = append(actions, r.AddGetGHReleaseByTagsAction(ghClient))
-		}
+		actions = append(actions, r.AddGetGHReleaseAction(ghClient))
 	}
 
 	// If publishPath is already set we are doing a direct repo download and don't need to set a release path
@@ -83,6 +70,7 @@ func (r *BinmanRelease) setPreActions(releasePath string) []Action {
 	// If PostOnly is true, we don't need to select an asset
 	if !r.PostOnly {
 		actions = append(actions,
+			// The SetUrlAction finds the approriate asset to download
 			r.AddSetUrlAction(),
 		)
 	}

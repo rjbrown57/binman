@@ -51,25 +51,38 @@ func TestSetPreActions(t *testing.T) {
 		source:      &s,
 	}
 
+	relExternalUrl := BinmanRelease{
+		Repo:        "rjbrown57/binman",
+		publishPath: "binman",
+		QueryType:   "release",
+		PostOnly:    false,
+		ExternalUrl: "https://avaluehere.com",
+		source:      &s,
+	}
+
 	var tests = []struct {
 		ReturnedActions []Action
 		ExpectedActions []string
 	}{
 		{
 			relWithOutPublish.setPreActions("/tmp/"),
-			[]string{"*binman.GetGHLatestReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.GetGHReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
 			relWithPublish.setPreActions("/tmp/"),
-			[]string{"*binman.GetGHLatestReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.GetGHReleaseAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
 			relQueryByTag.setPreActions("/tmp/"),
-			[]string{"*binman.GetGHReleaseByTagsAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.GetGHReleaseAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
 			relPostOnly.setPreActions("/tmp/"),
-			[]string{"*binman.GetGHLatestReleaseAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.GetGHReleaseAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+		},
+		{
+			relExternalUrl.setPreActions("/tmp/"),
+			[]string{"*binman.GetGHReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 	}
 
