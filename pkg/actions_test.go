@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/rjbrown57/binman/pkg/constants"
 )
 
 func TestRunActions(t *testing.T) {
@@ -21,26 +23,27 @@ func TestRunActions(t *testing.T) {
 
 func TestSetPreActions(t *testing.T) {
 
-	s := Source{Name: "github.com", URL: defaultGHBaseURL, Apitype: "github", Tokenvar: "none"}
+	githubSource := Source{Name: "github.com", URL: constants.DefaultGHBaseURL, Apitype: "github", Tokenvar: "none"}
+	gitlabSource := Source{Name: "gitlab.com", URL: constants.DefaultGLBaseURL, Apitype: "gitlab", Tokenvar: "none"}
 
 	relWithOutPublish := BinmanRelease{
 		Repo:      "rjbrown57/binman",
 		QueryType: "release",
-		source:    &s,
+		source:    &githubSource,
 	}
 
 	relWithPublish := BinmanRelease{
 		Repo:        "rjbrown57/binman",
 		publishPath: "binman",
 		QueryType:   "release",
-		source:      &s,
+		source:      &githubSource,
 	}
 
 	relQueryByTag := BinmanRelease{
 		Repo:        "rjbrown57/binman",
 		publishPath: "binman",
 		QueryType:   "releasebytag",
-		source:      &s,
+		source:      &githubSource,
 	}
 
 	relPostOnly := BinmanRelease{
@@ -48,41 +51,58 @@ func TestSetPreActions(t *testing.T) {
 		publishPath: "binman",
 		QueryType:   "release",
 		PostOnly:    true,
-		source:      &s,
+		source:      &githubSource,
 	}
 
 	relExternalUrl := BinmanRelease{
 		Repo:        "rjbrown57/binman",
-		publishPath: "binman",
 		QueryType:   "release",
 		PostOnly:    false,
 		ExternalUrl: "https://avaluehere.com",
-		source:      &s,
+		source:      &githubSource,
+	}
+
+	relGLBasic := BinmanRelease{
+		Repo:      "rjbrown57/binman",
+		QueryType: "release",
+		source:    &gitlabSource,
 	}
 
 	var tests = []struct {
+		name            string
 		ReturnedActions []Action
 		ExpectedActions []string
 	}{
 		{
+			"relwithoutpublish",
 			relWithOutPublish.setPreActions("/tmp/"),
-			[]string{"*binman.GetGHReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.GetGHReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
+			// this release has a preset publish path this means it's a binman get and we don't need to use releasestatusaction
+			"relWithPublish",
 			relWithPublish.setPreActions("/tmp/"),
-			[]string{"*binman.GetGHReleaseAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.GetGHReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
+			"relQueryByTag",
 			relQueryByTag.setPreActions("/tmp/"),
-			[]string{"*binman.GetGHReleaseAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.GetGHReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
+			"relPostOnly",
 			relPostOnly.setPreActions("/tmp/"),
 			[]string{"*binman.GetGHReleaseAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
+			"relExternalUrl",
 			relExternalUrl.setPreActions("/tmp/"),
-			[]string{"*binman.GetGHReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.GetGHReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+		},
+		{
+			"relGLBasic",
+			relGLBasic.setPreActions("/tmp/"),
+			[]string{"*binman.GetGLReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 	}
 
@@ -90,7 +110,7 @@ func TestSetPreActions(t *testing.T) {
 		t.Logf("returned actions == %s", test.ReturnedActions)
 		for k := range test.ReturnedActions {
 			if reflect.TypeOf(test.ReturnedActions[k]).String() != test.ExpectedActions[k] {
-				t.Fatalf("Expected %s, got %s", reflect.TypeOf(test.ReturnedActions[k]).String(), test.ExpectedActions[k])
+				t.Fatalf("test %s - Expected %s, got %s", test.name, reflect.TypeOf(test.ReturnedActions[k]).String(), test.ExpectedActions[k])
 			}
 		}
 	}
