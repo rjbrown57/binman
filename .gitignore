@@ -1,3 +1,4 @@
 ./binman
 dist/
 notes/
+.*.swp
