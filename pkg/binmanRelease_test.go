@@ -8,14 +8,23 @@ import (
 
 func TestGetOr(t *testing.T) {
 
-	rel := BinmanRelease{
-		Repo: "rjbrown57/binman",
+	relSlice := []BinmanRelease{
+		{
+			// A basic gitub release
+			Repo: "rjbrown57/binman",
+		},
+		{
+			// A basic nested project
+			Repo: "mygroup/mysubgroup/myproject",
+		},
 	}
 
-	rel.getOR()
-	testRepo := fmt.Sprintf("%s/%s", rel.org, rel.project)
-	if testRepo != rel.Repo {
-		t.Fatalf("%s != %s ; Should be equal", testRepo, rel.Repo)
+	for _, rel := range relSlice {
+		rel.getOR()
+		testRepo := fmt.Sprintf("%s/%s", rel.org, rel.project)
+		if testRepo != rel.Repo {
+			t.Fatalf("excpected %s : got %s", testRepo, rel.Repo)
+		}
 	}
 
 }

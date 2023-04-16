@@ -54,8 +54,15 @@ type PostCommand struct {
 // set project and org vars
 func (r *BinmanRelease) getOR() {
 	n := strings.Split(r.Repo, "/")
-	r.org = n[0]
-	r.project = n[1]
+	length := len(n)
+
+	// Concatenate everything but the project
+	r.org = strings.Join(n[:length-1], "/")
+
+	// Project is always the last element
+	r.project = n[length-1]
+}
+
 }
 
 func (r *BinmanRelease) findTarget() {
