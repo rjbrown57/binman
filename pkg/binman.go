@@ -45,7 +45,7 @@ func goSyncRepo(rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	c <- BinmanMsg{rel: rel, err: nil}
 }
 
-func BinmanGetReleasePrep(work map[string]string) []BinmanRelease {
+func BinmanGetReleasePrep(sourceMap map[string]*Source, work map[string]string) []BinmanRelease {
 
 	if f, err := os.Stat(work["path"]); !f.IsDir() || err != nil {
 		log.Fatalf("Issue detected with %s", work["path"])
@@ -66,6 +66,7 @@ func BinmanGetReleasePrep(work map[string]string) []BinmanRelease {
 		rel.QueryType = "releasebytag"
 	}
 
+	rel.setSource(sourceMap)
 	rel.getOR()
 
 	return []BinmanRelease{rel}
@@ -93,7 +94,7 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 
 	switch launchCommand {
 	case "get":
-		releases = BinmanGetReleasePrep(args)
+		releases = BinmanGetReleasePrep(config.Config.sourceMap, args)
 	case "config":
 		releases = config.Releases
 	}
