@@ -53,6 +53,7 @@ type PostCommand struct {
 
 // set project and org vars
 func (r *BinmanRelease) getOR() {
+
 	n := strings.Split(r.Repo, "/")
 	length := len(n)
 
@@ -63,6 +64,30 @@ func (r *BinmanRelease) getOR() {
 	r.project = n[length-1]
 }
 
+// setSource will set the source for a release, it will also trim the source prefix from repo if used
+func (r *BinmanRelease) setSource(sourceMap map[string]*Source) {
+
+	repoSlice := strings.Split(r.Repo, "/")
+
+	// Test if user supplied "sourceIdentifier/project/repo" format
+	if source, exists := sourceMap[repoSlice[0]]; exists {
+		// assign sourceIdentifer
+		r.SourceIdentifier = source.Name
+
+		// trimIdentifier from Reponame
+		repoName := strings.TrimPrefix(r.Repo, repoSlice[0]+"/")
+		r.Repo = repoName
+		log.Debugf("source %s detected in repo name. Updating repo name to %s", repoSlice[0], r.Repo)
+
+	}
+
+	// github.com is default for an unspecified source
+	if r.SourceIdentifier == "" {
+		r.SourceIdentifier = "github.com"
+	}
+
+	// assign pointer to source info for this release
+	r.source = sourceMap[r.SourceIdentifier]
 }
 
 func (r *BinmanRelease) findTarget() {

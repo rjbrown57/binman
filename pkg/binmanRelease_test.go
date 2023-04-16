@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/rjbrown57/binman/pkg/constants"
 )
 
 func TestGetOr(t *testing.T) {
@@ -24,6 +26,62 @@ func TestGetOr(t *testing.T) {
 		testRepo := fmt.Sprintf("%s/%s", rel.org, rel.project)
 		if testRepo != rel.Repo {
 			t.Fatalf("excpected %s : got %s", testRepo, rel.Repo)
+		}
+	}
+
+}
+
+func TestSetSource(t *testing.T) {
+
+	var githubDefault = Source{Name: "github.com", URL: constants.DefaultGHBaseURL, Apitype: "github"}
+	var gitlabDefault = Source{Name: "gitlab.com", URL: constants.DefaultGLBaseURL, Apitype: "gitlab"}
+
+	sourceMap := make(map[string]*Source)
+	sourceMap["github.com"] = &githubDefault
+	sourceMap["gitlab.com"] = &gitlabDefault
+
+	var tests = []struct {
+		rel              BinmanRelease
+		expectedSourceId string
+		expectedSource   *Source
+		expectedReponame string
+	}{
+		{
+			rel:              BinmanRelease{Repo: "rjbrown57/binman"},
+			expectedSourceId: "github.com",
+			expectedSource:   sourceMap["github.com"],
+			expectedReponame: "rjbrown57/binman",
+		},
+		{
+			rel:              BinmanRelease{Repo: "rjbrown57/binman", SourceIdentifier: "gitlab.com"},
+			expectedSourceId: "gitlab.com",
+			expectedSource:   sourceMap["gitlab.com"],
+			expectedReponame: "rjbrown57/binman",
+		},
+		{
+			rel:              BinmanRelease{Repo: "github.com/rjbrown57/binman"},
+			expectedSourceId: "github.com",
+			expectedSource:   sourceMap["github.com"],
+			expectedReponame: "rjbrown57/binman",
+		},
+		{
+			rel:              BinmanRelease{Repo: "gitlab.com/rjbrown57/binman"},
+			expectedSourceId: "gitlab.com",
+			expectedSource:   sourceMap["gitlab.com"],
+			expectedReponame: "rjbrown57/binman",
+		},
+	}
+
+	for _, test := range tests {
+		test.rel.setSource(sourceMap)
+		if test.expectedReponame != test.rel.Repo {
+			t.Fatalf("excpected %s : got %s", test.expectedReponame, test.rel.Repo)
+		}
+		if test.expectedSource != test.rel.source {
+			t.Fatalf("excpected %s : got %s", test.expectedSource, test.rel.source)
+		}
+		if test.expectedSourceId != test.rel.SourceIdentifier {
+			t.Fatalf("excpected %s : got %s", test.expectedSourceId, test.rel.SourceIdentifier)
 		}
 	}
 

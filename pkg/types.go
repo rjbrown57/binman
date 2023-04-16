@@ -123,16 +123,11 @@ func (config *GHBMConfig) populateReleases() {
 
 			defer wg.Done()
 
+			// set sources
+			config.Releases[index].setSource(config.Config.sourceMap)
+
 			// set project/org variables
 			config.Releases[index].getOR()
-
-			// github.com is default for an unspecified source
-			if config.Releases[index].SourceIdentifier == "" {
-				config.Releases[index].SourceIdentifier = "github.com"
-			}
-
-			// assign pointer to source info for this release
-			config.Releases[index].source = config.Config.sourceMap[config.Releases[index].SourceIdentifier]
 
 			// Configure the query type
 			// release is the default, if a version is set releasebytag
@@ -200,6 +195,8 @@ func (config *GHBMConfig) setDefaults() {
 	// Set sources if user has not supplied for github.com/gitlab.com
 	setDefaultSources(config)
 
+	log.Debugf("set Sources = %+v", config.Config.Sources)
+
 	// If user does not supply a ReleasePath var we will use HOMEDIR/binMan
 	if config.Config.ReleasePath == "" {
 		hDir, err := os.UserHomeDir()
@@ -254,8 +251,6 @@ func setDefaultSources(config *GHBMConfig) {
 
 	var githubDefault = Source{Name: "github.com", URL: constants.DefaultGHBaseURL, Apitype: "github", Tokenvar: config.Config.TokenVar}
 	var gitlabDefault = Source{Name: "gitlab.com", URL: constants.DefaultGLBaseURL, Apitype: "gitlab"}
-
-	log.Debugf("sources = %s", config.Config.Sources)
 
 	for index, source := range config.Config.Sources {
 
