@@ -101,9 +101,10 @@ These options can be set per release
 | downloadonly   | default `false`. Set to true if you don't want binman to try to extract and link the asset |
 | externalurl | see [externalurl support](#external-url-support) |
 | linkname | by default binman will create a symlink matching the project name. This can be overidden with linkname set per release |
-| releasefilename | in some cases project publish assets that have different names than the github project. For example [cilium-cli](github.com/cilium/cilium-cli) publishs a cli `cilium`. We would set `cilium` here so binman knows what to look for |
 | os | target OS  |
+| releasefilename | in some cases project publish assets that have different names than the github project. For example [cilium-cli](github.com/cilium/cilium-cli) publishs a cli `cilium`. We would set `cilium` here so binman knows what to look for |
 | releasepath | Alternate releasepath from what is set in the main config |
+| source | git source to get release from. By default set to "github.com". Must match the name key of a configured source. See [config-sources](#config-sources)
 | upx | see [upx Config](#upx-config) |
 | version | pin to a specific release version |
 | postcommands | see [post commands](#post-commands)|
