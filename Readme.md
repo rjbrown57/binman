@@ -68,7 +68,7 @@ By default binman configures two sources `github.com` and `gitlab.com` without a
 
 ```
 config:
-  releasepath: /tmp/bmdebug/
+  releasepath: # path to keep fetched releases. $HOME/binMan is the default
   maxdownloads: 1
   sources:
    - name: gitlab.com
