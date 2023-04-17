@@ -156,7 +156,7 @@ func (r *BinmanRelease) knownUrlCheck() {
 func (r *BinmanRelease) setPublishPath(ReleasePath string, tag string) {
 	// Trim trailing / if user provided
 	ReleasePath = strings.TrimSuffix(ReleasePath, "/")
-	r.publishPath = filepath.Join(ReleasePath, "repos", r.org, r.project, tag)
+	r.publishPath = filepath.Join(ReleasePath, "repos", r.SourceIdentifier, r.org, r.project, tag)
 }
 
 // getDataMap is a helper function to provide data to be used with templating
