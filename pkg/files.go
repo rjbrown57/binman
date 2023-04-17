@@ -22,7 +22,7 @@ import (
 func createLink(source string, target string) error {
 
 	// If target exists, remove it
-	if _, err := os.Stat(target); err == nil {
+	if _, err := os.Readlink(target); err == nil {
 		log.Debugf("Updating %s to %s\n", source, target)
 		err := os.Remove(target)
 		if err != nil {
