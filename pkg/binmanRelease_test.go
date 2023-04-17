@@ -5,19 +5,84 @@ import (
 	"os"
 	"testing"
 
-	"github.com/google/go-github/v50/github"
+	"github.com/rjbrown57/binman/pkg/constants"
 )
 
 func TestGetOr(t *testing.T) {
 
-	rel := BinmanRelease{
-		Repo: "rjbrown57/binman",
+	relSlice := []BinmanRelease{
+		{
+			// A basic gitub release
+			Repo: "rjbrown57/binman",
+		},
+		{
+			// A basic nested project
+			Repo: "mygroup/mysubgroup/myproject",
+		},
 	}
 
-	rel.getOR()
-	testRepo := fmt.Sprintf("%s/%s", rel.org, rel.project)
-	if testRepo != rel.Repo {
-		t.Fatalf("%s != %s ; Should be equal", testRepo, rel.Repo)
+	for _, rel := range relSlice {
+		rel.getOR()
+		testRepo := fmt.Sprintf("%s/%s", rel.org, rel.project)
+		if testRepo != rel.Repo {
+			t.Fatalf("excpected %s : got %s", testRepo, rel.Repo)
+		}
+	}
+
+}
+
+func TestSetSource(t *testing.T) {
+
+	var githubDefault = Source{Name: "github.com", URL: constants.DefaultGHBaseURL, Apitype: "github"}
+	var gitlabDefault = Source{Name: "gitlab.com", URL: constants.DefaultGLBaseURL, Apitype: "gitlab"}
+
+	sourceMap := make(map[string]*Source)
+	sourceMap["github.com"] = &githubDefault
+	sourceMap["gitlab.com"] = &gitlabDefault
+
+	var tests = []struct {
+		rel              BinmanRelease
+		expectedSourceId string
+		expectedSource   *Source
+		expectedReponame string
+	}{
+		{
+			rel:              BinmanRelease{Repo: "rjbrown57/binman"},
+			expectedSourceId: "github.com",
+			expectedSource:   sourceMap["github.com"],
+			expectedReponame: "rjbrown57/binman",
+		},
+		{
+			rel:              BinmanRelease{Repo: "rjbrown57/binman", SourceIdentifier: "gitlab.com"},
+			expectedSourceId: "gitlab.com",
+			expectedSource:   sourceMap["gitlab.com"],
+			expectedReponame: "rjbrown57/binman",
+		},
+		{
+			rel:              BinmanRelease{Repo: "github.com/rjbrown57/binman"},
+			expectedSourceId: "github.com",
+			expectedSource:   sourceMap["github.com"],
+			expectedReponame: "rjbrown57/binman",
+		},
+		{
+			rel:              BinmanRelease{Repo: "gitlab.com/rjbrown57/binman"},
+			expectedSourceId: "gitlab.com",
+			expectedSource:   sourceMap["gitlab.com"],
+			expectedReponame: "rjbrown57/binman",
+		},
+	}
+
+	for _, test := range tests {
+		test.rel.setSource(sourceMap)
+		if test.expectedReponame != test.rel.Repo {
+			t.Fatalf("excpected %s : got %s", test.expectedReponame, test.rel.Repo)
+		}
+		if test.expectedSource != test.rel.source {
+			t.Fatalf("excpected %s : got %s", test.expectedSource, test.rel.source)
+		}
+		if test.expectedSourceId != test.rel.SourceIdentifier {
+			t.Fatalf("excpected %s : got %s", test.expectedSourceId, test.rel.SourceIdentifier)
+		}
 	}
 
 }
@@ -79,18 +144,13 @@ func TestFindTarget(t *testing.T) {
 		t.Fatalf("unable to write string to file %s", afp)
 	}
 
-	// Create a fake release
-	ghData := github.RepositoryRelease{
-		TagName: &version,
-	}
-
 	rel := BinmanRelease{
 		Repo:         "rjbrown57/binman",
 		artifactPath: "binman",
 		publishPath:  d,
 		Os:           "linux",
 		Arch:         "amd64",
-		githubData:   &ghData,
+		Version:      version,
 	}
 
 	rel.findTarget()
@@ -128,11 +188,6 @@ func TestSetartifactPath(t *testing.T) {
 
 	var version string = "v0.0.0"
 
-	// Create a fake release
-	ghData := github.RepositoryRelease{
-		TagName: &version,
-	}
-
 	// A release where we have set a specific target with releasefilename
 	relWithRelFilename := BinmanRelease{
 		Repo:            "rjbrown57/binman",
@@ -146,7 +201,7 @@ func TestSetartifactPath(t *testing.T) {
 		linkPath:        "path",
 		assetName:       "binman",
 		org:             "rjbrown57",
-		githubData:      &ghData,
+		Version:         version,
 	}
 
 	// A release where the asset is a tar/tgz/zip and we have specified a path internally
@@ -162,7 +217,7 @@ func TestSetartifactPath(t *testing.T) {
 		linkPath:        "path",
 		assetName:       "binman",
 		org:             "rjbrown57",
-		githubData:      &ghData,
+		Version:         version,
 	}
 
 	// A release with an external url that is a binary
@@ -178,7 +233,7 @@ func TestSetartifactPath(t *testing.T) {
 		linkPath:     "path",
 		assetName:    "binman",
 		org:          "rjbrown57",
-		githubData:   &ghData,
+		Version:      version,
 	}
 
 	// A release with an external url that is a tar/tgz/zip
@@ -194,7 +249,7 @@ func TestSetartifactPath(t *testing.T) {
 		linkPath:     "path",
 		assetName:    "binman",
 		org:          "rjbrown57",
-		githubData:   &ghData,
+		Version:      version,
 	}
 
 	// A basic release we use multiple times
@@ -209,7 +264,7 @@ func TestSetartifactPath(t *testing.T) {
 		linkPath:     "path",
 		assetName:    "binman",
 		org:          "rjbrown57",
-		githubData:   &ghData,
+		Version:      version,
 	}
 
 	// A release with the link name set
@@ -224,7 +279,7 @@ func TestSetartifactPath(t *testing.T) {
 		linkPath:     "path",
 		assetName:    "binman",
 		org:          "rjbrown57",
-		githubData:   &ghData,
+		Version:      version,
 	}
 
 	var tests = []struct {
@@ -264,15 +319,10 @@ func TestGetDataMap(t *testing.T) {
 	var os string = "linux"
 	var arch string = "amd64"
 
-	// Create a fake release
-	ghData := github.RepositoryRelease{
-		TagName: &version,
-	}
-
 	rel := BinmanRelease{
-		Os:         os,
-		Arch:       arch,
-		githubData: &ghData,
+		Os:      os,
+		Arch:    arch,
+		Version: version,
 	}
 
 	testdataMap := make(map[string]string)

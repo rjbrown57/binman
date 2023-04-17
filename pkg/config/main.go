@@ -5,6 +5,7 @@ import (
 	"os/exec"
 
 	binman "github.com/rjbrown57/binman/pkg"
+	"github.com/rjbrown57/binman/pkg/constants"
 	gh "github.com/rjbrown57/binman/pkg/gh"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"gopkg.in/yaml.v3"
@@ -49,11 +50,13 @@ func releasesContains(r []binman.BinmanRelease, repo string) bool {
 }
 
 func Add(config string, repo string) {
+
 	cPath := binman.SetBaseConfig(config)
 	// We use NewGHBMConfig here to avoid grabbing contextual configs
 	currentConfig := binman.NewGHBMConfig(cPath)
 
-	tag, err := gh.CheckRepo(gh.GetGHCLient(currentConfig.Config.TokenVar), repo)
+	// todo fix this hack
+	tag, err := gh.CheckRepo(gh.GetGHCLient(constants.DefaultGHBaseURL, currentConfig.Config.TokenVar), repo)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}

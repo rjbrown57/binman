@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v50/github"
-	"github.com/rjbrown57/binman/pkg/gh"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -22,14 +20,14 @@ var swg sync.WaitGroup
 // Pre -> Post -> Os -> Final
 // The last action of each phase sets the actions for the next phase
 // The Final actions is to set rel.actions = nil and conlude the loop
-func goSyncRepo(ghClient *github.Client, rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
+func goSyncRepo(rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	var err error
 
-	rel.actions = rel.setPreActions(ghClient, rel.ReleasePath)
+	rel.actions = rel.setPreActions(rel.ReleasePath)
 
-	log.Debugf("release %s = %+v", rel.Repo, rel)
+	log.Debugf("release %s = %+v source = %+v", rel.Repo, rel, rel.source)
 
 	for rel.actions != nil {
 		if err = rel.runActions(); err != nil {
@@ -47,7 +45,7 @@ func goSyncRepo(ghClient *github.Client, rel BinmanRelease, c chan<- BinmanMsg, 
 	c <- BinmanMsg{rel: rel, err: nil}
 }
 
-func BinmanGetReleasePrep(work map[string]string) []BinmanRelease {
+func BinmanGetReleasePrep(sourceMap map[string]*Source, work map[string]string) []BinmanRelease {
 
 	if f, err := os.Stat(work["path"]); !f.IsDir() || err != nil {
 		log.Fatalf("Issue detected with %s", work["path"])
@@ -68,6 +66,7 @@ func BinmanGetReleasePrep(work map[string]string) []BinmanRelease {
 		rel.QueryType = "releasebytag"
 	}
 
+	rel.setSource(sourceMap)
 	rel.getOR()
 
 	return []BinmanRelease{rel}
@@ -85,7 +84,6 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 	output := make(map[string][]BinmanMsg)
 	var wg sync.WaitGroup
 	var releases []BinmanRelease
-	var ghClient *github.Client
 
 	// Create config object.
 	// setBaseConfig will return the appropriate base config file.
@@ -94,17 +92,9 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 
 	log.Debugf("binman config = %+v", config)
 
-	// get github client
-	ghClient = gh.GetGHCLient(config.Config.TokenVar)
-
-	gh.ShowLimits(ghClient)
-	if err := gh.CheckLimits(ghClient); err != nil {
-		log.Fatalf("Unable to check limits against GH api")
-	}
-
 	switch launchCommand {
 	case "get":
-		releases = BinmanGetReleasePrep(args)
+		releases = BinmanGetReleasePrep(config.Config.sourceMap, args)
 	case "config":
 		releases = config.Releases
 	}
@@ -123,10 +113,9 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 	swg.Add(1)
 	spinChan <- fmt.Sprintf("Processing %d repos", relLength)
 
-	// https://github.com/lotusirous/go-concurrency-patterns/blob/main/2-chan/main.go
 	for _, rel := range releases {
 		wg.Add(1)
-		go goSyncRepo(ghClient, rel, c, &wg)
+		go goSyncRepo(rel, c, &wg)
 	}
 
 	go func(c chan BinmanMsg, wg *sync.WaitGroup) {
@@ -176,6 +165,5 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 		OutputResults(output, debug)
 	}
 
-	gh.ShowLimits(ghClient)
 	log.Debugf("binman finished!")
 }

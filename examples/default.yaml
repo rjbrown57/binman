@@ -1,13 +1,23 @@
 config:
   releasepath:  #path to keep fetched releases. $HOME/binMan is the default
-  tokenvar: #environment variable that contains github token
+  cleanup: true # remove downloaded archive
+  maxdownloads: 1 # number of concurrent downloads allowed. Default is 3
   upx: #Compress binaries with upx
     enabled: false
     args: [] # arrary of args for upx
+  sources:
+   - name: gitlab.com
+     #tokenvar: GL_TOKEN # environment variable that contains gitlab token
+     apitype: gitlab
+   - name: github.com
+     #tokenvar: GH_TOKEN # environment variable that contains github token
+     apitype: github
 releases:
   - repo: rjbrown57/binman
-    linkname: # Set link name to be created. Default is to match project name.
-    extractfilename: # If the published binary does not match the project name within the tar/zip set the binary name here
-    upx: # Upx can also be set per release
+    linkname: mybinman  
+    downloadonly: false 
+    cleanup: true
+    upx: 
       args: [] #["-k","-v"]
-    downloadonly: false # binman will only download the file. You take care of the rest ;)
+  # syncing from gitlab
+  #- repo: gitlab.com/gitlab-org/cli

@@ -2,59 +2,93 @@ package binman
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/go-github/v50/github"
+	"github.com/rjbrown57/binman/pkg/gl"
 	log "github.com/rjbrown57/binman/pkg/logging"
+	"github.com/xanzy/go-gitlab"
 )
 
-type GetGHLatestReleaseAction struct {
+type GetGHReleaseAction struct {
 	r        *BinmanRelease
 	ghClient *github.Client
 }
 
-func (r *BinmanRelease) AddGetGHLatestReleaseAction(ghClient *github.Client) Action {
-	return &GetGHLatestReleaseAction{
+func (r *BinmanRelease) AddGetGHReleaseAction(ghClient *github.Client) Action {
+	return &GetGHReleaseAction{
 		r,
 		ghClient,
 	}
 }
 
-func (action *GetGHLatestReleaseAction) execute() error {
+func (action *GetGHReleaseAction) execute() error {
 
 	var err error
+	var ghd *github.RepositoryRelease
 
 	ctx := context.Background()
 
-	log.Debugf("Querying github api for latest release of %s", action.r.Repo)
-	// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
-	if action.r.githubData, _, err = action.ghClient.Repositories.GetLatestRelease(ctx, action.r.org, action.r.project); err == nil {
-		action.r.Version = action.r.githubData.GetTagName()
+	switch action.r.QueryType {
+	case "release":
+		log.Debugf("Querying github api for latest release of %s", action.r.Repo)
+		// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
+		ghd, _, err = action.ghClient.Repositories.GetLatestRelease(ctx, action.r.org, action.r.project)
+	case "releasebytag":
+		ghd, _, err = action.ghClient.Repositories.GetReleaseByTag(ctx, action.r.org, action.r.project, action.r.Version)
 	}
+
+	if err == nil {
+		action.r.Version = ghd.GetTagName()
+		action.r.relNotes = ghd.GetBody()
+	}
+
+	action.r.relData = ghd
 
 	return err
 }
 
-type GetGHReleaseByTagsAction struct {
+type GetGLReleaseAction struct {
 	r        *BinmanRelease
-	ghClient *github.Client
+	glClient *gitlab.Client
 }
 
-func (r *BinmanRelease) AddGetGHReleaseByTagsAction(ghClient *github.Client) Action {
-	return &GetGHReleaseByTagsAction{
+func (r *BinmanRelease) AddGetGLReleaseAction(glClient *gitlab.Client) Action {
+	return &GetGLReleaseAction{
 		r,
-		ghClient,
+		glClient,
 	}
 }
 
-func (action *GetGHReleaseByTagsAction) execute() error {
+func (action *GetGLReleaseAction) execute() error {
 
 	var err error
 
-	ctx := context.Background()
+	// Get latest tag or Confirm tag exsits
+	switch action.r.QueryType {
+	case "release":
+		log.Debugf("Querying gitlab api for latest release of %s", action.r.Repo)
+		action.r.Version = gl.GLGetLatestTag(action.glClient, action.r.Repo)
+		if action.r.Version == "" {
+			err = fmt.Errorf("Unable to find latest tag for %s", action.r.Repo)
+			return err
+		}
+		log.Debugf("Latest release of %s == %s", action.r.Repo, action.r.Version)
+	case "releasebytag":
+		log.Debugf("Querying gitlab api for tag %s of %s", action.r.Version, action.r.Repo)
+		if !gl.GLGetTag(action.glClient, action.r.Repo, action.r.Version) {
+			err = fmt.Errorf("Unable to find tag %s for %s", action.r.Version, action.r.Repo)
+			return err
+		}
+	}
 
-	log.Debugf("Querying github api for %s release of %s", action.r.Version, action.r.Repo)
-	// https://docs.github.com/en/rest/releases/releases#get-the-latest-release
-	action.r.githubData, _, err = action.ghClient.Repositories.GetReleaseByTag(ctx, action.r.org, action.r.project, action.r.Version)
+	//Fetch release data
+	releaseLinks := gl.GLGetReleaseAssets(action.glClient, action.r.Repo, action.r.Version)
+	action.r.relData = releaseLinks
+
+	if action.r.relData == nil || len(releaseLinks) == 0 {
+		err = fmt.Errorf("No release data found for %s", action.r.Repo)
+	}
 
 	return err
 }

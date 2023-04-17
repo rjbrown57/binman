@@ -10,12 +10,10 @@ import (
 	"sync"
 
 	"github.com/fatih/color"
+	"github.com/rjbrown57/binman/pkg/constants"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/rodaine/table"
 )
-
-const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
-const ZipRegEx = `(\.zip$)`
 
 // BinmanMsg contains return messages for binman's concurrent workers
 type BinmanMsg struct {
@@ -52,6 +50,16 @@ type BinmanConfig struct {
 	TokenVar       string    `yaml:"tokenvar,omitempty"`     // Github Auth Token
 	NumWorkers     int       `yaml:"maxdownloads,omitempty"` // maximum number of concurrent downloads the user will allow
 	UpxConfig      UpxConfig `yaml:"upx,omitempty"`          // Allow upx to shrink extracted
+	Sources        []Source  `yaml:"sources,omitempty"`      // Sources to query. By default gitlab and github
+
+	sourceMap map[string]*Source // map of names to struct pointers for sources
+}
+
+type Source struct {
+	Name     string `yaml:"name"`
+	Tokenvar string `yaml:"tokenvar,omitempty"`
+	URL      string `yaml:"url"`
+	Apitype  string `yaml:"apitype"`
 }
 
 // BinmanDefaults contains default config options. If a value is unset in releases array these will be used.
@@ -114,6 +122,9 @@ func (config *GHBMConfig) populateReleases() {
 		go func(index int) {
 
 			defer wg.Done()
+
+			// set sources
+			config.Releases[index].setSource(config.Config.sourceMap)
 
 			// set project/org variables
 			config.Releases[index].getOR()
@@ -181,6 +192,11 @@ func (config *GHBMConfig) populateReleases() {
 // setDefaults will populate defaults, and required values
 func (config *GHBMConfig) setDefaults() {
 
+	// Set sources if user has not supplied for github.com/gitlab.com
+	setDefaultSources(config)
+
+	log.Debugf("set Sources = %+v", config.Config.Sources)
+
 	// If user does not supply a ReleasePath var we will use HOMEDIR/binMan
 	if config.Config.ReleasePath == "" {
 		hDir, err := os.UserHomeDir()
@@ -194,8 +210,11 @@ func (config *GHBMConfig) setDefaults() {
 		config.Config.NumWorkers = len(config.Releases)
 	}
 
-	if config.Config.TokenVar == "" {
+	log.Debugf("%s %s", config.Config.TokenVar, config.Config.sourceMap["github.com"].Tokenvar)
+
+	if config.Config.TokenVar == "" && config.Config.sourceMap["github.com"].Tokenvar == "" {
 		log.Debugf("config.tokenvar is not set. Using anonymous authentication. Please be aware you can quickly be rate limited by github. Instructions here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
+		config.Config.sourceMap["github.com"].Tokenvar = "none"
 		config.Config.TokenVar = "none"
 	}
 
@@ -220,5 +239,59 @@ func (config *GHBMConfig) setDefaults() {
 
 	if config.Defaults.Os == "" {
 		config.Defaults.Os = runtime.GOOS
+	}
+
+}
+
+// setDefaultSources will handle merging defaults and user sources
+// If github/gitlab source keys are missing we add a default
+func setDefaultSources(config *GHBMConfig) {
+
+	config.Config.sourceMap = make(map[string]*Source)
+
+	var githubDefault = Source{Name: "github.com", URL: constants.DefaultGHBaseURL, Apitype: "github", Tokenvar: config.Config.TokenVar}
+	var gitlabDefault = Source{Name: "gitlab.com", URL: constants.DefaultGLBaseURL, Apitype: "gitlab"}
+
+	for index, source := range config.Config.Sources {
+
+		switch source.Apitype {
+		case "gitlab", "github":
+		default:
+			log.Fatalf("Source %s apitype %s must equal github or gitlab", source.Name, source.Apitype)
+		}
+
+		// assign to sourceMap
+		config.Config.sourceMap[source.Name] = &config.Config.Sources[index]
+
+		switch source.Name {
+		case "github.com":
+			// Assign the default url if it's not set correctly
+			if source.URL != constants.DefaultGHBaseURL {
+				config.Config.Sources[index].URL = constants.DefaultGHBaseURL
+			}
+
+			// Compatability for existing githubtoken setting
+			if source.Tokenvar == "" && config.Config.TokenVar != "" {
+				config.Config.Sources[index].Tokenvar = config.Config.TokenVar
+			}
+		case "gitlab.com":
+			// Assign the default url if it's unset or incorrect
+			if source.URL != constants.DefaultGHBaseURL {
+				config.Config.Sources[index].URL = constants.DefaultGLBaseURL
+			}
+		}
+
+	}
+
+	// Add github.com to source array and sourceMap if missing
+	if _, exists := config.Config.sourceMap[githubDefault.Name]; !exists {
+		config.Config.Sources = append(config.Config.Sources, githubDefault)
+		config.Config.sourceMap[githubDefault.Name] = &config.Config.Sources[len(config.Config.Sources)-1]
+	}
+
+	// Add gitlab.com to source array and sourceMap if missing
+	if _, exists := config.Config.sourceMap[gitlabDefault.Name]; !exists {
+		config.Config.Sources = append(config.Config.Sources, gitlabDefault)
+		config.Config.sourceMap[gitlabDefault.Name] = &config.Config.Sources[len(config.Config.Sources)-1]
 	}
 }

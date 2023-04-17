@@ -3,7 +3,8 @@ package binman
 import (
 	"reflect"
 
-	"github.com/google/go-github/v50/github"
+	"github.com/rjbrown57/binman/pkg/gh"
+	"github.com/rjbrown57/binman/pkg/gl"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -42,16 +43,22 @@ func (r *BinmanRelease) runActions() error {
 }
 
 // SetPreActions handles query and asset Selection
-func (r *BinmanRelease) setPreActions(ghClient *github.Client, releasePath string) []Action {
+func (r *BinmanRelease) setPreActions(releasePath string) []Action {
 
 	var actions []Action
 
-	// Add query task
-	switch r.QueryType {
-	case "release":
-		actions = append(actions, r.AddGetGHLatestReleaseAction(ghClient))
-	case "releasebytag":
-		actions = append(actions, r.AddGetGHReleaseByTagsAction(ghClient))
+	switch r.source.Apitype {
+	case "gitlab":
+		glClient := gl.GetGLClient(r.source.URL, r.source.Tokenvar)
+		actions = append(actions, r.AddGetGLReleaseAction(glClient))
+	case "github":
+		ghClient := gh.GetGHCLient(r.source.URL, r.source.Tokenvar)
+		gh.ShowLimits(ghClient)
+		if err := gh.CheckLimits(ghClient); err != nil {
+			log.Fatalf("Unable to check limits against GH api")
+		}
+
+		actions = append(actions, r.AddGetGHReleaseAction(ghClient))
 	}
 
 	// If publishPath is already set we are doing a direct repo download and don't need to set a release path
@@ -63,6 +70,7 @@ func (r *BinmanRelease) setPreActions(ghClient *github.Client, releasePath strin
 	// If PostOnly is true, we don't need to select an asset
 	if !r.PostOnly {
 		actions = append(actions,
+			// The SetUrlAction finds the approriate asset to download
 			r.AddSetUrlAction(),
 		)
 	}

@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"testing"
+
+	"github.com/rjbrown57/binman/pkg/constants"
 )
 
 const mergeConfig = `
@@ -95,6 +98,10 @@ func TestSetDefaults(t *testing.T) {
 		t.Fatalf("Unable to detected user home directory %s", err)
 	}
 
+	defaultSourceMap := make(map[string]*Source)
+	defaultSourceMap["github.com"] = &Source{Name: "github.com", URL: constants.DefaultGHBaseURL, Apitype: "github", Tokenvar: "thetoken"}
+	defaultSourceMap["gitlab.com"] = &Source{Name: "gitlab.com", URL: constants.DefaultGLBaseURL, Apitype: "gitlab", Tokenvar: "thetoken"}
+
 	var tests = []struct {
 		config              string
 		expectedOs          string
@@ -102,9 +109,10 @@ func TestSetDefaults(t *testing.T) {
 		expectedReleasePath string
 		expectedTokenVar    string
 		expectedQueryType   string
+		expectedSourceMap   map[string]*Source
 	}{
-		{testConfig, runtime.GOOS, runtime.GOARCH, "thereleasepath", "thetoken", "release"},
-		{testConfigEmptyVals, runtime.GOOS, runtime.GOARCH, homeDir + "/" + "binMan", "none", "release"},
+		{testConfig, runtime.GOOS, runtime.GOARCH, "thereleasepath", "thetoken", "release", defaultSourceMap},
+		{testConfigEmptyVals, runtime.GOOS, runtime.GOARCH, homeDir + "/" + "binMan", "none", "release", defaultSourceMap},
 	}
 
 	for _, test := range tests {
@@ -126,6 +134,10 @@ func TestSetDefaults(t *testing.T) {
 
 		if c.Config.ReleasePath != test.expectedReleasePath {
 			t.Fatalf("Expected %s got %s", test.expectedReleasePath, c.Config.ReleasePath)
+		}
+
+		if reflect.DeepEqual(c.Config.sourceMap, test.expectedSourceMap) {
+			t.Fatalf("Expected %+v, got %+v,", c.Config.sourceMap["github.com"], test.expectedSourceMap["github.com"])
 		}
 	}
 }

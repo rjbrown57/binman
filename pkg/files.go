@@ -12,7 +12,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/rjbrown57/binman/pkg/constants"
 	log "github.com/rjbrown57/binman/pkg/logging"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,7 +22,7 @@ import (
 func createLink(source string, target string) error {
 
 	// If target exists, remove it
-	if _, err := os.Stat(target); err == nil {
+	if _, err := os.Readlink(target); err == nil {
 		log.Debugf("Updating %s to %s\n", source, target)
 		err := os.Remove(target)
 		if err != nil {
@@ -40,8 +42,8 @@ func createLink(source string, target string) error {
 // Test for filetypes
 func findfType(filepath string) string {
 
-	zipRegex := regexp.MustCompile(ZipRegEx)
-	tarRegex := regexp.MustCompile(TarRegEx)
+	zipRegex := regexp.MustCompile(constants.ZipRegEx)
+	tarRegex := regexp.MustCompile(constants.TarRegEx)
 
 	switch {
 	case tarRegex.MatchString(filepath):

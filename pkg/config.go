@@ -11,9 +11,27 @@ import (
 const defaultConfig = `
 config:
   releasepath:  #path to keep fetched releases. $HOME/binMan is the default
-  tokenvar: #environment variable that contains github token
+  cleanup: true # remove downloaded archive
+  maxdownloads: 1 # number of concurrent downloads allowed. Default is 3
+  upx: #Compress binaries with upx
+    enabled: false
+    args: [] # arrary of args for upx
+  sources:
+   - name: gitlab.com
+     #tokenvar: GL_TOKEN # environment variable that contains gitlab token
+     apitype: gitlab
+   - name: github.com
+     #tokenvar: GH_TOKEN # environment variable that contains github token
+     apitype: github
 releases:
   - repo: rjbrown57/binman
+    linkname: mybinman  
+    downloadonly: false 
+    cleanup: true
+    upx: 
+      args: [] #["-k","-v"]
+  # syncing from gitlab
+  #- repo: gitlab.com/gitlab-org/cli
 `
 
 // setupConfig will create ~/.config/binman and populate ~/.config/binman/config as needed

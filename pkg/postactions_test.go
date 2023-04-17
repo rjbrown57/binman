@@ -4,8 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/google/go-github/v50/github"
 )
 
 func TestWriteRelNotesAction(t *testing.T) {
@@ -22,16 +20,11 @@ func TestWriteRelNotesAction(t *testing.T) {
 	var version string = "v0.0.0"
 	var bodyContent string = "test-test-test"
 
-	// Create a fake release
-	ghData := github.RepositoryRelease{
-		TagName: &version,
-		Body:    &bodyContent,
-	}
-
 	rel := BinmanRelease{
 		Repo:        "rjbrown57/binman",
 		publishPath: d,
-		githubData:  &ghData,
+		Version:     version,
+		relNotes:    bodyContent,
 	}
 
 	actions = append(actions, rel.AddWriteRelNotesAction())
@@ -162,15 +155,10 @@ func TestOsCommandAction(t *testing.T) {
 
 	var version string = "v0.0.0"
 
-	// Create a fake release
-	ghData := github.RepositoryRelease{
-		TagName: &version,
-	}
-
 	rel := BinmanRelease{
 		Repo:         "rjbrown57/binman",
 		PostCommands: coms,
-		githubData:   &ghData,
+		Version:      version,
 	}
 
 	actions = append(actions, rel.AddOsCommandAction(0))

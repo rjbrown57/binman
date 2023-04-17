@@ -7,8 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/google/go-github/v50/github"
 	"github.com/rjbrown57/binman/pkg/gh"
+	"github.com/rjbrown57/binman/pkg/gl"
 	log "github.com/rjbrown57/binman/pkg/logging"
+	"github.com/xanzy/go-gitlab"
 )
 
 type ReleaseStatusAction struct {
@@ -26,7 +29,7 @@ func (r *BinmanRelease) AddReleaseStatusAction(releasePath string) Action {
 // ReleaseStatusAction verifies whether we have work to do
 func (action *ReleaseStatusAction) execute() error {
 
-	action.r.setPublishPath(action.releasePath, *action.r.githubData.TagName)
+	action.r.setPublishPath(action.releasePath, action.r.Version)
 	_, err := os.Stat(action.r.publishPath)
 
 	// If err nil we already have this version, send custom error so gosyncrepo knows to end actions
@@ -52,7 +55,9 @@ func (r *BinmanRelease) AddSetUrlAction() Action {
 	}
 }
 
+// format a user specified url with release data
 func (action *SetUrlAction) execute() error {
+
 	// If user has set an external url use that to grab target
 	if action.r.ExternalUrl != "" {
 		log.Debugf("User specified url %s", action.r.dlUrl)
@@ -61,15 +66,29 @@ func (action *SetUrlAction) execute() error {
 		return nil
 	}
 
-	// If the user has requested a specifc asset check for that
-	if action.r.ReleaseFileName != "" {
-		rFilename := formatString(action.r.ReleaseFileName, action.r.getDataMap())
-		log.Debugf("Get asset by name %s", rFilename)
-		action.r.assetName, action.r.dlUrl = gh.GetAssetbyName(rFilename, action.r.githubData.Assets)
-	} else {
-		// Attempt to find the asset via arch/os
-		log.Debugf("Attempt to find asset %s", action.r.ReleaseFileName)
-		action.r.assetName, action.r.dlUrl = gh.FindAsset(action.r.Arch, action.r.Os, action.r.Version, action.r.project, action.r.githubData.Assets)
+	switch data := action.r.relData.(type) {
+	case *github.RepositoryRelease:
+		// If the user has requested a specifc asset check for that
+		if action.r.ReleaseFileName != "" {
+			rFilename := formatString(action.r.ReleaseFileName, action.r.getDataMap())
+			log.Debugf("Get gh asset by name %s", rFilename)
+			action.r.assetName, action.r.dlUrl = gh.GetAssetbyName(rFilename, data.Assets)
+		} else {
+			// Attempt to find the asset via arch/os
+			log.Debugf("Attempt to find github asset for %s", action.r.project)
+			action.r.assetName, action.r.dlUrl = gh.FindAsset(action.r.Arch, action.r.Os, action.r.Version, action.r.project, data.Assets)
+		}
+	case []*gitlab.ReleaseLink:
+		// If the user has requested a specifc asset check for that
+		if action.r.ReleaseFileName != "" {
+			rFilename := formatString(action.r.ReleaseFileName, action.r.getDataMap())
+			log.Debugf("Get gl asset by name %s", rFilename)
+			action.r.assetName, action.r.dlUrl = gl.GetAssetbyName(rFilename, data)
+		} else {
+			// Attempt to find the asset via arch/os
+			log.Debugf("Attempt to find gitlab asset for %s\n", action.r.project)
+			action.r.assetName, action.r.dlUrl = gl.FindAsset(action.r.Arch, action.r.Os, action.r.Version, action.r.project, data)
+		}
 	}
 
 	// If at this point dlUrl is not set we have an issue

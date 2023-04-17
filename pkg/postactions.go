@@ -107,11 +107,10 @@ func (r *BinmanRelease) AddWriteRelNotesAction() Action {
 }
 
 func (action *WriteRelNotesAction) execute() error {
-	relNotes := action.r.githubData.GetBody()
-	if relNotes != "" {
+	if action.r.relNotes != "" {
 		notePath := filepath.Join(action.r.publishPath, "releaseNotes.txt")
 		log.Debugf("Notes written to %s", notePath)
-		return WriteStringtoFile(notePath, relNotes)
+		return WriteStringtoFile(notePath, action.r.relNotes)
 	}
 
 	return nil

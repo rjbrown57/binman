@@ -1,21 +1,34 @@
-package gh
+package gl
 
 import (
+	"path/filepath"
 	"regexp"
 	"strings"
 
-	"github.com/google/go-github/v50/github"
 	"github.com/rjbrown57/binman/pkg/constants"
 	log "github.com/rjbrown57/binman/pkg/logging"
+	"github.com/xanzy/go-gitlab"
 )
 
-// I should refactor this a bit to use a regex for Arch to interchange amd64 v x86_64
-// rel* vars should come in a interface
-func GetAssetbyName(relFileName string, assets []*github.ReleaseAsset) (string, string) {
+func GLGetReleaseAssets(glClient *gitlab.Client, repo string, tag string) []*gitlab.ReleaseLink {
+	rel, _, err := glClient.Releases.GetRelease(repo, tag)
+
+	if err == nil {
+		return rel.Assets.Links
+	}
+
+	log.Debugf("Error getting release for %s:%s - %v", repo, tag, err)
+
+	return nil
+}
+
+func GetAssetbyName(relFileName string, assets []*gitlab.ReleaseLink) (string, string) {
 	for _, asset := range assets {
-		if *asset.Name == relFileName {
-			log.Debugf("Selected asset == %+v\n", *asset.Name)
-			return *asset.Name, *asset.BrowserDownloadURL
+		an := strings.ToLower(filepath.Base(asset.DirectAssetURL))
+
+		if an == relFileName {
+			log.Debugf("Selected asset == %+v\n", an)
+			return an, *&asset.DirectAssetURL
 		}
 	}
 
@@ -23,13 +36,18 @@ func GetAssetbyName(relFileName string, assets []*github.ReleaseAsset) (string, 
 }
 
 // FindAsset will Return first asset that matches our OS and Arch regexes and one of our supported filetypes
-func FindAsset(relArch string, relOS string, version string, project string, assets []*github.ReleaseAsset) (string, string) {
+func FindAsset(relArch string, relOS string, version string, project string, assets []*gitlab.ReleaseLink) (string, string) {
 
-	var possibleAsset github.ReleaseAsset
+	var possibleAsset *gitlab.ReleaseLink
 
 	// sometimes amd64 is represented as x86_64, so we substitute a regex here that covers both
 	if relArch == "amd64" {
 		relArch = constants.X86RegEx
+	}
+
+	// gitlab refers to darwin and "macos"  so we substitute a regex here that covers both
+	if relOS == "darwin" {
+		relOS = constants.MacOsRx
 	}
 
 	zipRx := regexp.MustCompile(constants.ZipRegEx)
@@ -42,7 +60,7 @@ func FindAsset(relArch string, relOS string, version string, project string, ass
 	// any 1 exact match asset will terminate the loop, otherwise we will take the last possible match asset
 
 	for _, asset := range assets {
-		an := strings.ToLower(asset.GetName())
+		an := strings.ToLower(filepath.Base(asset.DirectAssetURL))
 
 		// This asset matches our OS/Arch
 		if osRx.MatchString(an) && archRx.MatchString(an) {
@@ -53,18 +71,20 @@ func FindAsset(relArch string, relOS string, version string, project string, ass
 			switch {
 			case exeRx.MatchString(an), !strings.Contains(an, "."), tarRx.MatchString(an), zipRx.MatchString(an):
 				log.Debugf("Selected asset %s == %+v\n", an, asset)
-				return asset.GetName(), asset.GetBrowserDownloadURL()
+				return an, asset.DirectAssetURL
 			}
 
 			log.Debugf("Evaluating %s contains version %s", an, version)
 			if strings.Contains(an, version) || strings.Contains(an, strings.Trim(version, "v")) && strings.Contains(an, project) {
-				log.Debugf("Possible match by version %s %s", version, asset.GetName())
-				possibleAsset = *asset
+				log.Debugf("Possible match by version %s %s", version, an)
+				possibleAsset = asset
 
 			}
 		}
 
 	}
 
-	return possibleAsset.GetName(), possibleAsset.GetBrowserDownloadURL()
+	log.Debugf("returning partial match %s %s", project, version)
+	return strings.ToLower(filepath.Base(possibleAsset.DirectAssetURL)), possibleAsset.DirectAssetURL
+
 }

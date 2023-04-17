@@ -7,30 +7,33 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/google/go-github/v50/github"
+	"github.com/rjbrown57/binman/pkg/constants"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
 // BinmanRelease contains info on specifc releases to hunt for
 type BinmanRelease struct {
-	Os              string        `yaml:"os,omitempty"`
-	Arch            string        `yaml:"arch,omitempty"`
-	CheckSum        bool          `yaml:"checkSum,omitempty"`
-	CleanupArchive  bool          `yaml:"cleanup,omitempty"`         // mark true if archive should be cleaned after extraction
-	DownloadOnly    bool          `yaml:"downloadonly,omitempty"`    // Download but do not extract/find/link
-	PostOnly        bool          `yaml:"postonly,omitempty"`        // Gather information from source, but perform no actions save os commands
-	UpxConfig       UpxConfig     `yaml:"upx,omitempty"`             // Allow shrinking with Upx
-	ExternalUrl     string        `yaml:"url,omitempty"`             // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
-	ExtractFileName string        `yaml:"extractfilename,omitempty"` // The file within the release you want
-	ReleaseFileName string        `yaml:"releasefilename,omitempty"` // Specifc Release filename to look for. This is useful if a project publishes a binary and not a tarball.
-	Repo            string        `yaml:"repo"`                      // The specific repo name in github. e.g achore/syft
-	LinkName        string        `yaml:"linkname,omitempty"`        // Set what the final link will be. Defaults to project name.
-	Version         string        `yaml:"version,omitempty"`         // Pull a specific version
-	PostCommands    []PostCommand `yaml:"postcommands,omitempty"`
-	QueryType       string        `yaml:"querytype,omitempty"`
-	ReleasePath     string        `yaml:"releasepath,omitempty"`
+	Os               string        `yaml:"os,omitempty"`
+	Arch             string        `yaml:"arch,omitempty"`
+	CheckSum         bool          `yaml:"checkSum,omitempty"`
+	CleanupArchive   bool          `yaml:"cleanup,omitempty"`         // mark true if archive should be cleaned after extraction
+	DownloadOnly     bool          `yaml:"downloadonly,omitempty"`    // Download but do not extract/find/link
+	PostOnly         bool          `yaml:"postonly,omitempty"`        // Gather information from source, but perform no actions save os commands
+	UpxConfig        UpxConfig     `yaml:"upx,omitempty"`             // Allow shrinking with Upx
+	ExternalUrl      string        `yaml:"url,omitempty"`             // User provided external url to use with versions grabbed from GH. Note you must also set ReleaseFileName
+	ExtractFileName  string        `yaml:"extractfilename,omitempty"` // The file within the release you want
+	ReleaseFileName  string        `yaml:"releasefilename,omitempty"` // Specifc Release filename to look for. This is useful if a project publishes a binary and not a tarball.
+	Repo             string        `yaml:"repo"`                      // The specific repo name in github. e.g achore/syft
+	LinkName         string        `yaml:"linkname,omitempty"`        // Set what the final link will be. Defaults to project name.
+	Version          string        `yaml:"version,omitempty"`         // Pull a specific version
+	PostCommands     []PostCommand `yaml:"postcommands,omitempty"`
+	QueryType        string        `yaml:"querytype,omitempty"`
+	ReleasePath      string        `yaml:"releasepath,omitempty"`
+	SourceIdentifier string        `yaml:"source,omitempty"` // Allow setting of source individually
 
-	githubData       *github.RepositoryRelease
+	relData          interface{} // Data gathered from source
+	relNotes         string
+	source           *Source
 	assetName        string // the target assetName
 	cleanupOnFailure bool   // mark true if we need to clean up on failure
 	dlUrl            string // the final donwload url
@@ -50,9 +53,41 @@ type PostCommand struct {
 
 // set project and org vars
 func (r *BinmanRelease) getOR() {
+
 	n := strings.Split(r.Repo, "/")
-	r.org = n[0]
-	r.project = n[1]
+	length := len(n)
+
+	// Concatenate everything but the project
+	r.org = strings.Join(n[:length-1], "/")
+
+	// Project is always the last element
+	r.project = n[length-1]
+}
+
+// setSource will set the source for a release, it will also trim the source prefix from repo if used
+func (r *BinmanRelease) setSource(sourceMap map[string]*Source) {
+
+	repoSlice := strings.Split(r.Repo, "/")
+
+	// Test if user supplied "sourceIdentifier/project/repo" format
+	if source, exists := sourceMap[repoSlice[0]]; exists {
+		// assign sourceIdentifer
+		r.SourceIdentifier = source.Name
+
+		// trimIdentifier from Reponame
+		repoName := strings.TrimPrefix(r.Repo, repoSlice[0]+"/")
+		r.Repo = repoName
+		log.Debugf("source %s detected in repo name. Updating repo name to %s", repoSlice[0], r.Repo)
+
+	}
+
+	// github.com is default for an unspecified source
+	if r.SourceIdentifier == "" {
+		r.SourceIdentifier = "github.com"
+	}
+
+	// assign pointer to source info for this release
+	r.source = sourceMap[r.SourceIdentifier]
 }
 
 func (r *BinmanRelease) findTarget() {
@@ -64,8 +99,8 @@ func (r *BinmanRelease) findTarget() {
 		log.Debugf("Running on %s updating target to %s", r.Os, targetFileName)
 	}
 
-	tarRx := regexp.MustCompile(TarRegEx)
-	ZipRegEx := regexp.MustCompile(ZipRegEx)
+	tarRx := regexp.MustCompile(constants.TarRegEx)
+	ZipRegEx := regexp.MustCompile(constants.ZipRegEx)
 
 	_ = filepath.WalkDir(r.publishPath, func(path string, d os.DirEntry, err error) error {
 
@@ -121,13 +156,13 @@ func (r *BinmanRelease) knownUrlCheck() {
 func (r *BinmanRelease) setPublishPath(ReleasePath string, tag string) {
 	// Trim trailing / if user provided
 	ReleasePath = strings.TrimSuffix(ReleasePath, "/")
-	r.publishPath = filepath.Join(ReleasePath, "repos", r.org, r.project, tag)
+	r.publishPath = filepath.Join(ReleasePath, "repos", r.SourceIdentifier, r.org, r.project, tag)
 }
 
 // getDataMap is a helper function to provide data to be used with templating
 func (r *BinmanRelease) getDataMap() map[string]string {
 	dataMap := make(map[string]string)
-	dataMap["version"] = *r.githubData.TagName
+	dataMap["version"] = r.Version
 	dataMap["os"] = r.Os
 	dataMap["arch"] = r.Arch
 	dataMap["org"] = r.org

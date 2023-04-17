@@ -2,7 +2,7 @@
 
 ## General
 
-Binman is a tool to sync release assets from github to your local workstation. The main use case is syncing via config to keep the tools you use every day up to date.
+Binman is a tool to sync release assets from github or gitlab to your local workstation. The main use case is syncing via config to keep the tools you use every day up to date.
 
 ![demo](examples/demo.gif)
 
@@ -10,17 +10,13 @@ Grab the latest release [here](https://github.com/rjbrown57/binman/releases), an
 
 Binman will attempt to find a release asset that matches your OS and architecture and one of the types of files we handle currently. Currently handled file types are "zip", "tar", "binary", "exe". 
 
-When a matching release asset is found it will be downloaded to your `releasepath` or the default `$HOME/binMan`. The download file will be placed at `$releasepath/repos/${githuborg}/${githubproject}/${version}/`. If the asset is an archive all files will be extracted. Binman will then attempt to find a binary and will link it to `$releasepath/${githubproject}`.
-
 Just add the releasepath to your shell PATH var and you are good to go!  
-
-Binman provides many config options to allow you to handle all the manifold release styles on github. Check out the [config options section](#config-options) for details.
 
 ## Config Sync
 
 To run binman effectively you need a config. 
 
-Running binman with no arguements, and no config will populate the following config to your OS's appropriate [config directory](https://pkg.go.dev/os#UserConfigDir). On linux the config file will be added to `~/.config/binman/config`. 
+Running binman with no arguements, and no config will populate the defualt config to your OS's appropriate [config directory](https://pkg.go.dev/os#UserConfigDir). On linux the config file will be added to `~/.config/binman/config`. 
 
 Binman also allows supplying a configfile from an alternate path with the `-c` flag or by the "BINMAN_CONFIG" environment variable.
 
@@ -29,12 +25,18 @@ Here's an example config file
 ```yaml
 config:
   releasepath:  #path to keep fetched releases. $HOME/binMan is the default
-  tokenvar: #environment variable that contains github token
   cleanup: true # remove downloaded archive
-  maxdownloads: 10 # number of concurrent downloads allowed. Default is 3
+  maxdownloads: 1 # number of concurrent downloads allowed. Default is 3
   upx: #Compress binaries with upx
     enabled: false
     args: [] # arrary of args for upx
+  sources:
+   - name: gitlab.com
+     #tokenvar: GL_TOKEN # environment variable that contains gitlab token
+     apitype: gitlab
+   - name: github.com
+     #tokenvar: GH_TOKEN # environment variable that contains github token
+     apitype: github
 releases:
   - repo: rjbrown57/binman
     linkname: mybinman  
@@ -42,6 +44,8 @@ releases:
     cleanup: true
     upx: 
       args: [] #["-k","-v"]
+  # syncing from gitlab
+  #- repo: gitlab.com/gitlab-org/cli
 ```
 
 Binman can also run with a "contextual" config file. If a directory contains a file ".binMan.yaml" this will be merged with your main config. Check a config into git projects and easily fetch required dependencies from github.
@@ -55,9 +59,36 @@ Top level `config:` options
 | cleanup   | Remove .zip/.tar files after we have extracted something. Useful in container builds / CI |
 | maxdownloads | number of concurrent downloads to allow. Default is number of releases |
 | releasepath | Path to publish files to |
-| tokenvar   | github token to use for auth. You can get yourself rate limited if you have a sizeable config. Instructions to [generate a token are here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token") |
+| tokenvar   | github token to use for auth. You can get yourself rate limited if you have a sizeable config. Instructions to [generate a token are here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token"). This config.tokenvar is left for compatability and can also be set in config.sources for github.com |
 | upx   | config to enable upx shrinking. Details below |
 
+### Config sources
+
+By default binman configures two sources `github.com` and `gitlab.com` without authentication. Currently the only supported apitypes are `github` and `gitlab`.  You can supply config to use your internal github or gitlab instances like the below example. Downloads do not currently have authentication, expect this in a future release!
+
+```
+config:
+  releasepath: /tmp/bmdebug/
+  maxdownloads: 1
+  sources:
+   - name: gitlab.com
+     tokenvar: GL_TOKEN
+     apitype: gitlab
+   - name: github.com
+     tokenvar: GH_TOKEN
+     apitype: github
+   - name: myprvate.github.com
+     tokenvar: GH_TOKEN
+     apitype: github
+   - name: myprivate.gitlab.com
+     tokenvar: GL_TOKEN
+     apitype: gitlab
+releases:
+  - repo: rjbrown57/binman # by default github will be the source
+  - repo: myprivate.github.com/myorg/myproject # source can be supplied in the repo key
+  - repo: mygitlaborg/mygitlabproject 
+    source: myprivate.gitlab.com # source can also be supplied via the source key. source must match the name field of configured sources.
+```
 
 ### Release options
 
