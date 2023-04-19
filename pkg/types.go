@@ -10,6 +10,8 @@ import (
 	"sync"
 
 	"github.com/fatih/color"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rjbrown57/binman/pkg/constants"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/rodaine/table"
@@ -51,8 +53,16 @@ type BinmanConfig struct {
 	NumWorkers     int       `yaml:"maxdownloads,omitempty"` // maximum number of concurrent downloads the user will allow
 	UpxConfig      UpxConfig `yaml:"upx,omitempty"`          // Allow upx to shrink extracted
 	Sources        []Source  `yaml:"sources,omitempty"`      // Sources to query. By default gitlab and github
+	Watch          Watch     `yaml:"watch,omitempty"`        // Watch config object
 
 	sourceMap map[string]*Source // map of names to struct pointers for sources
+}
+
+type Watch struct {
+	Sync      bool   `yaml:"sync,omitempty"`      // set to true if you want to also pull down releases
+	Frequency int    `yaml:"frequency,omitempty"` // how often to query for new releases
+	Port      string `yaml:"port,omitempty"`      // port to expose prometheus metrics on
+	enabled   bool   // private boolean to enable watch mode when invoked by watch subcommand
 }
 
 type Source struct {
@@ -74,6 +84,7 @@ type GHBMConfig struct {
 	Config   BinmanConfig    `yaml:"config"`
 	Defaults BinmanDefaults  `yaml:"defaults,omitempty"`
 	Releases []BinmanRelease `yaml:"releases"`
+	metrics  *prometheus.GaugeVec
 }
 
 func NewGHBMConfig(configPath string) *GHBMConfig {
@@ -128,6 +139,13 @@ func (config *GHBMConfig) populateReleases() {
 
 			// set project/org variables
 			config.Releases[index].getOR()
+
+			// If we are running in watch mode set metric and options
+			if config.Config.Watch.enabled {
+				config.Releases[index].metric = config.metrics
+				config.Releases[index].watchSync = config.Config.Watch.Sync
+				config.Releases[index].watchExposeMetrics = true
+			}
 
 			// Configure the query type
 			// release is the default, if a version is set releasebytag
@@ -210,8 +228,6 @@ func (config *GHBMConfig) setDefaults() {
 		config.Config.NumWorkers = len(config.Releases)
 	}
 
-	log.Debugf("%s %s", config.Config.TokenVar, config.Config.sourceMap["github.com"].Tokenvar)
-
 	if config.Config.TokenVar == "" && config.Config.sourceMap["github.com"].Tokenvar == "" {
 		log.Debugf("config.tokenvar is not set. Using anonymous authentication. Please be aware you can quickly be rate limited by github. Instructions here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
 		config.Config.sourceMap["github.com"].Tokenvar = "none"
@@ -241,6 +257,30 @@ func (config *GHBMConfig) setDefaults() {
 		config.Defaults.Os = runtime.GOOS
 	}
 
+}
+
+// setWatchConfig sets config/releases for watch subcommand
+func (config *GHBMConfig) setWatchConfig() {
+
+	config.cleanReleases()
+	config.setDefaults()
+
+	// enable watch mode to populate releases sets correct values
+	config.Config.Watch.enabled = true
+
+	// Default port to expose metrics / health is 9091
+	if config.Config.Watch.Port == "" {
+		config.Config.Watch.Port = "9091"
+	}
+
+	// Default watch frequency is 60 seconds
+	if config.Config.Watch.Frequency == 0 {
+		config.Config.Watch.Frequency = 60
+	}
+
+	config.metrics = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "binman_release"}, []string{"latest", "repo", "version"})
+
+	config.populateReleases()
 }
 
 // setDefaultSources will handle merging defaults and user sources

@@ -67,6 +67,11 @@ func (r *BinmanRelease) setPreActions(releasePath string) []Action {
 		actions = append(actions, r.AddReleaseStatusAction(releasePath))
 	}
 
+	// If watchSync is false then skip all remaining steps
+	if !r.watchSync && r.watchExposeMetrics {
+		return append(actions, r.AddEndWorkAction())
+	}
+
 	// If PostOnly is true, we don't need to select an asset
 	if !r.PostOnly {
 		actions = append(actions,
