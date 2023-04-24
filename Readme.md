@@ -244,7 +244,7 @@ releases:
 - repo: rjbrown57/binman
 ```
 
-metrics are exposed in the format `binman_release{latest="true",repo="rjbrown57/binman",version="v0.8.0"} 0`. Keep in mind github api limits when configuring how often binman checks for new assets. 
+metrics are exposed in the format `binman_release{latest="true",repo="rjbrown57/binman",version="v0.8.0"} 0`. Keep in mind github api limits when configuring how often binman checks for new assets. An example helm chart is provided [here for running in k8s](charts/binman/) 
 
 ## Direct Repo sync
 
