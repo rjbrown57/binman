@@ -55,7 +55,7 @@ type BinmanConfig struct {
 	Sources        []Source  `yaml:"sources,omitempty"`      // Sources to query. By default gitlab and github
 	Watch          Watch     `yaml:"watch,omitempty"`        // Watch config object
 
-	sourceMap map[string]*Source // map of names to struct pointers for sources
+	SourceMap map[string]*Source // map of names to struct pointers for sources
 }
 
 type Watch struct {
@@ -136,7 +136,7 @@ func (config *GHBMConfig) populateReleases() {
 			defer wg.Done()
 
 			// set sources
-			config.Releases[index].setSource(config.Config.sourceMap)
+			config.Releases[index].setSource(config.Config.SourceMap)
 
 			// set project/org variables
 			config.Releases[index].getOR()
@@ -208,8 +208,8 @@ func (config *GHBMConfig) populateReleases() {
 	wg.Wait()
 }
 
-// setDefaults will populate defaults, and required values
-func (config *GHBMConfig) setDefaults() {
+// SetDefaults will populate defaults, and required values
+func (config *GHBMConfig) SetDefaults() {
 
 	// Set sources if user has not supplied for github.com/gitlab.com
 	setDefaultSources(config)
@@ -229,9 +229,9 @@ func (config *GHBMConfig) setDefaults() {
 		config.Config.NumWorkers = len(config.Releases)
 	}
 
-	if config.Config.TokenVar == "" && config.Config.sourceMap["github.com"].Tokenvar == "" {
+	if config.Config.TokenVar == "" && config.Config.SourceMap["github.com"].Tokenvar == "" {
 		log.Debugf("config.tokenvar is not set. Using anonymous authentication. Please be aware you can quickly be rate limited by github. Instructions here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
-		config.Config.sourceMap["github.com"].Tokenvar = "none"
+		config.Config.SourceMap["github.com"].Tokenvar = "none"
 		config.Config.TokenVar = "none"
 	}
 
@@ -264,7 +264,7 @@ func (config *GHBMConfig) setDefaults() {
 func (config *GHBMConfig) setWatchConfig() {
 
 	config.cleanReleases()
-	config.setDefaults()
+	config.SetDefaults()
 
 	// enable watch mode to populate releases sets correct values
 	config.Config.Watch.enabled = true
@@ -288,7 +288,7 @@ func (config *GHBMConfig) setWatchConfig() {
 // If github/gitlab source keys are missing we add a default
 func setDefaultSources(config *GHBMConfig) {
 
-	config.Config.sourceMap = make(map[string]*Source)
+	config.Config.SourceMap = make(map[string]*Source)
 
 	var githubDefault = Source{Name: "github.com", URL: constants.DefaultGHBaseURL, Apitype: "github", Tokenvar: config.Config.TokenVar}
 	var gitlabDefault = Source{Name: "gitlab.com", URL: constants.DefaultGLBaseURL, Apitype: "gitlab"}
@@ -302,7 +302,7 @@ func setDefaultSources(config *GHBMConfig) {
 		}
 
 		// assign to sourceMap
-		config.Config.sourceMap[source.Name] = &config.Config.Sources[index]
+		config.Config.SourceMap[source.Name] = &config.Config.Sources[index]
 
 		switch source.Name {
 		case "github.com":
@@ -325,14 +325,14 @@ func setDefaultSources(config *GHBMConfig) {
 	}
 
 	// Add github.com to source array and sourceMap if missing
-	if _, exists := config.Config.sourceMap[githubDefault.Name]; !exists {
+	if _, exists := config.Config.SourceMap[githubDefault.Name]; !exists {
 		config.Config.Sources = append(config.Config.Sources, githubDefault)
-		config.Config.sourceMap[githubDefault.Name] = &config.Config.Sources[len(config.Config.Sources)-1]
+		config.Config.SourceMap[githubDefault.Name] = &config.Config.Sources[len(config.Config.Sources)-1]
 	}
 
 	// Add gitlab.com to source array and sourceMap if missing
-	if _, exists := config.Config.sourceMap[gitlabDefault.Name]; !exists {
+	if _, exists := config.Config.SourceMap[gitlabDefault.Name]; !exists {
 		config.Config.Sources = append(config.Config.Sources, gitlabDefault)
-		config.Config.sourceMap[gitlabDefault.Name] = &config.Config.Sources[len(config.Config.Sources)-1]
+		config.Config.SourceMap[gitlabDefault.Name] = &config.Config.Sources[len(config.Config.Sources)-1]
 	}
 }

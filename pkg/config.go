@@ -87,7 +87,7 @@ func SetConfig(suppliedConfig string) *GHBMConfig {
 		binMancfg.Releases = append(binMancfg.Releases, tc.Releases...)
 	}
 
-	binMancfg.setDefaults()
+	binMancfg.SetDefaults()
 	binMancfg.cleanReleases()
 	binMancfg.populateReleases()
 	return binMancfg
