@@ -238,6 +238,7 @@ config:
           apitype: gitlab
     watch:
       sync: true # Whether to download assets or not. If you only want metrics set to false
+      fileserver: false # Start a basic fileserver at /
       frequency: 60 # seconds between iteration, default is 60
       port: 9091 # Port to expose healthz and metrics endpoints, default is 9091
 releases:

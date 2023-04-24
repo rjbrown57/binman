@@ -18,6 +18,7 @@ config:
     args: [] # arrary of args for upx
   watch: # config for watch mode
     sync: true # sync releases
+    fileserver: false # Start a basic fileserver at /
     frequency: 60 # How frequent to run syncs
     port: 9091 # Port to expose readiness and metrics on
   sources:

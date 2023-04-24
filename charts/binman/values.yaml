@@ -1,5 +1,8 @@
 replicaCount: 1
 
+# Specify target ns here otherwise .Release.Namespace will be used
+#namespace: target_namespace_here
+
 image:
   repository: ghcr.io/rjbrown57/binman
   pullPolicy: Always
@@ -30,3 +33,11 @@ binmanConfig:
   releasePath: /binMan/
   configPath: /config
   configName: config.yaml
+
+service:
+  port: 9091
+
+pvc:
+  enabled: false
+  storageClassName: standard 
+  storage: 1Gi

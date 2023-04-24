@@ -11,10 +11,22 @@ import (
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
-func startHealthz() func(http.ResponseWriter, *http.Request) {
+func healthzFunc() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ok"))
 	}
+}
+
+func watchServe(config Watch, releasePath string) {
+	log.Infof("Serving /metrics on %s", config.Port)
+	http.HandleFunc("/healthz", healthzFunc())
+	http.Handle("/metrics", promhttp.Handler())
+
+	if config.FileServer && config.Sync {
+		http.Handle("/", http.FileServer(http.Dir(releasePath)))
+	}
+
+	log.Fatalf("%v", http.ListenAndServe(":"+config.Port, nil))
 }
 
 // Start watch command to expose metrics and sync on a schedule
@@ -27,6 +39,9 @@ func StartWatch(config string) {
 	watchConfig := NewGHBMConfig(SetBaseConfig(config))
 	watchConfig.setWatchConfig()
 
+	// Start watch mode http
+	go watchServe(watchConfig.Config.Watch, watchConfig.Config.ReleasePath)
+
 	// start download workers
 	log.Debugf("launching %d download workers", watchConfig.Config.NumWorkers)
 	for worker := 1; worker <= watchConfig.Config.NumWorkers; worker++ {
@@ -34,11 +49,6 @@ func StartWatch(config string) {
 	}
 
 	log.Debugf("watch config = %+v", watchConfig.Config.Watch)
-
-	log.Infof("Serving /metrics on %s", watchConfig.Config.Watch.Port)
-	http.HandleFunc("/healthz", startHealthz())
-	http.Handle("/metrics", promhttp.Handler())
-	go http.ListenAndServe(":"+watchConfig.Config.Watch.Port, nil)
 
 	go getSpinner(true)
 

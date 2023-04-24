@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "binman.fullname" . }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
     {{- include "binman.labels" . | nindent 4 }}
 spec:
@@ -54,7 +55,13 @@ spec:
       - configMap:
           name: binmanconfig
         name: binmanconfig
+      {{- if .Values.pvc.enabled }}
+      - name: binmandata
+        persistentVolumeClaim:
+          claimName: {{ include "binman.fullname" . }}-pvc
+      {{- else }}
       - emptyDir:
           medium: Memory
         name: binmandata
+      {{- end }}
      

@@ -59,10 +59,11 @@ type BinmanConfig struct {
 }
 
 type Watch struct {
-	Sync      bool   `yaml:"sync,omitempty"`      // set to true if you want to also pull down releases
-	Frequency int    `yaml:"frequency,omitempty"` // how often to query for new releases
-	Port      string `yaml:"port,omitempty"`      // port to expose prometheus metrics on
-	enabled   bool   // private boolean to enable watch mode when invoked by watch subcommand
+	Sync       bool   `yaml:"sync,omitempty"`       // set to true if you want to also pull down releases
+	Frequency  int    `yaml:"frequency,omitempty"`  // how often to query for new releases
+	Port       string `yaml:"port,omitempty"`       // port to expose prometheus metrics on
+	FileServer bool   `yaml:"fileserver,omitempty"` // Start file server of configured release path, must be used in conjunction with sync
+	enabled    bool   // private boolean to enable watch mode when invoked by watch subcommand
 }
 
 type Source struct {

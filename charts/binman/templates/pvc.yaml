@@ -1,0 +1,17 @@
+{{- if .Values.pvc.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "binman.fullname" . }}-pvc
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "binman.labels" . | nindent 4 }}
+spec:
+  storageClassName: {{ .Values.pvc.storageClassName }} 
+  volumeName: {{ include "binman.fullname" . }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.pvc.storage }}
+{{- end }}

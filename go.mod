@@ -43,6 +43,7 @@ require (
 	github.com/prometheus/client_golang v1.15.0
 	github.com/rodaine/table v1.1.0
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/syntaqx/serve v0.5.0
 	github.com/theckman/yacspin v0.13.12
 	github.com/xanzy/go-gitlab v0.81.0
 	golang.org/x/crypto v0.6.0 // indirect
