@@ -32,6 +32,10 @@ func (action *ReleaseStatusAction) execute() error {
 	action.r.setPublishPath(action.releasePath, action.r.Version)
 	_, err := os.Stat(action.r.publishPath)
 
+	if action.r.watchExposeMetrics {
+		action.r.metric.WithLabelValues("true", action.r.Repo, action.r.Version)
+	}
+
 	// If err nil we already have this version, send custom error so gosyncrepo knows to end actions
 	// Default to capture any other error cases
 	switch err {

@@ -65,6 +65,9 @@ func addSubcommands() {
 	// add config to root
 	rootCmd.AddCommand(configCmd)
 
+	// add watch to root
+	rootCmd.AddCommand(watchCmd)
+
 	// Setup
 	wd, err := os.Getwd()
 	if err != nil {

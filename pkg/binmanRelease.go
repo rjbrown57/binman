@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rjbrown57/binman/pkg/constants"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
@@ -31,6 +32,7 @@ type BinmanRelease struct {
 	ReleasePath      string        `yaml:"releasepath,omitempty"`
 	SourceIdentifier string        `yaml:"source,omitempty"` // Allow setting of source individually
 
+	metric           *prometheus.GaugeVec
 	relData          interface{} // Data gathered from source
 	relNotes         string
 	source           *Source
@@ -44,6 +46,9 @@ type BinmanRelease struct {
 	linkPath         string // Will be set by BinmanRelease.setPaths
 	artifactPath     string // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
 	actions          []Action
+
+	watchExposeMetrics bool
+	watchSync          bool
 }
 
 type PostCommand struct {

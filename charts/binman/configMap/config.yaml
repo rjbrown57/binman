@@ -1,0 +1,18 @@
+config:
+  releasepath: /binMan/
+  cleanup: true
+  maxdownloads: 1 # number of concurrent downloads allowed. Default is number of releases specified
+  watch: # config for watch mode
+    sync: true # sync releases
+    fileserver: true # start fileserver pointed at releasepath
+    frequency: 60 # How frequent to run syncs
+    port: 9091 # Port to expose readiness and metrics on 
+  sources:
+   - name: gitlab.com
+     apitype: gitlab
+   - name: github.com
+     apitype: github
+releases:
+  - repo: rjbrown57/binman
+  - repo: anchore/syft
+  - repo: gitlab.com/gitlab-org/cli

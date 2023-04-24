@@ -94,7 +94,7 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 
 	switch launchCommand {
 	case "get":
-		releases = BinmanGetReleasePrep(config.Config.sourceMap, args)
+		releases = BinmanGetReleasePrep(config.Config.SourceMap, args)
 	case "config":
 		releases = config.Releases
 	}

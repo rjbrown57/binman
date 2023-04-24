@@ -10,6 +10,8 @@ import (
 	"sync"
 
 	"github.com/fatih/color"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rjbrown57/binman/pkg/constants"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/rodaine/table"
@@ -51,8 +53,17 @@ type BinmanConfig struct {
 	NumWorkers     int       `yaml:"maxdownloads,omitempty"` // maximum number of concurrent downloads the user will allow
 	UpxConfig      UpxConfig `yaml:"upx,omitempty"`          // Allow upx to shrink extracted
 	Sources        []Source  `yaml:"sources,omitempty"`      // Sources to query. By default gitlab and github
+	Watch          Watch     `yaml:"watch,omitempty"`        // Watch config object
 
-	sourceMap map[string]*Source // map of names to struct pointers for sources
+	SourceMap map[string]*Source // map of names to struct pointers for sources
+}
+
+type Watch struct {
+	Sync       bool   `yaml:"sync,omitempty"`       // set to true if you want to also pull down releases
+	Frequency  int    `yaml:"frequency,omitempty"`  // how often to query for new releases
+	Port       string `yaml:"port,omitempty"`       // port to expose prometheus metrics on
+	FileServer bool   `yaml:"fileserver,omitempty"` // Start file server of configured release path, must be used in conjunction with sync
+	enabled    bool   // private boolean to enable watch mode when invoked by watch subcommand
 }
 
 type Source struct {
@@ -74,6 +85,7 @@ type GHBMConfig struct {
 	Config   BinmanConfig    `yaml:"config"`
 	Defaults BinmanDefaults  `yaml:"defaults,omitempty"`
 	Releases []BinmanRelease `yaml:"releases"`
+	metrics  *prometheus.GaugeVec
 }
 
 func NewGHBMConfig(configPath string) *GHBMConfig {
@@ -124,10 +136,17 @@ func (config *GHBMConfig) populateReleases() {
 			defer wg.Done()
 
 			// set sources
-			config.Releases[index].setSource(config.Config.sourceMap)
+			config.Releases[index].setSource(config.Config.SourceMap)
 
 			// set project/org variables
 			config.Releases[index].getOR()
+
+			// If we are running in watch mode set metric and options
+			if config.Config.Watch.enabled {
+				config.Releases[index].metric = config.metrics
+				config.Releases[index].watchSync = config.Config.Watch.Sync
+				config.Releases[index].watchExposeMetrics = true
+			}
 
 			// Configure the query type
 			// release is the default, if a version is set releasebytag
@@ -189,8 +208,8 @@ func (config *GHBMConfig) populateReleases() {
 	wg.Wait()
 }
 
-// setDefaults will populate defaults, and required values
-func (config *GHBMConfig) setDefaults() {
+// SetDefaults will populate defaults, and required values
+func (config *GHBMConfig) SetDefaults() {
 
 	// Set sources if user has not supplied for github.com/gitlab.com
 	setDefaultSources(config)
@@ -210,11 +229,9 @@ func (config *GHBMConfig) setDefaults() {
 		config.Config.NumWorkers = len(config.Releases)
 	}
 
-	log.Debugf("%s %s", config.Config.TokenVar, config.Config.sourceMap["github.com"].Tokenvar)
-
-	if config.Config.TokenVar == "" && config.Config.sourceMap["github.com"].Tokenvar == "" {
+	if config.Config.TokenVar == "" && config.Config.SourceMap["github.com"].Tokenvar == "" {
 		log.Debugf("config.tokenvar is not set. Using anonymous authentication. Please be aware you can quickly be rate limited by github. Instructions here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token")
-		config.Config.sourceMap["github.com"].Tokenvar = "none"
+		config.Config.SourceMap["github.com"].Tokenvar = "none"
 		config.Config.TokenVar = "none"
 	}
 
@@ -243,11 +260,35 @@ func (config *GHBMConfig) setDefaults() {
 
 }
 
+// setWatchConfig sets config/releases for watch subcommand
+func (config *GHBMConfig) setWatchConfig() {
+
+	config.cleanReleases()
+	config.SetDefaults()
+
+	// enable watch mode to populate releases sets correct values
+	config.Config.Watch.enabled = true
+
+	// Default port to expose metrics / health is 9091
+	if config.Config.Watch.Port == "" {
+		config.Config.Watch.Port = "9091"
+	}
+
+	// Default watch frequency is 60 seconds
+	if config.Config.Watch.Frequency == 0 {
+		config.Config.Watch.Frequency = 60
+	}
+
+	config.metrics = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "binman_release"}, []string{"latest", "repo", "version"})
+
+	config.populateReleases()
+}
+
 // setDefaultSources will handle merging defaults and user sources
 // If github/gitlab source keys are missing we add a default
 func setDefaultSources(config *GHBMConfig) {
 
-	config.Config.sourceMap = make(map[string]*Source)
+	config.Config.SourceMap = make(map[string]*Source)
 
 	var githubDefault = Source{Name: "github.com", URL: constants.DefaultGHBaseURL, Apitype: "github", Tokenvar: config.Config.TokenVar}
 	var gitlabDefault = Source{Name: "gitlab.com", URL: constants.DefaultGLBaseURL, Apitype: "gitlab"}
@@ -261,7 +302,7 @@ func setDefaultSources(config *GHBMConfig) {
 		}
 
 		// assign to sourceMap
-		config.Config.sourceMap[source.Name] = &config.Config.Sources[index]
+		config.Config.SourceMap[source.Name] = &config.Config.Sources[index]
 
 		switch source.Name {
 		case "github.com":
@@ -284,14 +325,14 @@ func setDefaultSources(config *GHBMConfig) {
 	}
 
 	// Add github.com to source array and sourceMap if missing
-	if _, exists := config.Config.sourceMap[githubDefault.Name]; !exists {
+	if _, exists := config.Config.SourceMap[githubDefault.Name]; !exists {
 		config.Config.Sources = append(config.Config.Sources, githubDefault)
-		config.Config.sourceMap[githubDefault.Name] = &config.Config.Sources[len(config.Config.Sources)-1]
+		config.Config.SourceMap[githubDefault.Name] = &config.Config.Sources[len(config.Config.Sources)-1]
 	}
 
 	// Add gitlab.com to source array and sourceMap if missing
-	if _, exists := config.Config.sourceMap[gitlabDefault.Name]; !exists {
+	if _, exists := config.Config.SourceMap[gitlabDefault.Name]; !exists {
 		config.Config.Sources = append(config.Config.Sources, gitlabDefault)
-		config.Config.sourceMap[gitlabDefault.Name] = &config.Config.Sources[len(config.Config.Sources)-1]
+		config.Config.SourceMap[gitlabDefault.Name] = &config.Config.Sources[len(config.Config.Sources)-1]
 	}
 }

@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: binmanconfig
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+data:
+{{ (.Files.Glob "configMap/*").AsConfig | indent 2 }}

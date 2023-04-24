@@ -121,7 +121,7 @@ func TestSetDefaults(t *testing.T) {
 			t.Fatalf("failed to write test config to %s", configPath)
 		}
 		c := NewGHBMConfig(configPath)
-		c.setDefaults()
+		c.SetDefaults()
 
 		// test the defaults
 		if c.Defaults.Arch != test.expectedArch || c.Defaults.Os != test.expectedOs {
@@ -136,8 +136,8 @@ func TestSetDefaults(t *testing.T) {
 			t.Fatalf("Expected %s got %s", test.expectedReleasePath, c.Config.ReleasePath)
 		}
 
-		if reflect.DeepEqual(c.Config.sourceMap, test.expectedSourceMap) {
-			t.Fatalf("Expected %+v, got %+v,", c.Config.sourceMap["github.com"], test.expectedSourceMap["github.com"])
+		if reflect.DeepEqual(c.Config.SourceMap, test.expectedSourceMap) {
+			t.Fatalf("Expected %+v, got %+v,", c.Config.SourceMap["github.com"], test.expectedSourceMap["github.com"])
 		}
 	}
 }
@@ -253,7 +253,7 @@ func TestPopulateReleases(t *testing.T) {
 		},
 	}
 
-	got.setDefaults()
+	got.SetDefaults()
 	got.populateReleases()
 
 	for k := range got.Releases {

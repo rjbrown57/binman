@@ -54,9 +54,10 @@ func Add(config string, repo string) {
 	cPath := binman.SetBaseConfig(config)
 	// We use NewGHBMConfig here to avoid grabbing contextual configs
 	currentConfig := binman.NewGHBMConfig(cPath)
+	currentConfig.SetDefaults()
 
 	// todo fix this hack
-	tag, err := gh.CheckRepo(gh.GetGHCLient(constants.DefaultGHBaseURL, currentConfig.Config.TokenVar), repo)
+	tag, err := gh.CheckRepo(gh.GetGHCLient(constants.DefaultGHBaseURL, currentConfig.Config.SourceMap["github.com"].Tokenvar), repo)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
