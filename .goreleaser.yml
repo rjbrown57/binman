@@ -12,7 +12,8 @@ builds:
       - amd64
 dockers:
   - image_templates:
-    - ghcr.io/rjbrown57/binman
+    - "ghcr.io/rjbrown57/binman"
+    - "ghcr.io/rjbrown57/binman:{{ .Tag }}"
 archives:
   - format: binary
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
