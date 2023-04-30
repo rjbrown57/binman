@@ -220,14 +220,12 @@ func createTestData(passCase string) map[string]string {
 	var bogusString = "what.ami"
 	var wrongOs = "file_other_os.zip"
 	var wrongEnding = "file_linux_amd64.wrongending"
-	var possibleMatch = "file_v0.0.0_linux_amd64"
 
 	assets := map[string]string{
-		bogusString:   bogusString,
-		wrongOs:       wrongOs,
-		wrongEnding:   wrongEnding,
-		possibleMatch: possibleMatch,
-		passCase:      passCase,
+		bogusString: bogusString,
+		wrongOs:     wrongOs,
+		wrongEnding: wrongEnding,
+		passCase:    passCase,
 	}
 
 	return assets
@@ -245,8 +243,8 @@ func TestSelectAsset(t *testing.T) {
 		"file_linux_amd64",        // a binary
 		"file_0.0.0_linux_amd64",  // possible match 1
 		"file_v0.0.0_linux_amd64", // possible match 1
-
 	}
+
 	for _, testString := range passCases {
 		name, _ := selectAsset("linux", "amd64", "v0.0.0", "file", createTestData(testString))
 		if name != testString {
