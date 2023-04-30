@@ -279,7 +279,7 @@ func (config *GHBMConfig) setWatchConfig() {
 		config.Config.Watch.Frequency = 60
 	}
 
-	config.metrics = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "binman_release"}, []string{"latest", "repo", "version"})
+	config.metrics = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "binman_release"}, []string{"latest", "source", "repo", "version"})
 
 	config.populateReleases()
 }
