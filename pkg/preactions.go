@@ -33,7 +33,11 @@ func (action *ReleaseStatusAction) execute() error {
 	_, err := os.Stat(action.r.publishPath)
 
 	if action.r.watchExposeMetrics {
-		action.r.metric.WithLabelValues("true", action.r.Repo, action.r.Version)
+		var latestLabel string = "true"
+		if action.r.QueryType == "releasebytag" {
+			latestLabel = "false"
+		}
+		action.r.metric.WithLabelValues(latestLabel, action.r.SourceIdentifier, action.r.Repo, action.r.Version)
 	}
 
 	// If err nil we already have this version, send custom error so gosyncrepo knows to end actions
