@@ -213,3 +213,52 @@ func TestMakeExecutable(t *testing.T) {
 		t.Fatalf("Permissions for %s are %o not 0755", writePath, mode)
 	}
 }
+
+// createTestData is a helper function to create test cases that should never be returned. It should be passed the "successful" test string
+func createTestData(passCase string) map[string]string {
+
+	var bogusString = "what.ami"
+	var wrongOs = "file_other_os.zip"
+	var wrongEnding = "file_linux_amd64.wrongending"
+	var possibleMatch = "file_v0.0.0_linux_amd64"
+
+	assets := map[string]string{
+		bogusString:   bogusString,
+		wrongOs:       wrongOs,
+		wrongEnding:   wrongEnding,
+		possibleMatch: possibleMatch,
+		passCase:      passCase,
+	}
+
+	return assets
+}
+
+// TestSelectAsset will test each passing asset type
+func TestSelectAsset(t *testing.T) {
+
+	var passCases = []string{
+		"file_linux_amd64.zip",    // a zip
+		"file_linux_amd64.tar",    // tar form 1
+		"file_linux_amd64.tar.gz", // tar form 2
+		"file_linux_amd64.tgz",    // tar form 3
+		"file_linux_amd64.exe",    // an exe
+		"file_linux_amd64",        // a binary
+		"file_0.0.0_linux_amd64",  // possible match 1
+		"file_v0.0.0_linux_amd64", // possible match 1
+
+	}
+	for _, testString := range passCases {
+		name, _ := selectAsset("linux", "amd64", "v0.0.0", "file", createTestData(testString))
+		if name != testString {
+			t.Fatalf("SelectAsset test failed. %s does not match %s", name, testString)
+		}
+	}
+
+	// find nothing
+	var nilString = "file_linux_amd64.nil"
+	name, _ := selectAsset("linux", "amd64", "v1.0.0", "file", createTestData(nilString))
+
+	if name != "" {
+		t.Fatalf("SelectAsset nil test failed. Name = %s and should be empty!", name)
+	}
+}

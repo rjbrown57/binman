@@ -80,7 +80,7 @@ func (action *SetUrlAction) execute() error {
 		} else {
 			// Attempt to find the asset via arch/os
 			log.Debugf("Attempt to find github asset for %s", action.r.project)
-			action.r.assetName, action.r.dlUrl = gh.FindAsset(action.r.Arch, action.r.Os, action.r.Version, action.r.project, data.Assets)
+			action.r.assetName, action.r.dlUrl = selectAsset(action.r.Arch, action.r.Os, action.r.Version, action.r.project, gh.GHGetAssetData(data.Assets))
 		}
 	case []*gitlab.ReleaseLink:
 		// If the user has requested a specifc asset check for that
@@ -91,7 +91,7 @@ func (action *SetUrlAction) execute() error {
 		} else {
 			// Attempt to find the asset via arch/os
 			log.Debugf("Attempt to find gitlab asset for %s\n", action.r.project)
-			action.r.assetName, action.r.dlUrl = gl.FindAsset(action.r.Arch, action.r.Os, action.r.Version, action.r.project, data)
+			action.r.assetName, action.r.dlUrl = selectAsset(action.r.Arch, action.r.Os, action.r.Version, action.r.project, gl.GLGetAssetData(data))
 		}
 	}
 

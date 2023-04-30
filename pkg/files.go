@@ -18,6 +18,60 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Select asset takes a list of possible assets and makes a choice
+func selectAsset(relArch string, relOS string, version string, project string, assets map[string]string) (string, string) {
+
+	var possibleAsset struct {
+		Name string
+		Url  string
+	}
+
+	// sometimes amd64 is represented as x86_64, so we substitute a regex here that covers both
+	if relArch == "amd64" || relArch == "x86_64" {
+		relArch = constants.X86RegEx
+	}
+
+	// darwin/osx/macos also has alternate names so we substitute regex
+	if relOS == "darwin" {
+		relOS = constants.MacOsRx
+	}
+
+	zipRx := regexp.MustCompile(constants.ZipRegEx)
+	tarRx := regexp.MustCompile(constants.TarRegEx)
+	exeRx := regexp.MustCompile(constants.ExeRegex)
+	osRx := regexp.MustCompile(strings.ToLower(relOS))
+	archRx := regexp.MustCompile(strings.ToLower(relArch))
+
+	// There are exact match assets and possible match assets
+	// any 1 exact match asset will terminate the loop, otherwise we will take the last possible match asset
+	for name, url := range assets {
+
+		log.Debugf("name %s - url %s", name, url)
+		// This asset matches our OS/Arch
+		if osRx.MatchString(name) && archRx.MatchString(name) {
+			log.Debugf("Evaluating asset %s\n", name)
+
+			// If asset is an exact match one of our supported styles return name+download url
+			// Current styles are tar,zip,exe,linux binary
+			switch {
+			case exeRx.MatchString(name), !strings.Contains(name, "."), tarRx.MatchString(name), zipRx.MatchString(name):
+				log.Debugf("Selected asset %s == %s\n", name, url)
+				return name, url
+			}
+
+			log.Debugf("Evaluating %s contains version %s", name, version)
+			if strings.Contains(name, version) || strings.Contains(name, strings.Trim(version, "v")) && strings.Contains(name, project) {
+				log.Debugf("Possible match by version %s %s", version, name)
+				possibleAsset.Name = name
+				possibleAsset.Url = url
+			}
+		}
+
+	}
+
+	return possibleAsset.Name, possibleAsset.Url
+}
+
 // Create the link to new release
 func createLink(source string, target string) error {
 
