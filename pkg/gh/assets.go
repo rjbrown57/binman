@@ -1,11 +1,9 @@
 package gh
 
 import (
-	"regexp"
 	"strings"
 
 	"github.com/google/go-github/v50/github"
-	"github.com/rjbrown57/binman/pkg/constants"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -22,49 +20,14 @@ func GetAssetbyName(relFileName string, assets []*github.ReleaseAsset) (string, 
 	return "", ""
 }
 
-// FindAsset will Return first asset that matches our OS and Arch regexes and one of our supported filetypes
-func FindAsset(relArch string, relOS string, version string, project string, assets []*github.ReleaseAsset) (string, string) {
+// GHGetAssetData will create a map of names + download urls
+func GHGetAssetData(assets []*github.ReleaseAsset) map[string]string {
+	m := make(map[string]string)
 
-	var possibleAsset github.ReleaseAsset
-
-	// sometimes amd64 is represented as x86_64, so we substitute a regex here that covers both
-	if relArch == "amd64" {
-		relArch = constants.X86RegEx
-	}
-
-	zipRx := regexp.MustCompile(constants.ZipRegEx)
-	tarRx := regexp.MustCompile(constants.TarRegEx)
-	exeRx := regexp.MustCompile(constants.ExeRegex)
-	osRx := regexp.MustCompile(relOS)
-	archRx := regexp.MustCompile(relArch)
-
-	// There are exact match assets and possible match assets
-	// any 1 exact match asset will terminate the loop, otherwise we will take the last possible match asset
-
+	// create map of names + download urls
 	for _, asset := range assets {
-		an := strings.ToLower(asset.GetName())
-
-		// This asset matches our OS/Arch
-		if osRx.MatchString(an) && archRx.MatchString(an) {
-			log.Debugf("Evaluating asset %s\n %v\n", an, asset)
-
-			// If asset is an exact match one of our supported styles return name+download url
-			// Current styles are tar,zip,exe,linux binary
-			switch {
-			case exeRx.MatchString(an), !strings.Contains(an, "."), tarRx.MatchString(an), zipRx.MatchString(an):
-				log.Debugf("Selected asset %s == %+v\n", an, asset)
-				return asset.GetName(), asset.GetBrowserDownloadURL()
-			}
-
-			log.Debugf("Evaluating %s contains version %s", an, version)
-			if strings.Contains(an, version) || strings.Contains(an, strings.Trim(version, "v")) && strings.Contains(an, project) {
-				log.Debugf("Possible match by version %s %s", version, asset.GetName())
-				possibleAsset = *asset
-
-			}
-		}
-
+		m[strings.ToLower(asset.GetName())] = asset.GetBrowserDownloadURL()
 	}
 
-	return possibleAsset.GetName(), possibleAsset.GetBrowserDownloadURL()
+	return m
 }
