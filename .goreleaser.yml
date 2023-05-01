@@ -10,6 +10,7 @@ builds:
       - windows
     goarch:
       - amd64
+      - arm64
 dockers:
   - image_templates:
     - "ghcr.io/rjbrown57/binman"
