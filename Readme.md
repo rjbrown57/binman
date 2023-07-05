@@ -8,15 +8,15 @@ Binman is a tool to sync release assets from github or gitlab to your local work
 
 Grab the latest release [here](https://github.com/rjbrown57/binman/releases), and let binman grab it for you next time :rocket:
 
-Binman will attempt to find a release asset that matches your OS and architecture and one of the types of files we handle currently. Currently handled file types are "zip", "tar", "binary", "exe". 
+Binman will attempt to find a release asset that matches your OS and architecture and one of the types of files we handle currently. Currently handled file types are "zip", "tar", "binary", "exe".
 
-Just add the releasepath to your shell PATH var and you are good to go!  
+Just add the releasepath to your shell PATH var and you are good to go!
 
 ## Config Sync
 
 To run binman effectively you need a config. 
 
-Running binman with no arguements, and no config will populate the defualt config to your OS's appropriate [config directory](https://pkg.go.dev/os#UserConfigDir). On linux the config file will be added to `~/.config/binman/config`. 
+Running binman with no arguments, and no config will populate the default config to your OS's appropriate [config directory](https://pkg.go.dev/os#UserConfigDir). On linux the config file will be added to `~/.config/binman/config`.
 
 Binman also allows supplying a configfile from an alternate path with the `-c` flag or by the "BINMAN_CONFIG" environment variable.
 
@@ -39,10 +39,10 @@ config:
      apitype: github
 releases:
   - repo: rjbrown57/binman
-    linkname: mybinman  
-    downloadonly: false 
+    linkname: mybinman
+    downloadonly: false
     cleanup: true
-    upx: 
+    upx:
       args: [] #["-k","-v"]
   # syncing from gitlab
   #- repo: gitlab.com/gitlab-org/cli
@@ -59,7 +59,7 @@ Top level `config:` options
 | cleanup   | Remove .zip/.tar files after we have extracted something. Useful in container builds / CI |
 | maxdownloads | number of concurrent downloads to allow. Default is number of releases |
 | releasepath | Path to publish files to |
-| tokenvar   | github token to use for auth. You can get yourself rate limited if you have a sizeable config. Instructions to [generate a token are here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token"). This config.tokenvar is left for compatability and can also be set in config.sources for github.com |
+| tokenvar   | github token to use for auth. You can get yourself rate limited if you have a sizeable config. Instructions to [generate a token are here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token"). This config.tokenvar is left for compatibility and can also be set in config.sources for github.com |
 | upx   | config to enable upx shrinking. Details below |
 
 ### Config sources
@@ -86,7 +86,7 @@ config:
 releases:
   - repo: rjbrown57/binman # by default github will be the source
   - repo: myprivate.github.com/myorg/myproject # source can be supplied in the repo key
-  - repo: mygitlaborg/mygitlabproject 
+  - repo: mygitlaborg/mygitlabproject
     source: myprivate.gitlab.com # source can also be supplied via the source key. source must match the name field of configured sources.
 ```
 
@@ -100,9 +100,9 @@ These options can be set per release
 | cleanup   | Remove .zip/.tar files after we have extracted something. Useful in container builds / CI |
 | downloadonly   | default `false`. Set to true if you don't want binman to try to extract and link the asset |
 | externalurl | see [externalurl support](#external-url-support) |
-| linkname | by default binman will create a symlink matching the project name. This can be overidden with linkname set per release |
+| linkname | by default binman will create a symlink matching the project name. This can be overridden with linkname set per release |
 | os | target OS  |
-| releasefilename | in some cases project publish assets that have different names than the github project. For example [cilium-cli](github.com/cilium/cilium-cli) publishs a cli `cilium`. We would set `cilium` here so binman knows what to look for |
+| releasefilename | in some cases project publish assets that have different names than the github project. For example [cilium-cli](github.com/cilium/cilium-cli) publishes a cli `cilium`. We would set `cilium` here so binman knows what to look for |
 | releasepath | Alternate releasepath from what is set in the main config |
 | source | git source to get release from. By default set to "github.com". Must match the name key of a configured source. See [config-sources](#config-sources)
 | upx | see [upx Config](#upx-config) |
@@ -125,7 +125,7 @@ To add a new repo to your config you can run `binman config add anchore/syft`. T
 
 ## External Url Support
 
-binman currently supports fetching version information from github, and then downloading the asset from a seperate url. Templating via go templates and [sprig](https://masterminds.github.io/sprig/) can be performed on the url to allow substitution of the fetched tag.
+binman currently supports fetching version information from github, and then downloading the asset from a separate url. Templating via go templates and [sprig](https://masterminds.github.io/sprig/) can be performed on the url to allow substitution of the fetched tag.
 
 The following values are provided that are commonly used with external urls. See [string templating](#string-templating) for a full list.
 
@@ -147,7 +147,7 @@ releases:
  Current "known" repos are:
 
 * kubernetes/kubernetes
-  * Please note this is currently harcoded to fetch kubectl. If you want a different binary set additional `repo: kubernetes/kubernetes` and specify the url field for each additional binary.
+  * Please note this is currently hardcoded to fetch kubectl. If you want a different binary set additional `repo: kubernetes/kubernetes` and specify the url field for each additional binary.
 * helm/helm
 * hashicorp/terraform
 * hashicorp/vault
@@ -224,7 +224,7 @@ The following values are provided
 \* these values are only available to args in postcommands actions.
 
 ## Binman watch
-If you want to run binman continously, configure the watch portion of your config file and invoke `binman watch`. This will also expose `/metrics` and `/healthz` on port 9091 by default. An example config is below.
+If you want to run binman continuously, configure the watch portion of your config file and invoke `binman watch`. This will also expose `/metrics` and `/healthz` on port 9091 by default. An example config is below.
 
 ```
 config:
@@ -245,11 +245,11 @@ releases:
 - repo: rjbrown57/binman
 ```
 
-metrics are exposed in the format `binman_release{latest="true",repo="rjbrown57/binman",version="v0.8.0"} 0`. Keep in mind github api limits when configuring how often binman checks for new assets. An example helm chart is provided [here for running in k8s](charts/binman/) 
+metrics are exposed in the format `binman_release{latest="true",repo="rjbrown57/binman",version="v0.8.0"} 0`. Keep in mind github api limits when configuring how often binman checks for new assets. An example helm chart is provided [here for running in k8s](charts/binman/)
 
 ## Direct Repo sync
 
-Binman can be used to grab a specifc repository with the syntax `binman get rjbrown57/binman`
+Binman can be used to grab a specific repository with the syntax `binman get rjbrown57/binman`
 
 ## Using "ghcr.io/rjbrown57/binman:latest" container image
 
