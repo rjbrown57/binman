@@ -288,20 +288,21 @@ func TestSetartifactPath(t *testing.T) {
 		exectedartifactPath string
 		assetName           string
 		releasePath         string
+		binPath             string
 	}{
-		{relWithRelFilename, "/tmp/binmanz", "/tmp/binman", "binman", "/tmp/"},
-		{relWithUrlNonTar, "/tmp/binman", "/tmp/extractbinman", "testfile", "/tmp/"},
-		{relWithUrlTar, "/tmp/binman", "/tmp/extractbinman.tar.gz", "testfile", "/tmp/"},
-		{relWithExtractFilename, "/tmp/binman", "/tmp/extractbinman", "testfile", "/tmp/"},
-		{relWithLinkName, "/tmp/none", "/tmp/test", "test", "/tmp/"},
-		{relBasic, "/tmp/binman", "/tmp/binman", "myfile.tgz", "/tmp/"},
-		{relBasic, "/tmp/binman", "/tmp/binman", "myfile.zip", "/tmp/"},
-		{relBasic, "/tmp/binman", "/tmp/binman", "myfile.tar.gz", "/tmp/"},
-		{relBasic, "/tmp/binman", "/tmp/testfile", "testfile", "/tmp/"},
+		{relWithRelFilename, "/tmp/binmanz", "/tmp/binman", "binman", "/tmp/", "/tmp/"},
+		{relWithUrlNonTar, "/tmp/binman", "/tmp/extractbinman", "testfile", "/tmp/", "/tmp/"},
+		{relWithUrlTar, "/tmp/binman", "/tmp/extractbinman.tar.gz", "testfile", "/tmp/", "/tmp/"},
+		{relWithExtractFilename, "/tmp/binman", "/tmp/extractbinman", "testfile", "/tmp/", "/tmp/"},
+		{relWithLinkName, "/tmp/none", "/tmp/test", "test", "/tmp/", "/tmp/"},
+		{relBasic, "/tmp/binman", "/tmp/binman", "myfile.tgz", "/tmp/", "/tmp/"},
+		{relBasic, "/tmp/binman", "/tmp/binman", "myfile.zip", "/tmp/", "/tmp/"},
+		{relBasic, "/tmp/binman", "/tmp/binman", "myfile.tar.gz", "/tmp/", "/tmp/"},
+		{relBasic, "/tmp/binman", "/tmp/testfile", "testfile", "/tmp/", "/tmp/"},
 	}
 
 	for _, test := range tests {
-		test.rel.setArtifactPath(test.releasePath, test.assetName)
+		test.rel.setArtifactPath(test.releasePath, test.binPath, test.assetName)
 		if test.rel.linkPath != test.expectedLinkPath {
 			t.Fatalf("Link Path expected %s, got %s", test.expectedLinkPath, test.rel.linkPath)
 		}

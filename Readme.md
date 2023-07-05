@@ -59,6 +59,7 @@ Top level `config:` options
 | cleanup   | Remove .zip/.tar files after we have extracted something. Useful in container builds / CI |
 | maxdownloads | number of concurrent downloads to allow. Default is number of releases |
 | releasepath | Path to publish files to |
+| binpath | Path to directory where symlinks to binaries will be created, defaults to releasepath |
 | tokenvar   | github token to use for auth. You can get yourself rate limited if you have a sizeable config. Instructions to [generate a token are here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token"). This config.tokenvar is left for compatibility and can also be set in config.sources for github.com |
 | upx   | config to enable upx shrinking. Details below |
 

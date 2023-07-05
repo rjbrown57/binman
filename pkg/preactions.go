@@ -110,20 +110,28 @@ func (action *SetUrlAction) execute() error {
 type SetArtifactPathAction struct {
 	r           *BinmanRelease
 	releasePath string
+	binPath     string
 }
 
-func (r *BinmanRelease) AddSetArtifactPathAction(releasePath string) Action {
+func (r *BinmanRelease) AddSetArtifactPathAction(releasePath, binPath string) Action {
 	return &SetArtifactPathAction{
 		r,
 		releasePath,
+		binPath,
 	}
 }
 
 func (action *SetArtifactPathAction) execute() error {
-	action.r.setArtifactPath(action.releasePath, action.r.assetName)
+	action.r.setArtifactPath(action.releasePath, action.binPath, action.r.assetName)
+	// We set cleanupOnFailure to true in case we hit an issue further down the line
+	action.r.cleanupOnFailure = true
+	// If the binPath string is empty, for example when using `binman get`, don't create the directory
+	if action.binPath != "" {
+		if err := CreateDirectory(action.binPath); err != nil {
+			return err
+		}
+	}
 	err := CreateDirectory(action.r.publishPath)
 	// At this point we have created something during the release process
-	// so we set cleanupOnFailure to true in case we hit an issue further down the line
-	action.r.cleanupOnFailure = true
 	return err
 }
