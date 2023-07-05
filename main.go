@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 Russell Brown rjbrown57@gmail.com
-
 */
 package main
 
