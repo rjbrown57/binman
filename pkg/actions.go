@@ -43,7 +43,7 @@ func (r *BinmanRelease) runActions() error {
 }
 
 // SetPreActions handles query and asset Selection
-func (r *BinmanRelease) setPreActions(releasePath string) []Action {
+func (r *BinmanRelease) setPreActions(releasePath string, binPath string) []Action {
 
 	var actions []Action
 
@@ -82,7 +82,7 @@ func (r *BinmanRelease) setPreActions(releasePath string) []Action {
 
 	// Add remaining preDownload actions
 	actions = append(actions,
-		r.AddSetArtifactPathAction(releasePath),
+		r.AddSetArtifactPathAction(releasePath, binPath),
 		r.AddSetPostActions(),
 	)
 

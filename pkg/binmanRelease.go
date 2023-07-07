@@ -30,6 +30,7 @@ type BinmanRelease struct {
 	PostCommands     []PostCommand `yaml:"postcommands,omitempty"`
 	QueryType        string        `yaml:"querytype,omitempty"`
 	ReleasePath      string        `yaml:"releasepath,omitempty"`
+	BinPath          string        `yaml:"binpath,omitempty"`
 	SourceIdentifier string        `yaml:"source,omitempty"` // Allow setting of source individually
 
 	metric           *prometheus.GaugeVec
@@ -179,7 +180,7 @@ func (r *BinmanRelease) getDataMap() map[string]string {
 }
 
 // Helper method to set paths for a requested release object
-func (r *BinmanRelease) setArtifactPath(ReleasePath string, assetName string) {
+func (r *BinmanRelease) setArtifactPath(ReleasePath, BinPath string, assetName string) {
 
 	// Allow user to supply the name of the final link
 	// This is nice for projects like lazygit which is simply too much to type
@@ -220,7 +221,7 @@ func (r *BinmanRelease) setArtifactPath(ReleasePath string, assetName string) {
 		log.Debugf("Default Extraction %s\n", r.artifactPath)
 	}
 
-	r.linkPath = filepath.Join(ReleasePath, linkName)
+	r.linkPath = filepath.Join(BinPath, linkName)
 	log.Debugf("Artifact Path %s Link Path %s\n", r.artifactPath, r.project)
 
 	r.filepath = fmt.Sprintf("%s/%s", r.publishPath, r.assetName)

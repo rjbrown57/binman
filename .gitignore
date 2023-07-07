@@ -1,3 +1,4 @@
-./binman
+/binman
 dist/
 notes/
+.*.swp

@@ -49,6 +49,7 @@ type UpxConfig struct {
 type BinmanConfig struct {
 	CleanupArchive bool      `yaml:"cleanup,omitempty"`      // mark true if archive should be cleaned after extraction
 	ReleasePath    string    `yaml:"releasepath,omitempty"`  // path to download/link releases from github
+	BinPath        string    `yaml:"binpath,omitempty"`      // path to download/link binaries from github
 	TokenVar       string    `yaml:"tokenvar,omitempty"`     // Github Auth Token
 	NumWorkers     int       `yaml:"maxdownloads,omitempty"` // maximum number of concurrent downloads the user will allow
 	UpxConfig      UpxConfig `yaml:"upx,omitempty"`          // Allow upx to shrink extracted
@@ -202,6 +203,16 @@ func (config *GHBMConfig) populateReleases() {
 			}
 			config.Releases[index].ReleasePath = p
 
+			if config.Releases[index].BinPath == "" {
+				config.Releases[index].BinPath = config.Config.BinPath
+			}
+
+			p, err = filepath.Abs(config.Config.BinPath)
+			if err != nil {
+				log.Fatalf("Unable to get absolute path of %s", config.Config.BinPath)
+			}
+			config.Releases[index].BinPath = p
+
 		}(k)
 	}
 	// Wait until all defaults have been set
@@ -223,6 +234,15 @@ func (config *GHBMConfig) SetDefaults() {
 			log.Fatalf("Unable to detect home directory %v", err)
 		}
 		config.Config.ReleasePath = hDir + "/binMan"
+	}
+
+	// If user does not supply a BinPath var we will use ReleasePath
+	if config.Config.BinPath == "" {
+		_, err := os.UserHomeDir()
+		if err != nil {
+			log.Fatalf("Unable to detect home directory %v", err)
+		}
+		config.Config.BinPath = config.Config.ReleasePath
 	}
 
 	if config.Config.NumWorkers == 0 {

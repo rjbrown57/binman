@@ -25,7 +25,7 @@ func goSyncRepo(rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 
 	var err error
 
-	rel.actions = rel.setPreActions(rel.ReleasePath)
+	rel.actions = rel.setPreActions(rel.ReleasePath, rel.BinPath)
 
 	log.Debugf("release %s = %+v source = %+v", rel.Repo, rel, rel.source)
 
