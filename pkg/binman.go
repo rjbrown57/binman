@@ -19,7 +19,7 @@ var swg sync.WaitGroup
 // Actions are executed in 4 phases
 // Pre -> Post -> Os -> Final
 // The last action of each phase sets the actions for the next phase
-// The Final actions is to set rel.actions = nil and conlude the loop
+// The Final actions is to set rel.actions = nil and conclude the loop
 func goSyncRepo(rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	defer wg.Done()
 
@@ -90,7 +90,7 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 	// setConfig will check for a contextual config and merge with our base config and return the result
 	config := SetConfig(SetBaseConfig(args["configFile"]))
 
-	log.Debugf("binman config = %+v", config)
+	log.Debugf("binman config = %+v", config.Config)
 
 	switch launchCommand {
 	case "get":
