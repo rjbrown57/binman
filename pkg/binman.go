@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	db "github.com/rjbrown57/binman/pkg/db"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -85,10 +86,22 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 	var wg sync.WaitGroup
 	var releases []BinmanRelease
 
+	var dwg sync.WaitGroup
+
+	dbOptions := db.DbConfig{
+		Dwg:    &dwg,
+		DbChan: make(chan db.DbMsg),
+	}
+
+	if checkNewDb("") {
+		log.Debugf("Initializing DB")
+		populateDB(dbOptions, args["configFile"])
+	}
+
 	// Create config object.
 	// setBaseConfig will return the appropriate base config file.
 	// setConfig will check for a contextual config and merge with our base config and return the result
-	config := SetConfig(SetBaseConfig(args["configFile"]))
+	config := SetConfig(SetBaseConfig(args["configFile"]), &dwg, dbOptions.DbChan)
 
 	log.Debugf("binman config = %+v", config.Config)
 
@@ -100,6 +113,7 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 	}
 
 	go getSpinner(debug)
+	go db.RunDB(dbOptions)
 
 	// start download workers
 	var numWorkers = config.Config.NumWorkers
@@ -148,6 +162,9 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 	}
 
 	close(downloadChan)
+
+	dwg.Wait()
+	close(dbOptions.DbChan)
 
 	swg.Add(1)
 	spinChan <- fmt.Sprintf("spinstop%s", setStopMessage(output))

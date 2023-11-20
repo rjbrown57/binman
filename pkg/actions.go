@@ -1,8 +1,11 @@
 package binman
 
 import (
+	"fmt"
 	"reflect"
+	"sync"
 
+	db "github.com/rjbrown57/binman/pkg/db"
 	"github.com/rjbrown57/binman/pkg/gh"
 	"github.com/rjbrown57/binman/pkg/gl"
 	log "github.com/rjbrown57/binman/pkg/logging"
@@ -216,7 +219,41 @@ func (r *BinmanRelease) setFinalActions() []Action {
 		return []Action{r.AddEndWorkAction()}
 	}
 
-	return []Action{r.AddLinkFileAction(), r.AddEndWorkAction()}
+	return []Action{r.AddLinkFileAction(), r.AddUpdateDbAction(), r.AddEndWorkAction()}
+}
+
+type UpdateDbAction struct {
+	r *BinmanRelease
+}
+
+func (r *BinmanRelease) AddUpdateDbAction() Action {
+	return &UpdateDbAction{
+		r,
+	}
+}
+
+func (action *UpdateDbAction) execute() error {
+
+	action.r.dwg.Add(1)
+
+	var rwg sync.WaitGroup
+
+	dbMsg := db.DbMsg{
+		Operation:  "write",
+		Key:        fmt.Sprintf("%s/%s/%s/data", action.r.SourceIdentifier, action.r.Repo, action.r.Version),
+		ReturnChan: make(chan db.DBResponse, 1),
+		ReturnWg:   &rwg,
+		Data:       dataToBytes(action.r.getDataMap()),
+	}
+
+	dbMsg.ReturnWg.Add(1)
+
+	action.r.dbChan <- dbMsg
+
+	dbMsg.ReturnWg.Wait()
+	close(dbMsg.ReturnChan)
+	m := <-dbMsg.ReturnChan
+	return m.Err
 }
 
 type EndWorkAction struct {

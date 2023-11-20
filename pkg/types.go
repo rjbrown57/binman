@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rjbrown57/binman/pkg/constants"
+	db "github.com/rjbrown57/binman/pkg/db"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/rodaine/table"
 )
@@ -126,7 +127,7 @@ func (config *GHBMConfig) cleanReleases() {
 }
 
 // populateReleases applies defaults and does prep work on each release in our config
-func (config *GHBMConfig) populateReleases() {
+func (config *GHBMConfig) populateReleases(dwg *sync.WaitGroup, dbChan chan db.DbMsg) {
 
 	var wg sync.WaitGroup
 
@@ -135,6 +136,10 @@ func (config *GHBMConfig) populateReleases() {
 		go func(index int) {
 
 			defer wg.Done()
+
+			// Set Db wg/chan
+			config.Releases[index].dbChan = dbChan
+			config.Releases[index].dwg = dwg
 
 			// set sources
 			config.Releases[index].setSource(config.Config.SourceMap)
@@ -281,7 +286,7 @@ func (config *GHBMConfig) SetDefaults() {
 }
 
 // setWatchConfig sets config/releases for watch subcommand
-func (config *GHBMConfig) setWatchConfig() {
+func (config *GHBMConfig) setWatchConfig(dwg *sync.WaitGroup, dbChan chan db.DbMsg) {
 
 	config.cleanReleases()
 	config.SetDefaults()
@@ -301,7 +306,7 @@ func (config *GHBMConfig) setWatchConfig() {
 
 	config.metrics = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "binman_release"}, []string{"latest", "source", "repo", "version"})
 
-	config.populateReleases()
+	config.populateReleases(dwg, dbChan)
 }
 
 // setDefaultSources will handle merging defaults and user sources

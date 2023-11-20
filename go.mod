@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
+	golang.org/x/mod v0.8.0
 	golang.org/x/oauth2 v0.13.0
 )
 
@@ -47,6 +48,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/theckman/yacspin v0.13.12
 	github.com/xanzy/go-gitlab v0.93.1
+	go.etcd.io/bbolt v1.3.8
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect

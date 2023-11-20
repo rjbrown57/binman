@@ -68,6 +68,12 @@ func addSubcommands() {
 	// add watch to root
 	rootCmd.AddCommand(watchCmd)
 
+	// add status to root
+	rootCmd.AddCommand(statusCmd)
+
+	// add clean to root
+	rootCmd.AddCommand(cleanCmd)
+
 	// Setup
 	wd, err := os.Getwd()
 	if err != nil {
@@ -76,6 +82,10 @@ func addSubcommands() {
 
 	getCmd.Flags().StringVarP(&path, "path", "p", wd, "path to download file to")
 	getCmd.Flags().StringVarP(&version, "version", "v", "", "Specific version to grab via direct download")
+
+	cleanCmd.Flags().BoolVarP(&cleanDryRun, "dryrun", "r", false, "enable dry run for clean")
+	cleanCmd.Flags().IntVarP(&threshold, "threshold", "n", 3, "Non-zero amount of releases to retain")
+	cleanCmd.Flags().BoolVarP(&scan, "scan", "s", false, "force update of DB pre clean")
 
 	// add config to root
 	rootCmd.AddCommand(getCmd)
