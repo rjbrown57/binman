@@ -8,16 +8,16 @@ import (
 	"github.com/xanzy/go-gitlab"
 )
 
-func GLGetReleaseAssets(glClient *gitlab.Client, repo string, tag string) []*gitlab.ReleaseLink {
+func GLGetReleaseAssets(glClient *gitlab.Client, repo string, tag string) ([]*gitlab.ReleaseLink, int64) {
 	rel, _, err := glClient.Releases.GetRelease(repo, tag)
 
 	if err == nil {
-		return rel.Assets.Links
+		return rel.Assets.Links, rel.CreatedAt.Unix()
 	}
 
 	log.Debugf("Error getting release for %s:%s - %v", repo, tag, err)
 
-	return nil
+	return nil, 0
 }
 
 func GetAssetbyName(relFileName string, assets []*gitlab.ReleaseLink) (string, string) {
@@ -26,7 +26,7 @@ func GetAssetbyName(relFileName string, assets []*gitlab.ReleaseLink) (string, s
 
 		if an == relFileName {
 			log.Debugf("Selected asset == %+v\n", an)
-			return an, *&asset.DirectAssetURL
+			return an, asset.DirectAssetURL
 		}
 	}
 

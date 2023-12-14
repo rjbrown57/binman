@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	db "github.com/rjbrown57/binman/pkg/db"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -35,9 +36,23 @@ func StartWatch(config string) {
 	// Watch mode always uses json style logging
 	log.ConfigureLog(true, true)
 
+	var dwg sync.WaitGroup
+
+	dbOptions := db.DbConfig{
+		Dwg:    &dwg,
+		DbChan: make(chan db.DbMsg),
+	}
+
+	if checkNewDb("") {
+		log.Debugf("Initializing DB")
+		populateDB(dbOptions, config)
+	}
+
+	go db.RunDB(dbOptions)
+
 	// create the base config
 	watchConfig := NewGHBMConfig(SetBaseConfig(config))
-	watchConfig.setWatchConfig()
+	watchConfig.setWatchConfig(dbOptions.Dwg, dbOptions.DbChan)
 
 	// Start watch mode http
 	go watchServe(watchConfig.Config.Watch, watchConfig.Config.ReleasePath)

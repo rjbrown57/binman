@@ -124,6 +124,16 @@ to edit your config run `binman config edit`. This command will make use of what
 ### add
 To add a new repo to your config you can run `binman config add anchore/syft`. This will add `repo: anchore/syft` to our config file in the releases section. If further configuration is required do so with `binman config edit`
 
+## Binman clean subcommand
+Binman can remove old releases with the binman clean subcommand. The following options are supported.
+
+| Flag | Description | Default |
+| ----------- | ----------- | ---------- |
+| -r,--dryrun | enable dry run to check what will be removed | false |
+| -s,--scan | update db with local files pre scan. Useful if binman has been used previous to 1.0.0 | false |
+| -n,--threshold |  Non-zero amount of releases to retain | 3 |
+ 
+
 ## External Url Support
 
 binman currently supports fetching version information from github, and then downloading the asset from a separate url. Templating via go templates and [sprig](https://masterminds.github.io/sprig/) can be performed on the url to allow substitution of the fetched tag.
@@ -224,28 +234,6 @@ The following values are provided
 
 \* these values are only available to args in postcommands actions.
 
-## Binman watch
-If you want to run binman continuously, configure the watch portion of your config file and invoke `binman watch`. This will also expose `/metrics` and `/healthz` on port 9091 by default. An example config is below.
-
-```
-config:
-    sources:
-        - name: github.com
-          tokenvar: GH_TOKEN
-          url: https://api.github.com/
-          apitype: github
-        - name: gitlab.com
-          url: https://gitlab.com
-          apitype: gitlab
-    watch:
-      sync: true # Whether to download assets or not. If you only want metrics set to false
-      fileserver: false # Start a basic fileserver at /
-      frequency: 60 # seconds between iteration, default is 60
-      port: 9091 # Port to expose healthz and metrics endpoints, default is 9091
-releases:
-- repo: rjbrown57/binman
-```
-
 metrics are exposed in the format `binman_release{latest="true",repo="rjbrown57/binman",version="v0.8.0"} 0`. Keep in mind github api limits when configuring how often binman checks for new assets. An example helm chart is provided [here for running in k8s](charts/binman/)
 
 ## Direct Repo sync
@@ -271,4 +259,26 @@ ADD myconfig.yaml examples/basicExample.yaml
 RUN binman -c examples/basicExample.yaml
 FROM ubuntu:latest
 COPY --from=binman /root/binMan/ /usr/local/bin/
+```
+
+## Binman watch
+If you want to run binman continuously, configure the watch portion of your config file and invoke `binman watch`. This will also expose `/metrics` and `/healthz` on port 9091 by default. An example config is below.
+
+```
+config:
+    sources:
+        - name: github.com
+          tokenvar: GH_TOKEN
+          url: https://api.github.com/
+          apitype: github
+        - name: gitlab.com
+          url: https://gitlab.com
+          apitype: gitlab
+    watch:
+      sync: true # Whether to download assets or not. If you only want metrics set to false
+      fileserver: false # Start a basic fileserver at /
+      frequency: 60 # seconds between iteration, default is 60
+      port: 9091 # Port to expose healthz and metrics endpoints, default is 9091
+releases:
+- repo: rjbrown57/binman
 ```

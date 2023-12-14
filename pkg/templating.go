@@ -18,7 +18,7 @@ var KnownUrlMap = map[string]string{
 }
 
 // Format strings for processing. Currently used by releaseFileName and DlUrl
-func formatString(templateString string, dataMap map[string]string) string {
+func formatString(templateString string, dataMap map[string]interface{}) string {
 
 	// For compatability with previous binman versions update %s to {{.}}
 	templateString = strings.Replace(templateString, "%s", "{{.version}}", -1)

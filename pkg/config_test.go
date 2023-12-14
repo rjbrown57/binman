@@ -72,7 +72,6 @@ func TestSetBaseConfig(t *testing.T) {
 	}
 
 	// Test value of BINMAN_CONFIG is set
-
 	err := os.Setenv("BINMAN_CONFIG", "testvalue")
 	if err != nil {
 		t.Fatal("Unable to set BINMAN_CONFIG env var")
@@ -106,7 +105,7 @@ func TestSetConfig(t *testing.T) {
 
 	binmanConfigFile, binmanConfigFileBack := prepConfig(t)
 
-	config := SetConfig(SetBaseConfig("noConfig"))
+	config := SetConfig(SetBaseConfig("noConfig"), nil, nil)
 	baseLength := len(config.Releases)
 
 	if baseLength != 1 {
@@ -120,7 +119,7 @@ func TestSetConfig(t *testing.T) {
 	cf := fmt.Sprintf(d + "/" + ".binMan.yaml")
 	WriteStringtoFile(cf, mergeConfig)
 
-	mergedConfig := SetConfig(SetBaseConfig("noConfig"))
+	mergedConfig := SetConfig(SetBaseConfig("noConfig"), nil, nil)
 	mergedLength := len(mergedConfig.Releases)
 
 	if baseLength == mergedLength {

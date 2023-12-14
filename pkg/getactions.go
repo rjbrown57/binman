@@ -41,6 +41,7 @@ func (action *GetGHReleaseAction) execute() error {
 	if err == nil {
 		action.r.Version = ghd.GetTagName()
 		action.r.relNotes = ghd.GetBody()
+		action.r.createdAtTime = ghd.GetCreatedAt().Unix()
 	}
 
 	action.r.relData = ghd
@@ -83,8 +84,9 @@ func (action *GetGLReleaseAction) execute() error {
 	}
 
 	//Fetch release data
-	releaseLinks := gl.GLGetReleaseAssets(action.glClient, action.r.Repo, action.r.Version)
+	releaseLinks, t := gl.GLGetReleaseAssets(action.glClient, action.r.Repo, action.r.Version)
 	action.r.relData = releaseLinks
+	action.r.createdAtTime = t
 
 	if action.r.relData == nil || len(releaseLinks) == 0 {
 		err = fmt.Errorf("No release data found for %s", action.r.Repo)

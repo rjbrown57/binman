@@ -6,9 +6,11 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rjbrown57/binman/pkg/constants"
+	db "github.com/rjbrown57/binman/pkg/db"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -33,6 +35,7 @@ type BinmanRelease struct {
 	BinPath          string        `yaml:"binpath,omitempty"`
 	SourceIdentifier string        `yaml:"source,omitempty"` // Allow setting of source individually
 
+	createdAtTime    int64 // Unix time that release was created at
 	metric           *prometheus.GaugeVec
 	relData          interface{} // Data gathered from source
 	relNotes         string
@@ -47,9 +50,13 @@ type BinmanRelease struct {
 	linkPath         string // Will be set by BinmanRelease.setPaths
 	artifactPath     string // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
 	actions          []Action
+	versions         []string // Used during clean operations
 
 	watchExposeMetrics bool
 	watchSync          bool
+
+	dwg    *sync.WaitGroup // Wait Group for db operations
+	dbChan chan db.DbMsg   // Channel to send to DB
 }
 
 type PostCommand struct {
@@ -166,16 +173,19 @@ func (r *BinmanRelease) setPublishPath(ReleasePath string, tag string) {
 }
 
 // getDataMap is a helper function to provide data to be used with templating
-func (r *BinmanRelease) getDataMap() map[string]string {
-	dataMap := make(map[string]string)
+func (r *BinmanRelease) getDataMap() map[string]interface{} {
+	dataMap := make(map[string]interface{})
 	dataMap["version"] = r.Version
 	dataMap["os"] = r.Os
 	dataMap["arch"] = r.Arch
+	dataMap["repo"] = r.Repo
 	dataMap["org"] = r.org
 	dataMap["project"] = r.project
 	dataMap["artifactPath"] = r.artifactPath
-	dataMap["linkpath"] = r.linkPath
-	dataMap["filename"] = r.assetName
+	dataMap["publishPath"] = r.publishPath
+	dataMap["linkPath"] = r.linkPath
+	dataMap["assetName"] = r.assetName
+	dataMap["createdAt"] = r.createdAtTime
 	return dataMap
 }
 

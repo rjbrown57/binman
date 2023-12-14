@@ -321,20 +321,36 @@ func TestGetDataMap(t *testing.T) {
 	var arch string = "amd64"
 
 	rel := BinmanRelease{
-		Os:      os,
-		Arch:    arch,
-		Version: version,
+		Repo:          "test/test",
+		Os:            os,
+		Arch:          arch,
+		Version:       version,
+		createdAtTime: int64(0),
+		artifactPath:  "test",
+		linkPath:      "test",
+		publishPath:   "test",
+		assetName:     "test",
 	}
 
-	testdataMap := make(map[string]string)
+	rel.getOR()
+
+	testdataMap := make(map[string]interface{})
 	testdataMap["version"] = version
 	testdataMap["os"] = os
 	testdataMap["arch"] = arch
+	testdataMap["createdAt"] = int64(0)
+	testdataMap["org"] = "test"
+	testdataMap["repo"] = "test/test"
+	testdataMap["project"] = "test"
+	testdataMap["artifactPath"] = "test"
+	testdataMap["publishPath"] = "test"
+	testdataMap["linkPath"] = "test"
+	testdataMap["assetName"] = "test"
 
 	m := rel.getDataMap()
 	for k, v := range m {
 		if testdataMap[k] != v {
-			t.Fatalf("Expected %s got %s", testdataMap[k], v)
+			t.Fatalf("Expected %s%s got %s", k, testdataMap[k], v)
 		}
 	}
 }

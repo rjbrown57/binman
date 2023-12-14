@@ -262,7 +262,7 @@ func TestSetFinalActions(t *testing.T) {
 		{
 			"basic",
 			relBase.setFinalActions(),
-			[]string{"*binman.LinkFileAction", "*binman.EndWorkAction"},
+			[]string{"*binman.LinkFileAction", "*binman.UpdateDbAction", "*binman.EndWorkAction"},
 		},
 	}
 
@@ -270,7 +270,7 @@ func TestSetFinalActions(t *testing.T) {
 		fmt.Printf("Testing %s\n", test.name)
 		for k := range test.ReturnedActions {
 			if reflect.TypeOf(test.ReturnedActions[k]).String() != test.ExpectedActions[k] {
-				t.Fatalf("Expected %s, got %s", reflect.TypeOf(test.ReturnedActions[k]).String(), test.ExpectedActions[k])
+				t.Fatalf("Expected %s, got %s", test.ExpectedActions[k], reflect.TypeOf(test.ReturnedActions[k]).String())
 			}
 		}
 	}

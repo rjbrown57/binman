@@ -15,7 +15,7 @@ func TestFormatString(t *testing.T) {
 		{`https://releases.hashicorp.com/terraform/{{ trimPrefix "v" .version }}/terraform_{{ trimPrefix "v" .version }}_{{.os}}_{{.arch}}.zip`, "https://releases.hashicorp.com/terraform/0.0.0/terraform_0.0.0_linux_amd64.zip"},
 	}
 
-	m := make(map[string]string)
+	m := make(map[string]interface{})
 	m["version"] = "v0.0.0"
 	m["os"] = "linux"
 	m["arch"] = "amd64"
