@@ -8,6 +8,7 @@ import (
 
 	db "github.com/rjbrown57/binman/pkg/db"
 	log "github.com/rjbrown57/binman/pkg/logging"
+	"github.com/rjbrown57/binman/pkg/templating"
 )
 
 // if user does not provide a -c this will be populated at ~/.config/binman/config
@@ -41,7 +42,7 @@ func createTestDir(t *testing.T, testVersions []string, configTemplate string, t
 	// Prepare test config
 	bmConfigPath := fmt.Sprintf("%s/config", dM["releasePath"])
 	// This needs to render in the path
-	err = WriteStringtoFile(bmConfigPath, formatString(configTemplate, dM))
+	err = WriteStringtoFile(bmConfigPath, templating.TemplateString(configTemplate, dM))
 	if err != nil {
 		t.Fatalf("Failed to render test config to %s", dM["releasePath"])
 	}
