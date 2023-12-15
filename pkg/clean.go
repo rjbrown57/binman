@@ -19,8 +19,7 @@ var (
 	ErrVersionsListNotSorted = errors.New("Provided list of versions is not sorted")
 )
 
-func Clean(dryrun, debug, jsonLog, scan bool, threshold int, dbPath, config string) error {
-	log.ConfigureLog(jsonLog, debug)
+func Clean(dryrun, scan bool, threshold int, dbPath, config string) error {
 
 	log.Infof("Binman Clean started")
 

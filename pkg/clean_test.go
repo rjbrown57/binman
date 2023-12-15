@@ -28,7 +28,7 @@ type CleanTest struct {
 }
 
 func TestClean(t *testing.T) {
-	log.ConfigureLog(true, true)
+	log.ConfigureLog(true, 2)
 
 	testCleans := []CleanTest{
 		{
@@ -73,7 +73,7 @@ func TestClean(t *testing.T) {
 			log.Fatalf("Issue populating DB %s", err)
 		}
 
-		Clean(false, true, true, false, test.threshold, dbPath, testConfig)
+		Clean(false, true, test.threshold, dbPath, testConfig)
 
 		testDb := db.GetDB(dbPath)
 

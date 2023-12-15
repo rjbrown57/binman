@@ -8,7 +8,14 @@ import (
 
 var log = logrus.New()
 
-func ConfigureLog(jsonLog bool, debug bool) {
+func IsDebug() bool {
+	if log.Level == logrus.InfoLevel {
+		return false
+	}
+	return true
+}
+
+func ConfigureLog(jsonLog bool, logLevel int) {
 	// logging
 	if jsonLog {
 		log.Formatter = &logrus.JSONFormatter{}
@@ -16,9 +23,12 @@ func ConfigureLog(jsonLog bool, debug bool) {
 
 	log.Out = os.Stdout
 
-	if debug {
+	switch logLevel {
+	case 1:
 		log.Level = logrus.DebugLevel
-	} else {
+	case 2:
+		log.Level = logrus.TraceLevel
+	default:
 		log.Level = logrus.InfoLevel
 	}
 }
@@ -33,6 +43,10 @@ func Warnf(format string, v ...interface{}) {
 
 func Debugf(format string, v ...interface{}) {
 	log.Debugf(format, v...)
+}
+
+func Tracef(format string, v ...interface{}) {
+	log.Tracef(format, v...)
 }
 
 func Errorf(format string, v ...interface{}) {

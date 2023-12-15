@@ -23,7 +23,11 @@ var cleanCmd = &cobra.Command{
 			fmt.Println("Error: Please use a non-zero value for threshold")
 			os.Exit(1)
 		}
-		err := binman.Clean(cleanDryRun, debug, jsonLog, scan, threshold, "", config)
+
+		// Set the logging options
+		log.ConfigureLog(jsonLog, debug)
+
+		err := binman.Clean(cleanDryRun, scan, threshold, "", config)
 		if err != nil {
 			log.Fatalf("Failed to run clean %s", err)
 		}

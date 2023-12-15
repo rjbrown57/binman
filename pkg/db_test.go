@@ -59,7 +59,7 @@ func createTestDir(t *testing.T, testVersions []string, configTemplate string, t
 
 func TestPopulateData(t *testing.T) {
 
-	log.ConfigureLog(true, true)
+	log.ConfigureLog(true, 2)
 
 	testVersions := []string{
 		"github.com/org1/repo1/v0.0.0",

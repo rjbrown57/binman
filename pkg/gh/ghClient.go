@@ -20,7 +20,7 @@ func GetGHCLient(baseUrl string, tokenvar string) *github.Client {
 
 	// No auth client if user does not supply envvar
 	if tokenvar == "none" {
-		log.Debugf("Returning github client without auth")
+		log.Tracef("Returning github client without auth")
 		gh := github.NewClient(nil)
 		gh.BaseURL = ghUrl
 		return gh
@@ -32,7 +32,7 @@ func GetGHCLient(baseUrl string, tokenvar string) *github.Client {
 		log.Fatalf("Specified environment variable %s is empty", tokenvar)
 	}
 
-	log.Debugf("Returning github client using %s for auth", tokenvar)
+	log.Tracef("Returning github client using %s for auth", tokenvar)
 
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(

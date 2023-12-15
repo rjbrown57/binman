@@ -75,10 +75,8 @@ func BinmanGetReleasePrep(sourceMap map[string]*Source, work map[string]string) 
 }
 
 // Main does basic setup, then calls the appropriate functions for asset resolution
-func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCommand string) {
+func Main(args map[string]string, table bool, launchCommand string) {
 
-	// Set the logging options
-	log.ConfigureLog(jsonLog, debug)
 	log.Debugf("binman sync begin\n")
 
 	c := make(chan BinmanMsg)
@@ -112,7 +110,7 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 		releases = config.Releases
 	}
 
-	go getSpinner(debug)
+	go getSpinner(log.IsDebug())
 	go db.RunDB(dbOptions)
 
 	// start download workers
@@ -179,7 +177,7 @@ func Main(args map[string]string, debug bool, jsonLog bool, table bool, launchCo
 	}
 
 	if table {
-		OutputResults(output, debug)
+		OutputResults(output, log.IsDebug())
 	}
 
 	log.Debugf("binman finished!")

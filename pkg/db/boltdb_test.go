@@ -33,7 +33,7 @@ func getTests() []dbTest {
 func TestRunDB(t *testing.T) {
 
 	// Set the logging options
-	log.ConfigureLog(true, true)
+	log.ConfigureLog(true, 2)
 
 	d, err := os.MkdirTemp(os.TempDir(), "binmantest")
 	if err != nil {
@@ -139,7 +139,7 @@ func TestRunDB(t *testing.T) {
 // TestGetData will test write/read functions
 func TestGetData(t *testing.T) {
 
-	log.ConfigureLog(true, true)
+	log.ConfigureLog(true, 2)
 
 	d, err := os.MkdirTemp(os.TempDir(), "binmantest")
 	if err != nil {

@@ -87,9 +87,7 @@ func getVersionBuckets(tx *bolt.Tx) []*bolt.Bucket {
 }
 
 // OutputDbStatus will output all keys and values
-func OutputDbStatus(jsonlog, debug bool) error {
-
-	log.ConfigureLog(jsonlog, debug)
+func OutputDbStatus() error {
 
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
