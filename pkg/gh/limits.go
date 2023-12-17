@@ -28,7 +28,7 @@ func ShowLimits(ghClient *github.Client) error {
 		return err
 	}
 
-	log.Debugf("Github Rate limit info %s", limits.Core.String())
+	log.Tracef("Github Rate limit info %s", limits.Core.String())
 	return nil
 }
 

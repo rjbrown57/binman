@@ -2,6 +2,7 @@ package cmd
 
 import (
 	binman "github.com/rjbrown57/binman/pkg"
+	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -11,6 +12,9 @@ var statusCmd = &cobra.Command{
 	Short: "status operations for binman",
 	Long:  `status operations for binman`,
 	Run: func(cmd *cobra.Command, args []string) {
-		binman.OutputDbStatus(jsonLog, debug)
+
+		// Set the logging options
+		log.ConfigureLog(jsonLog, debug)
+		binman.OutputDbStatus()
 	},
 }

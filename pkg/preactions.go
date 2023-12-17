@@ -11,6 +11,7 @@ import (
 	"github.com/rjbrown57/binman/pkg/gh"
 	"github.com/rjbrown57/binman/pkg/gl"
 	log "github.com/rjbrown57/binman/pkg/logging"
+	"github.com/rjbrown57/binman/pkg/templating"
 	"github.com/xanzy/go-gitlab"
 )
 
@@ -69,7 +70,7 @@ func (action *SetUrlAction) execute() error {
 	// If user has set an external url use that to grab target
 	if action.r.ExternalUrl != "" {
 		log.Debugf("User specified url %s", action.r.dlUrl)
-		action.r.dlUrl = formatString(action.r.ExternalUrl, action.r.getDataMap())
+		action.r.dlUrl = templating.TemplateString(action.r.ExternalUrl, action.r.getDataMap())
 		action.r.assetName = filepath.Base(action.r.dlUrl)
 		return nil
 	}
@@ -78,7 +79,7 @@ func (action *SetUrlAction) execute() error {
 	case *github.RepositoryRelease:
 		// If the user has requested a specifc asset check for that
 		if action.r.ReleaseFileName != "" {
-			rFilename := formatString(action.r.ReleaseFileName, action.r.getDataMap())
+			rFilename := templating.TemplateString(action.r.ReleaseFileName, action.r.getDataMap())
 			log.Debugf("Get gh asset by name %s", rFilename)
 			action.r.assetName, action.r.dlUrl = gh.GetAssetbyName(rFilename, data.Assets)
 		} else {
@@ -89,7 +90,7 @@ func (action *SetUrlAction) execute() error {
 	case []*gitlab.ReleaseLink:
 		// If the user has requested a specifc asset check for that
 		if action.r.ReleaseFileName != "" {
-			rFilename := formatString(action.r.ReleaseFileName, action.r.getDataMap())
+			rFilename := templating.TemplateString(action.r.ReleaseFileName, action.r.getDataMap())
 			log.Debugf("Get gl asset by name %s", rFilename)
 			action.r.assetName, action.r.dlUrl = gl.GetAssetbyName(rFilename, data)
 		} else {

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	binman "github.com/rjbrown57/binman/pkg"
+	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +21,9 @@ var getCmd = &cobra.Command{
 		m["version"] = version
 		m["path"] = path
 
-		binman.Main(m, debug, jsonLog, table, "get")
+		// Set the logging options
+		log.ConfigureLog(jsonLog, debug)
+
+		binman.Main(m, table, "get")
 	},
 }

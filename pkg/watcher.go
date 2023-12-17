@@ -34,7 +34,7 @@ func watchServe(config Watch, releasePath string) {
 func StartWatch(config string) {
 
 	// Watch mode always uses json style logging
-	log.ConfigureLog(true, true)
+	log.ConfigureLog(true, 0)
 
 	var dwg sync.WaitGroup
 

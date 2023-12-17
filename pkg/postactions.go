@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	log "github.com/rjbrown57/binman/pkg/logging"
+	"github.com/rjbrown57/binman/pkg/templating"
 )
 
 type DownloadAction struct {
@@ -200,7 +201,7 @@ func (action *OsCommandAction) execute() error {
 
 	// Template any args
 	for i, arg := range action.r.PostCommands[action.index].Args {
-		action.r.PostCommands[action.index].Args[i] = formatString(arg, dataMap)
+		action.r.PostCommands[action.index].Args[i] = templating.TemplateString(arg, dataMap)
 	}
 
 	log.Debugf("Starting OS command %s with args %s for %s ", command, action.r.PostCommands[action.index].Args, action.r.Repo)

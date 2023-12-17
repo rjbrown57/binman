@@ -372,7 +372,7 @@ func TestKnownUrlCheck(t *testing.T) {
 		expectedurl string
 	}{
 		{relUnknown, ""},
-		{relKnown, KnownUrlMap[testRepo]},
+		{relKnown, constants.KnownUrlMap[testRepo]},
 	}
 
 	for _, test := range tests {

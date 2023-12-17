@@ -12,6 +12,7 @@ import (
 	"github.com/rjbrown57/binman/pkg/constants"
 	db "github.com/rjbrown57/binman/pkg/db"
 	log "github.com/rjbrown57/binman/pkg/logging"
+	"github.com/rjbrown57/binman/pkg/templating"
 )
 
 // BinmanRelease contains info on specifc releases to hunt for
@@ -105,7 +106,7 @@ func (r *BinmanRelease) setSource(sourceMap map[string]*Source) {
 
 func (r *BinmanRelease) findTarget() {
 
-	targetFileName := formatString(filepath.Base(r.artifactPath), r.getDataMap())
+	targetFileName := templating.TemplateString((filepath.Base(r.artifactPath)), r.getDataMap())
 
 	if r.Os == "windows" {
 		targetFileName = targetFileName + ".exe"
@@ -158,7 +159,7 @@ func (r *BinmanRelease) findTarget() {
 
 // knownUrlCheck will see if binman is aware of a common external url for this repo.
 func (r *BinmanRelease) knownUrlCheck() {
-	if url, ok := KnownUrlMap[r.Repo]; ok {
+	if url, ok := constants.KnownUrlMap[r.Repo]; ok {
 		log.Debugf("%s is a known repo. Updating download url to %s", r.Repo, url)
 		r.ExternalUrl = url
 	}
@@ -206,7 +207,7 @@ func (r *BinmanRelease) setArtifactPath(ReleasePath, BinPath string, assetName s
 	// else if it's a tar/zip but we have specified the inside file via ExtractFileName. Use ExtractFileName for source and destination
 	// else we want default
 	if r.ReleaseFileName != "" {
-		r.artifactPath = filepath.Join(r.publishPath, formatString(r.ReleaseFileName, r.getDataMap()))
+		r.artifactPath = filepath.Join(r.publishPath, templating.TemplateString(r.ReleaseFileName, r.getDataMap()))
 		log.Debugf("ReleaseFileName set %s\n", r.artifactPath)
 	} else if r.ExtractFileName != "" {
 		r.artifactPath = filepath.Join(r.publishPath, r.ExtractFileName)

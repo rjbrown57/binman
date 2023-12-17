@@ -1,4 +1,4 @@
-package binman
+package templating
 
 import (
 	"bytes"
@@ -9,16 +9,8 @@ import (
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
-// KnownUrlMap contains "projectname/repo" = "downloadurl" for common release assets not hosted on github
-var KnownUrlMap = map[string]string{
-	"helm/helm":             "https://get.helm.sh/helm-{{.version}}-{{.os}}-{{.arch}}.tar.gz",
-	"kubernetes/kubernetes": "https://dl.k8s.io/release/{{.version}}/bin/{{.os}}/{{.arch}}/kubectl",
-	"hashicorp/terraform":   `https://releases.hashicorp.com/terraform/{{ trimPrefix "v" .version }}/terraform_{{ trimPrefix "v" .version }}_{{.os}}_{{.arch}}.zip`,
-	"hashicorp/vault":       `https://releases.hashicorp.com/vault/{{ trimPrefix "v" .version }}/vault_{{ trimPrefix "v" .version }}_{{.os}}_{{.arch}}.zip`,
-}
-
 // Format strings for processing. Currently used by releaseFileName and DlUrl
-func formatString(templateString string, dataMap map[string]interface{}) string {
+func TemplateString(templateString string, dataMap map[string]interface{}) string {
 
 	// For compatability with previous binman versions update %s to {{.}}
 	templateString = strings.Replace(templateString, "%s", "{{.version}}", -1)

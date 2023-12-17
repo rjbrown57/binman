@@ -1,10 +1,10 @@
-package binman
+package templating
 
 import (
 	"testing"
 )
 
-func TestFormatString(t *testing.T) {
+func TestTemplateString(t *testing.T) {
 
 	var tests = []struct {
 		templateString string
@@ -21,7 +21,7 @@ func TestFormatString(t *testing.T) {
 	m["arch"] = "amd64"
 
 	for _, test := range tests {
-		if retval := formatString(test.templateString, m); retval != test.expectedString {
+		if retval := TemplateString(test.templateString, m); retval != test.expectedString {
 			t.Fatalf("%s should template to %s got %s", test.templateString, test.expectedString, retval)
 		}
 	}

@@ -6,16 +6,17 @@ import (
 	"strings"
 
 	binman "github.com/rjbrown57/binman/pkg"
+	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/spf13/cobra"
 )
 
-var debug bool
 var jsonLog bool
 var config string
 var repo string
 var version string
 var path string
 var table bool
+var debug int
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -36,7 +37,10 @@ var rootCmd = &cobra.Command{
 		m["repo"] = repo
 		m["version"] = version
 
-		binman.Main(m, debug, jsonLog, table, "config")
+		// Set the logging options
+		log.ConfigureLog(jsonLog, debug)
+
+		binman.Main(m, table, "config")
 	},
 }
 
@@ -96,8 +100,7 @@ func init() {
 	addSubcommands()
 
 	rootCmd.PersistentFlags().StringVarP(&config, "config", "c", "noConfig", "path to config file. Can be set with ${BINMAN_CONFIG} env var")
-	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "enable debug logging")
+	rootCmd.PersistentFlags().CountVarP(&debug, "debug", "d", "enable debug logging. Set multiple times to increase log level")
 	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json", "j", false, "enable json style logging")
 	rootCmd.PersistentFlags().BoolVarP(&table, "table", "t", false, "Output table after sync completion")
-
 }
