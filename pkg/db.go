@@ -134,7 +134,7 @@ func populateDB(dbOptions db.DbConfig, config string) error {
 	// Create config object.
 	// setBaseConfig will return the appropriate base config file.
 	// setConfig will check for a contextual config and merge with our base config and return the result
-	c := SetConfig(SetBaseConfig(config), nil, nil)
+	c := SetConfig(SetBaseConfig(config), nil, nil, nil)
 
 	log.Debugf("Updating binman db from filesystem")
 

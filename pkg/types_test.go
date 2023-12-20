@@ -254,7 +254,7 @@ func TestPopulateReleases(t *testing.T) {
 	}
 
 	got.SetDefaults()
-	got.populateReleases(nil, nil)
+	got.populateReleases(nil, nil, nil)
 
 	for k := range got.Releases {
 

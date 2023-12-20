@@ -70,7 +70,7 @@ func TestBinmanGetReleasePrep(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test.Got = BinmanGetReleasePrep(sourceMap, test.dataMap)
+		test.Got = BinmanGetReleasePrep(sourceMap, test.dataMap, nil)
 		if fmt.Sprintf("%v", test.Got[0]) != fmt.Sprintf("%v", test.Expected) {
 			t.Fatalf("\n got - %+v\n expected - %+v", test.Got[0], test.Expected)
 		}

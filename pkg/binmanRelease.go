@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rjbrown57/binman/pkg/constants"
 	db "github.com/rjbrown57/binman/pkg/db"
+	"github.com/rjbrown57/binman/pkg/downloader"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/rjbrown57/binman/pkg/templating"
 )
@@ -56,8 +57,9 @@ type BinmanRelease struct {
 	watchExposeMetrics bool
 	watchSync          bool
 
-	dwg    *sync.WaitGroup // Wait Group for db operations
-	dbChan chan db.DbMsg   // Channel to send to DB
+	dwg          *sync.WaitGroup       // Wait Group for db operations
+	dbChan       chan db.DbMsg         // Channel to send to DB
+	downloadChan chan downloader.DlMsg // Channel to request file download
 }
 
 type PostCommand struct {

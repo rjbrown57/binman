@@ -8,6 +8,7 @@ import (
 	"time"
 
 	db "github.com/rjbrown57/binman/pkg/db"
+	"github.com/rjbrown57/binman/pkg/downloader"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -46,7 +47,7 @@ func goSyncRepo(rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	c <- BinmanMsg{rel: rel, err: nil}
 }
 
-func BinmanGetReleasePrep(sourceMap map[string]*Source, work map[string]string) []BinmanRelease {
+func BinmanGetReleasePrep(sourceMap map[string]*Source, work map[string]string, downloadChan chan downloader.DlMsg) []BinmanRelease {
 
 	if f, err := os.Stat(work["path"]); !f.IsDir() || err != nil {
 		log.Fatalf("Issue detected with %s", work["path"])
@@ -61,6 +62,7 @@ func BinmanGetReleasePrep(sourceMap map[string]*Source, work map[string]string) 
 		DownloadOnly:     true,
 		cleanupOnFailure: false,
 		Version:          work["version"],
+		downloadChan:     downloadChan,
 	}
 
 	if rel.Version != "" {
@@ -86,6 +88,8 @@ func Main(args map[string]string, table bool, launchCommand string) {
 
 	var dwg sync.WaitGroup
 
+	var downloadChan = make(chan downloader.DlMsg)
+
 	dbOptions := db.DbConfig{
 		Dwg:    &dwg,
 		DbChan: make(chan db.DbMsg),
@@ -99,13 +103,14 @@ func Main(args map[string]string, table bool, launchCommand string) {
 	// Create config object.
 	// setBaseConfig will return the appropriate base config file.
 	// setConfig will check for a contextual config and merge with our base config and return the result
-	config := SetConfig(SetBaseConfig(args["configFile"]), &dwg, dbOptions.DbChan)
+	config := SetConfig(SetBaseConfig(args["configFile"]), &dwg, dbOptions.DbChan, downloadChan)
 
 	log.Debugf("binman config = %+v", config.Config)
 
 	switch launchCommand {
 	case "get":
-		releases = BinmanGetReleasePrep(config.Config.SourceMap, args)
+		releases = BinmanGetReleasePrep(config.Config.SourceMap, args, downloadChan)
+		config.Config.NumWorkers = 1
 	case "config":
 		releases = config.Releases
 	}
@@ -117,7 +122,7 @@ func Main(args map[string]string, table bool, launchCommand string) {
 	var numWorkers = config.Config.NumWorkers
 	log.Debugf("launching %d download workers", numWorkers)
 	for worker := 1; worker <= numWorkers; worker++ {
-		go getDownloader(worker)
+		go downloader.GetDownloader(downloadChan, worker)
 	}
 
 	relLength := len(releases)

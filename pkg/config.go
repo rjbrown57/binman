@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	db "github.com/rjbrown57/binman/pkg/db"
+	"github.com/rjbrown57/binman/pkg/downloader"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -75,7 +76,7 @@ func SetBaseConfig(configArg string) string {
 }
 
 // setConfig will create the appropriate GHBMConfig and merge if required
-func SetConfig(suppliedConfig string, dwg *sync.WaitGroup, dbChan chan db.DbMsg) *GHBMConfig {
+func SetConfig(suppliedConfig string, dwg *sync.WaitGroup, dbChan chan db.DbMsg, downloadChan chan downloader.DlMsg) *GHBMConfig {
 
 	// create the base config
 	binMancfg := NewGHBMConfig(suppliedConfig)
@@ -91,7 +92,7 @@ func SetConfig(suppliedConfig string, dwg *sync.WaitGroup, dbChan chan db.DbMsg)
 
 	binMancfg.SetDefaults()
 	binMancfg.cleanReleases()
-	binMancfg.populateReleases(dwg,dbChan)
+	binMancfg.populateReleases(dwg,dbChan,downloadChan)
 	return binMancfg
 }
 
