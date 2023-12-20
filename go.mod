@@ -48,7 +48,7 @@ require (
 	github.com/theckman/yacspin v0.13.12
 	github.com/xanzy/go-gitlab v0.95.2
 	go.etcd.io/bbolt v1.3.8
-	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
