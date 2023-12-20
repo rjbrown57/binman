@@ -98,6 +98,7 @@ func Main(args map[string]string, table bool, launchCommand string) {
 	if checkNewDb("") {
 		log.Debugf("Initializing DB")
 		populateDB(dbOptions, args["configFile"])
+		dbOptions.DbChan = make(chan db.DbMsg)
 	}
 
 	// Create config object.
