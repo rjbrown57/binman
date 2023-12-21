@@ -6,16 +6,11 @@ import (
 	"strings"
 
 	binman "github.com/rjbrown57/binman/pkg"
-	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/spf13/cobra"
 )
 
-var jsonLog bool
-var config string
-var repo string
-var version string
-var path string
-var table bool
+var imagePath, baseImage, config, path, repo, targetImageName, version string
+var jsonLog, table bool
 var debug int
 
 // rootCmd represents the base command when called without any subcommands
@@ -36,9 +31,6 @@ var rootCmd = &cobra.Command{
 		m["configFile"] = config
 		m["repo"] = repo
 		m["version"] = version
-
-		// Set the logging options
-		log.ConfigureLog(jsonLog, debug)
 
 		binman.Main(m, table, "config")
 	},
@@ -76,7 +68,20 @@ func addSubcommands() {
 	rootCmd.AddCommand(statusCmd)
 
 	// add clean to root
+	cleanCmd.Flags().BoolVarP(&cleanDryRun, "dryrun", "r", false, "enable dry run for clean")
+	cleanCmd.Flags().IntVarP(&threshold, "threshold", "n", 3, "Non-zero amount of releases to retain")
+	cleanCmd.Flags().BoolVarP(&scan, "scan", "s", false, "force update of DB pre clean")
 	rootCmd.AddCommand(cleanCmd)
+
+	// add build to root
+	buildOciCmd.Flags().StringVar(&baseImage, "base", "alpine:latest", "Base image to append synced binaries to")
+	buildOciCmd.Flags().StringVar(&repo, "repo", "", "a specific repo to build OCI image for. E.G rjbrown57/binman:v0.10.1. The version string is optional and if omitted the latest version will be used. Leave empty to build a toolbox image of all synced releases")
+	buildOciCmd.Flags().StringVar(&targetImageName, "publishPath", "", "target to publish OCI image to. Should be a valid docker image name. If version is left empty it will be generated")
+	buildOciCmd.Flags().StringVar(&imagePath, "imageBinPath", "/usr/local/bin/", "Where binaries should be located within the image")
+	buildOciCmd.MarkFlagRequired("publishPath")
+	buildCmd.AddCommand(buildOciCmd)
+
+	rootCmd.AddCommand(buildCmd)
 
 	// Setup
 	wd, err := os.Getwd()
@@ -86,10 +91,6 @@ func addSubcommands() {
 
 	getCmd.Flags().StringVarP(&path, "path", "p", wd, "path to download file to")
 	getCmd.Flags().StringVarP(&version, "version", "v", "", "Specific version to grab via direct download")
-
-	cleanCmd.Flags().BoolVarP(&cleanDryRun, "dryrun", "r", false, "enable dry run for clean")
-	cleanCmd.Flags().IntVarP(&threshold, "threshold", "n", 3, "Non-zero amount of releases to retain")
-	cleanCmd.Flags().BoolVarP(&scan, "scan", "s", false, "force update of DB pre clean")
 
 	// add config to root
 	rootCmd.AddCommand(getCmd)

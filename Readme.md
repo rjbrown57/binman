@@ -133,6 +133,18 @@ Binman can remove old releases with the binman clean subcommand. The following o
 | -s,--scan | update db with local files pre scan. Useful if binman has been used previous to 1.0.0 | false |
 | -n,--threshold |  Non-zero amount of releases to retain | 3 |
  
+## Binman build subcommand
+Binman can build objects from your synced releases. Currently this is limited to OCI Images.
+
+### oci
+Images are built by appending synced binaries onto a base image. Each binary will receive become it's own layer in the final image.
+
+| Flag | Description | Default |
+| ----------- | ----------- | ---------- |
+| --imageBinPath | Where binaries should be located within the image | /usr/local/bin/ |
+| --publishPath| target to publish OCI image to. Should be a valid docker image name. If version is left empty it will be generated | - |
+| --repo |  Non-zero amount of releases to retain | All releases toolbox |
+| --base | | alpine:latest |
 
 ## External Url Support
 

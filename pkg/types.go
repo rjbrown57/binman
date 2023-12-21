@@ -1,6 +1,7 @@
 package binman
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -17,6 +18,10 @@ import (
 	"github.com/rjbrown57/binman/pkg/downloader"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/rodaine/table"
+)
+
+var (
+	ErrReleaseNotFound = errors.New("Requested release not found in config")
 )
 
 // BinmanMsg contains return messages for binman's concurrent workers
@@ -225,6 +230,15 @@ func (config *GHBMConfig) populateReleases(dwg *sync.WaitGroup, dbChan chan db.D
 	}
 	// Wait until all defaults have been set
 	wg.Wait()
+}
+
+func (config *GHBMConfig) GetRelease(repo string) (BinmanRelease, error) {
+	for _, r := range config.Releases {
+		if r.Repo == repo {
+			return r, nil
+		}
+	}
+	return BinmanRelease{}, ErrReleaseNotFound
 }
 
 // SetDefaults will populate defaults, and required values

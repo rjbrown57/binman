@@ -114,12 +114,11 @@ func (bib *BinmanImageBuild) makeImage() error {
 
 		var layerstoadd []mutate.Addendum
 
-		for _, l := range bib.layers {
+		for i, l := range bib.layers {
 			layerstoadd = append(layerstoadd, mutate.Addendum{Layer: l,
 				History: v1.History{EmptyLayer: false,
-					Author:    bib.Name,
-					CreatedBy: "binman oci build",
-					Comment:   "Built with binman",
+					CreatedBy: fmt.Sprintf("%s", filepath.Base(bib.Assets[i])),
+					Comment:   "Built with rjbrown57/binman",
 					Created:   v1.Time{Time: time.Now()}}})
 		}
 
