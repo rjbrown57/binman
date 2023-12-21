@@ -1,5 +1,3 @@
-FROM ubuntu:latest 
-RUN apt-get update && \
-apt-get -yqq install ca-certificates && \
-rm -rf /var/cache/apt/lists
+FROM alpine:latest 
+RUN apk add ca-certificates 
 COPY binman /usr/local/bin/binman
