@@ -105,7 +105,7 @@ func TestSetConfig(t *testing.T) {
 
 	binmanConfigFile, binmanConfigFileBack := prepConfig(t)
 
-	config := SetConfig(SetBaseConfig("noConfig"), nil, nil)
+	config := SetConfig(SetBaseConfig("noConfig"), nil, nil, nil)
 	baseLength := len(config.Releases)
 
 	if baseLength != 1 {
@@ -119,7 +119,7 @@ func TestSetConfig(t *testing.T) {
 	cf := fmt.Sprintf(d + "/" + ".binMan.yaml")
 	WriteStringtoFile(cf, mergeConfig)
 
-	mergedConfig := SetConfig(SetBaseConfig("noConfig"), nil, nil)
+	mergedConfig := SetConfig(SetBaseConfig("noConfig"), nil, nil, nil)
 	mergedLength := len(mergedConfig.Releases)
 
 	if baseLength == mergedLength {

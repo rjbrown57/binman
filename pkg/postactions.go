@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/rjbrown57/binman/pkg/downloader"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/rjbrown57/binman/pkg/templating"
 )
@@ -31,7 +32,7 @@ func (action *DownloadAction) execute() error {
 	var rWg sync.WaitGroup
 
 	rWg.Add(1)
-	downloadChan <- dlMsg{action.r.dlUrl, action.r.filepath, &rWg, confirmChan}
+	action.r.downloadChan <- downloader.DlMsg{Url: action.r.dlUrl, Filepath: action.r.filepath, Wg: &rWg, ConfirmChan: confirmChan}
 	spinChan <- fmt.Sprintf("Downloading %s(%s)", action.r.Repo, action.r.Version)
 	rWg.Wait()
 	close(confirmChan)

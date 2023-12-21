@@ -9,6 +9,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	db "github.com/rjbrown57/binman/pkg/db"
+	"github.com/rjbrown57/binman/pkg/downloader"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -36,6 +37,7 @@ func StartWatch(config string) {
 	// Watch mode always uses json style logging
 	log.ConfigureLog(true, 0)
 
+	var downloadChan = make(chan downloader.DlMsg)
 	var dwg sync.WaitGroup
 
 	dbOptions := db.DbConfig{
@@ -60,7 +62,7 @@ func StartWatch(config string) {
 	// start download workers
 	log.Debugf("launching %d download workers", watchConfig.Config.NumWorkers)
 	for worker := 1; worker <= watchConfig.Config.NumWorkers; worker++ {
-		go getDownloader(worker)
+		go downloader.GetDownloader(downloadChan, worker)
 	}
 
 	log.Debugf("watch config = %+v", watchConfig.Config.Watch)

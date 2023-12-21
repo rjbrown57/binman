@@ -42,7 +42,7 @@ func Clean(dryrun, scan bool, threshold int, dbPath, config string) error {
 
 	bdb := db.GetDB(dbPath, bolt.Options{Timeout: 1 * time.Second, ReadOnly: false})
 
-	c := SetConfig(SetBaseConfig(config), dbOptions.Dwg, dbOptions.DbChan)
+	c := SetConfig(SetBaseConfig(config), dbOptions.Dwg, dbOptions.DbChan, nil)
 
 	for _, rel := range c.Releases {
 		// Collect All Versions
