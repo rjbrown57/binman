@@ -93,6 +93,9 @@ func Main(args map[string]string, table bool, launchCommand string) {
 	dbOptions := db.DbConfig{
 		Dwg:    &dwg,
 		DbChan: make(chan db.DbMsg),
+		// if a binman sync attempts to write something to the DB it has synced a new release.
+		//So we should always allow it to override any possibly out of date info.
+		Overwrite: true,
 	}
 
 	if checkNewDb("") {
