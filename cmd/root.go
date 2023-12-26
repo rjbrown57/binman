@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	binman "github.com/rjbrown57/binman/pkg"
+	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -31,6 +32,9 @@ var rootCmd = &cobra.Command{
 		m["configFile"] = config
 		m["repo"] = repo
 		m["version"] = version
+
+		// Set the logging options
+		log.ConfigureLog(jsonLog, debug)
 
 		binman.Main(m, table, "config")
 	},
