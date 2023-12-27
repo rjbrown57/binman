@@ -137,14 +137,14 @@ Binman can remove old releases with the binman clean subcommand. The following o
 Binman can build objects from your synced releases. Currently this is limited to OCI Images.
 
 ### oci
-Images are built by appending synced binaries onto a base image. Each binary will receive become it's own layer in the final image.
+Images are built by appending synced binaries onto a base image. Each binary will become it's own layer in the final image.
 
 | Flag | Description | Default |
 | ----------- | ----------- | ---------- |
 | --imageBinPath | Where binaries should be located within the image | /usr/local/bin/ |
 | --publishPath| target to publish OCI image to. Should be a valid docker image name. If version is left empty it will be generated | - |
-| --repo |  Non-zero amount of releases to retain | All releases toolbox |
-| --base | | alpine:latest |
+| --repo | Specifc synced repo to add to publish an image for | All releases toolbox |
+| --base | Base image to append binaries to | alpine:latest |
 
 ## External Url Support
 
@@ -219,7 +219,6 @@ config:
   upx: #Compress binaries with upx
     enabled: false
     args: [] # arrary of args for upx https://linux.die.net/man/1/upx
-
 ```
 
 ## String Templating
