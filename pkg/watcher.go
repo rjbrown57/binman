@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	db "github.com/rjbrown57/binman/pkg/db"
-	"github.com/rjbrown57/binman/pkg/downloader"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -32,40 +30,12 @@ func watchServe(config Watch, releasePath string) {
 }
 
 // Start watch command to expose metrics and sync on a schedule
-func StartWatch(config string) {
+func StartWatch(bm *BMConfig) {
 
 	// Watch mode always uses json style logging
 	log.ConfigureLog(true, 0)
 
-	var downloadChan = make(chan downloader.DlMsg)
-	var dwg sync.WaitGroup
-
-	dbOptions := db.DbConfig{
-		Dwg:    &dwg,
-		DbChan: make(chan db.DbMsg),
-	}
-
-	if checkNewDb("") {
-		log.Debugf("Initializing DB")
-		populateDB(dbOptions, config)
-	}
-
-	go db.RunDB(dbOptions)
-
-	// create the base config
-	watchConfig := NewGHBMConfig(SetBaseConfig(config))
-	watchConfig.setWatchConfig(dbOptions.Dwg, dbOptions.DbChan)
-
-	// Start watch mode http
-	go watchServe(watchConfig.Config.Watch, watchConfig.Config.ReleasePath)
-
-	// start download workers
-	log.Debugf("launching %d download workers", watchConfig.Config.NumWorkers)
-	for worker := 1; worker <= watchConfig.Config.NumWorkers; worker++ {
-		go downloader.GetDownloader(downloadChan, worker)
-	}
-
-	log.Debugf("watch config = %+v", watchConfig.Config.Watch)
+	log.Debugf("watch config = %+v", bm.Config.Watch)
 
 	go getSpinner(true)
 
@@ -76,9 +46,9 @@ func StartWatch(config string) {
 			output := make(map[string][]BinmanMsg)
 			var wg sync.WaitGroup
 
-			log.Infof("Binman watch sync start of %d releases", len(watchConfig.Releases))
+			log.Infof("Binman watch sync start of %d releases", len(bm.Releases))
 
-			for _, rel := range watchConfig.Releases {
+			for _, rel := range bm.Releases {
 				wg.Add(1)
 				go goSyncRepo(rel, c, &wg)
 			}
@@ -103,19 +73,19 @@ func StartWatch(config string) {
 
 				output["Error"] = append(output["Error"], msg)
 				if msg.rel.cleanupOnFailure {
-					err := os.RemoveAll(msg.rel.publishPath)
+					err := os.RemoveAll(msg.rel.PublishPath)
 					if err != nil {
-						log.Debugf("Unable to clean up %s - %s", msg.rel.publishPath, err)
+						log.Debugf("Unable to clean up %s - %s", msg.rel.PublishPath, err)
 					}
-					log.Debugf("cleaned %s\n", msg.rel.publishPath)
+					log.Debugf("cleaned %s\n", msg.rel.PublishPath)
 					log.Debugf("Final release data  %+v\n", msg.rel)
 				}
 			}
 
 			log.Infof("Binman watch iteration complete")
-			time.Sleep(time.Duration(watchConfig.Config.Watch.Frequency) * time.Second)
+			time.Sleep(time.Duration(bm.Config.Watch.Frequency) * time.Second)
 
-			watchConfig.metrics.Reset()
+			bm.metrics.Reset()
 		}
 	}()
 

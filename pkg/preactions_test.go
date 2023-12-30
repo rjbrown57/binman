@@ -22,7 +22,7 @@ func TestReleaseStatusAction(t *testing.T) {
 		Repo:        "rjbrown57/binman",
 		org:         "rjbrown57",
 		project:     "binman",
-		publishPath: d,
+		PublishPath: d,
 		Version:     version,
 	}
 
@@ -30,7 +30,7 @@ func TestReleaseStatusAction(t *testing.T) {
 		Repo:        "rjbrown57/noexist",
 		org:         "rjbrown57",
 		project:     "noexist",
-		publishPath: d,
+		PublishPath: d,
 		Version:     version,
 	}
 

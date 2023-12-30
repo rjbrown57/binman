@@ -129,12 +129,8 @@ func OutputDbStatus() error {
 // populateDB is used to populate the db with data required for clean up
 func populateDB(dbOptions db.DbConfig, config string) error {
 
-	go db.RunDB(dbOptions)
-
 	// Create config object.
-	// setBaseConfig will return the appropriate base config file.
-	// setConfig will check for a contextual config and merge with our base config and return the result
-	c := SetConfig(SetBaseConfig(config), nil, nil, nil)
+	c := NewBMConfig(config).SetConfig().WithDb(dbOptions)
 
 	log.Debugf("Updating binman db from filesystem")
 
@@ -161,8 +157,8 @@ func populateDB(dbOptions db.DbConfig, config string) error {
 		// for each version get the path that we should add to the DB
 		for _, v := range versions {
 			rel.Version = v
-			rel.setPublishPath(rel.ReleasePath, rel.Version)
-			dbOptions.Dwg.Add(1)
+			rel.setpublishPath(rel.ReleasePath, rel.Version)
+			c.dbOptions.Dwg.Add(1)
 			var rwg sync.WaitGroup
 			rwg.Add(1)
 
@@ -173,8 +169,10 @@ func populateDB(dbOptions db.DbConfig, config string) error {
 				ReturnWg:   &rwg,
 				Data:       dataToBytes(rel.getDataMap()),
 			}
-			dbOptions.DbChan <- msg
+
+			c.dbOptions.DbChan <- msg
 			rwg.Wait()
+
 			close(msg.ReturnChan)
 			m := <-msg.ReturnChan
 			if m.Err != nil && !errors.Is(m.Err, db.ErrKeyExists) {
@@ -183,7 +181,7 @@ func populateDB(dbOptions db.DbConfig, config string) error {
 
 		}
 	}
-	dbOptions.Dwg.Wait()
-	close(dbOptions.DbChan)
+	c.dbOptions.Dwg.Wait()
+	c.BMClose()
 	return nil
 }

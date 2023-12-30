@@ -281,7 +281,7 @@ func WriteStringtoFile(path string, thestring string) error {
 	return os.WriteFile(path, []byte(thestring), 0600)
 }
 
-// mustUnmarshalYaml will Unmarshall from config to GHBMConfig
+// mustUnmarshalYaml will Unmarshall from config to BMConfig
 func mustUnmarshalYaml(configPath string, v interface{}) {
 	yamlFile, err := os.ReadFile(filepath.Clean(configPath))
 	if err != nil {

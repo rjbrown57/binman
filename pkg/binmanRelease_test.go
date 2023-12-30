@@ -147,7 +147,7 @@ func TestFindTarget(t *testing.T) {
 	rel := BinmanRelease{
 		Repo:         "rjbrown57/binman",
 		artifactPath: "binman",
-		publishPath:  d,
+		PublishPath:  d,
 		Os:           "linux",
 		Arch:         "amd64",
 		Version:      version,
@@ -192,7 +192,7 @@ func TestSetartifactPath(t *testing.T) {
 	relWithRelFilename := BinmanRelease{
 		Repo:            "rjbrown57/binman",
 		artifactPath:    "binman",
-		publishPath:     "/tmp/",
+		PublishPath:     "/tmp/",
 		ReleaseFileName: "binman",
 		project:         "binmanz",
 		LinkName:        "",
@@ -208,7 +208,7 @@ func TestSetartifactPath(t *testing.T) {
 	relWithExtractFilename := BinmanRelease{
 		Repo:            "rjbrown57/binman",
 		artifactPath:    "binman",
-		publishPath:     "/tmp/",
+		PublishPath:     "/tmp/",
 		ExtractFileName: "extractbinman",
 		project:         "binman",
 		LinkName:        "",
@@ -224,7 +224,7 @@ func TestSetartifactPath(t *testing.T) {
 	relWithUrlNonTar := BinmanRelease{
 		Repo:         "rjbrown57/binman",
 		artifactPath: "binman",
-		publishPath:  "/tmp/",
+		PublishPath:  "/tmp/",
 		ExternalUrl:  "extractbinman",
 		project:      "binman",
 		LinkName:     "",
@@ -240,7 +240,7 @@ func TestSetartifactPath(t *testing.T) {
 	relWithUrlTar := BinmanRelease{
 		Repo:         "rjbrown57/binman",
 		artifactPath: "binman",
-		publishPath:  "/tmp/",
+		PublishPath:  "/tmp/",
 		ExternalUrl:  "extractbinman.tar.gz",
 		project:      "binman",
 		LinkName:     "",
@@ -256,7 +256,7 @@ func TestSetartifactPath(t *testing.T) {
 	relBasic := BinmanRelease{
 		Repo:         "rjbrown57/binman",
 		artifactPath: "binman",
-		publishPath:  "/tmp/",
+		PublishPath:  "/tmp/",
 		LinkName:     "",
 		project:      "binman",
 		Os:           "linux",
@@ -271,7 +271,7 @@ func TestSetartifactPath(t *testing.T) {
 	relWithLinkName := BinmanRelease{
 		Repo:         "rjbrown57/binman",
 		artifactPath: "binman",
-		publishPath:  "/tmp/",
+		PublishPath:  "/tmp/",
 		project:      "binman",
 		LinkName:     "none",
 		Os:           "linux",
@@ -328,7 +328,7 @@ func TestGetDataMap(t *testing.T) {
 		createdAtTime: int64(0),
 		artifactPath:  "test",
 		linkPath:      "test",
-		publishPath:   "test",
+		PublishPath:   "test",
 		assetName:     "test",
 	}
 

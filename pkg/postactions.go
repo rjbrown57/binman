@@ -110,7 +110,7 @@ func (r *BinmanRelease) AddWriteRelNotesAction() Action {
 
 func (action *WriteRelNotesAction) execute() error {
 	if action.r.relNotes != "" {
-		notePath := filepath.Join(action.r.publishPath, "releaseNotes.txt")
+		notePath := filepath.Join(action.r.PublishPath, "releaseNotes.txt")
 		log.Debugf("Notes written to %s", notePath)
 		return WriteStringtoFile(notePath, action.r.relNotes)
 	}
@@ -133,14 +133,14 @@ func (action *ExtractAction) execute() error {
 	switch findfType(action.r.filepath) {
 	case "tar":
 		log.Debugf("tar extract start")
-		err := handleTar(action.r.publishPath, action.r.filepath)
+		err := handleTar(action.r.PublishPath, action.r.filepath)
 		if err != nil {
 			log.Debugf("Failed to extract tar file: %v", err)
 			return err
 		}
 	case "zip":
 		log.Debugf("zip extract start")
-		err := handleZip(action.r.publishPath, action.r.filepath)
+		err := handleZip(action.r.PublishPath, action.r.filepath)
 		if err != nil {
 			log.Debugf("Failed to extract zip file: %v", err)
 			return err

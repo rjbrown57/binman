@@ -22,7 +22,7 @@ func TestWriteRelNotesAction(t *testing.T) {
 
 	rel := BinmanRelease{
 		Repo:        "rjbrown57/binman",
-		publishPath: d,
+		PublishPath: d,
 		Version:     version,
 		relNotes:    bodyContent,
 	}
@@ -34,7 +34,7 @@ func TestWriteRelNotesAction(t *testing.T) {
 	}
 
 	// Read the written release notes
-	notesBytes, err := os.ReadFile(filepath.Join(rel.publishPath, "releaseNotes.txt"))
+	notesBytes, err := os.ReadFile(filepath.Join(rel.PublishPath, "releaseNotes.txt"))
 	if err != nil {
 		t.Fatal("Unable to read written release notes")
 	}

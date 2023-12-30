@@ -52,8 +52,8 @@ func releasesContains(r []binman.BinmanRelease, repo string) bool {
 func Add(config string, repo string) {
 
 	cPath := binman.SetBaseConfig(config)
-	// We use NewGHBMConfig here to avoid grabbing contextual configs
-	currentConfig := binman.NewGHBMConfig(cPath)
+	// We use NewBMConfig here to avoid grabbing contextual configs
+	currentConfig := binman.NewBMConfig(cPath)
 	currentConfig.SetDefaults()
 
 	// todo fix this hack
@@ -85,7 +85,7 @@ func Add(config string, repo string) {
 
 func Get(config string) {
 	cPath := binman.SetBaseConfig(config)
-	// We use NewGHBMConfig here to avoid grabbing contextual configs
+	// We use NewBMConfig here to avoid grabbing contextual configs
 	c, err := os.ReadFile(cPath)
 	if err != nil {
 		log.Fatalf("Unable to read file %s", cPath)

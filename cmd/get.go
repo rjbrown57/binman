@@ -15,15 +15,13 @@ var getCmd = &cobra.Command{
 	Long:    `get a single repo with binman. Useful with CI/docker`,
 	Run: func(cmd *cobra.Command, args []string) {
 		validateRepo(args[0])
-		m := make(map[string]string)
-		m["configFile"] = config
-		m["repo"] = args[0]
-		m["version"] = version
-		m["path"] = path
-
-		// Set the logging options
 		log.ConfigureLog(jsonLog, debug)
 
-		binman.Main(m, table, "get")
+		binman.Main(binman.NewGet(binman.BinmanRelease{
+			Repo:         args[0],
+			Version:      version,
+			PublishPath:  path,
+			DownloadOnly: true,
+		}))
 	},
 }

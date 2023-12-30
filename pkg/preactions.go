@@ -30,8 +30,8 @@ func (r *BinmanRelease) AddReleaseStatusAction(releasePath string) Action {
 // ReleaseStatusAction verifies whether we have work to do
 func (action *ReleaseStatusAction) execute() error {
 
-	action.r.setPublishPath(action.releasePath, action.r.Version)
-	_, err := os.Stat(action.r.publishPath)
+	action.r.setpublishPath(action.releasePath, action.r.Version)
+	_, err := os.Stat(action.r.PublishPath)
 
 	if action.r.watchExposeMetrics {
 		var latestLabel string = "true"
@@ -132,7 +132,7 @@ func (action *SetArtifactPathAction) execute() error {
 			return err
 		}
 	}
-	err := CreateDirectory(action.r.publishPath)
+	err := CreateDirectory(action.r.PublishPath)
 	// At this point we have created something during the release process
 	return err
 }

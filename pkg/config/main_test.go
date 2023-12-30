@@ -65,7 +65,7 @@ func TestAdd(t *testing.T) {
 
 	Add(configPath, testRepo)
 
-	c := binman.NewGHBMConfig(configPath)
+	c := binman.NewBMConfig(configPath).SetConfig()
 	if !releasesContains(c.Releases, testRepo) {
 		t.Fatalf("%s not added to config properly", testRepo)
 	}

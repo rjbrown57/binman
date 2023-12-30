@@ -3,13 +3,12 @@ package binman
 import (
 	"fmt"
 	"os"
-	"runtime"
 	"sync"
 	"time"
 
-	db "github.com/rjbrown57/binman/pkg/db"
-	"github.com/rjbrown57/binman/pkg/downloader"
+	"github.com/fatih/color"
 	log "github.com/rjbrown57/binman/pkg/logging"
+	"github.com/rodaine/table"
 )
 
 const timeout = 60 * time.Second
@@ -47,105 +46,48 @@ func goSyncRepo(rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 	c <- BinmanMsg{rel: rel, err: nil}
 }
 
-func BinmanGetReleasePrep(sourceMap map[string]*Source, work map[string]string, downloadChan chan downloader.DlMsg) []BinmanRelease {
+func OutputResults(out map[string][]BinmanMsg, debug bool) {
 
-	if f, err := os.Stat(work["path"]); !f.IsDir() || err != nil {
-		log.Fatalf("Issue detected with %s", work["path"])
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
+
+	upToDateTable := table.New("Repo", "Version", "State")
+	upToDateTable.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
+	for key, msgSlice := range out {
+		for _, msg := range msgSlice {
+			upToDateTable.AddRow(msg.rel.Repo, msg.rel.Version, key)
+		}
 	}
 
-	rel := BinmanRelease{
-		Repo:             work["repo"],
-		Os:               runtime.GOOS,
-		Arch:             runtime.GOARCH,
-		publishPath:      work["path"],
-		QueryType:        "release",
-		DownloadOnly:     true,
-		cleanupOnFailure: false,
-		Version:          work["version"],
-		downloadChan:     downloadChan,
-	}
-
-	if rel.Version != "" {
-		rel.QueryType = "releasebytag"
-	}
-
-	rel.setSource(sourceMap)
-	rel.getOR()
-
-	return []BinmanRelease{rel}
-
+	upToDateTable.Print()
 }
 
 // Main does basic setup, then calls the appropriate functions for asset resolution
-func Main(args map[string]string, table bool, launchCommand string) {
+func Main(bm *BMConfig) error {
 
 	log.Debugf("binman sync begin\n")
 
-	c := make(chan BinmanMsg)
-	output := make(map[string][]BinmanMsg)
-	var wg sync.WaitGroup
-	var releases []BinmanRelease
+	log.Debugf("binman config = %+v", bm.Config)
 
-	var dwg sync.WaitGroup
-
-	var downloadChan = make(chan downloader.DlMsg)
-
-	dbOptions := db.DbConfig{
-		Dwg:    &dwg,
-		DbChan: make(chan db.DbMsg),
-		// if a binman sync attempts to write something to the DB it has synced a new release.
-		//So we should always allow it to override any possibly out of date info.
-		Overwrite: true,
-	}
-
-	if checkNewDb("") {
-		log.Debugf("Initializing DB")
-		populateDB(dbOptions, args["configFile"])
-		dbOptions.DbChan = make(chan db.DbMsg)
-	}
-
-	// Create config object.
-	// setBaseConfig will return the appropriate base config file.
-	// setConfig will check for a contextual config and merge with our base config and return the result
-	config := SetConfig(SetBaseConfig(args["configFile"]), &dwg, dbOptions.DbChan, downloadChan)
-
-	log.Debugf("binman config = %+v", config.Config)
-
-	switch launchCommand {
-	case "get":
-		releases = BinmanGetReleasePrep(config.Config.SourceMap, args, downloadChan)
-		config.Config.NumWorkers = 1
-	case "config":
-		releases = config.Releases
-	}
-
+	// Should we collapsed into a OutputOptions struct and added to BMConfig
 	go getSpinner(log.IsDebug())
-	go db.RunDB(dbOptions)
 
-	// start download workers
-	var numWorkers = config.Config.NumWorkers
-	log.Debugf("launching %d download workers", numWorkers)
-	for worker := 1; worker <= numWorkers; worker++ {
-		go downloader.GetDownloader(downloadChan, worker)
-	}
-
-	relLength := len(releases)
+	// This should probably be moved to CollectData
+	// This should be done when ouput is refactored
+	relLength := len(bm.Releases)
 	log.Debugf("Process %v Releases", relLength)
 	swg.Add(1)
 	spinChan <- fmt.Sprintf("Processing %d repos", relLength)
 
-	for _, rel := range releases {
-		wg.Add(1)
-		go goSyncRepo(rel, c, &wg)
-	}
-
-	go func(c chan BinmanMsg, wg *sync.WaitGroup) {
-		wg.Wait()
-		close(c)
-	}(c, &wg)
+	// This will populate the bm.Releases array + return the list of msgs
+	bm.CollectData()
 
 	// Process results
-	for msg := range c {
+	// This should be broken into it's own function?
+	output := make(map[string][]BinmanMsg)
+
+	for _, msg := range bm.Msgs {
 
 		if msg.err == nil {
 			output["Synced"] = append(output["Synced"], msg)
@@ -159,19 +101,17 @@ func Main(args map[string]string, table bool, launchCommand string) {
 
 		output["Error"] = append(output["Error"], msg)
 		if msg.rel.cleanupOnFailure {
-			err := os.RemoveAll(msg.rel.publishPath)
+			err := os.RemoveAll(msg.rel.PublishPath)
 			if err != nil {
-				log.Debugf("Unable to clean up %s - %s", msg.rel.publishPath, err)
+				log.Debugf("Unable to clean up %s - %s", msg.rel.PublishPath, err)
 			}
-			log.Debugf("cleaned %s\n", msg.rel.publishPath)
+			log.Debugf("cleaned %s\n", msg.rel.PublishPath)
 			log.Debugf("Final release data  %+v\n", msg.rel)
 		}
 	}
 
-	close(downloadChan)
-
-	dwg.Wait()
-	close(dbOptions.DbChan)
+	// Close any channels used in the BMConfig
+	bm.BMClose()
 
 	swg.Add(1)
 	spinChan <- fmt.Sprintf("spinstop%s", setStopMessage(output))
@@ -185,9 +125,13 @@ func Main(args map[string]string, table bool, launchCommand string) {
 		}
 	}
 
-	if table {
+	// We should update BM config to contain an optional "OutPutConfig" by default it is unset
+	// it will contain the table, log level, jsonLog settings etc.
+	// We should then be able to call an output interface to get our expected stuff?
+	if true {
 		OutputResults(output, log.IsDebug())
 	}
 
 	log.Debugf("binman finished!")
+	return nil
 }

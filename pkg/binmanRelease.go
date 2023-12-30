@@ -35,7 +35,8 @@ type BinmanRelease struct {
 	QueryType        string        `yaml:"querytype,omitempty"`
 	ReleasePath      string        `yaml:"releasepath,omitempty"`
 	BinPath          string        `yaml:"binpath,omitempty"`
-	SourceIdentifier string        `yaml:"source,omitempty"` // Allow setting of source individually
+	SourceIdentifier string        `yaml:"source,omitempty"`      // Allow setting of source individually
+	PublishPath      string        `yaml:"publishpath,omitempty"` // Path Release will be set up at. Typically only set by set commands or library use.
 
 	createdAtTime    int64 // Unix time that release was created at
 	metric           *prometheus.GaugeVec
@@ -48,7 +49,6 @@ type BinmanRelease struct {
 	filepath         string // the target filepath for download
 	org              string // Will be provided by constuctor
 	project          string // Will be provided by constuctor
-	publishPath      string // Path Release will be set up at
 	linkPath         string // Will be set by BinmanRelease.setPaths
 	artifactPath     string // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
 	actions          []Action
@@ -118,7 +118,7 @@ func (r *BinmanRelease) findTarget() {
 	tarRx := regexp.MustCompile(constants.TarRegEx)
 	ZipRegEx := regexp.MustCompile(constants.ZipRegEx)
 
-	_ = filepath.WalkDir(r.publishPath, func(path string, d os.DirEntry, err error) error {
+	_ = filepath.WalkDir(r.PublishPath, func(path string, d os.DirEntry, err error) error {
 
 		// if it's something we should ignore, we ignore it
 		if d.IsDir() || tarRx.MatchString(d.Name()) || ZipRegEx.MatchString(d.Name()) {
@@ -169,10 +169,10 @@ func (r *BinmanRelease) knownUrlCheck() {
 
 // Helper method to set artifactPath for a requested release object
 // This will be called early in a main loop iteration so we can check if we already have a release
-func (r *BinmanRelease) setPublishPath(ReleasePath string, tag string) {
+func (r *BinmanRelease) setpublishPath(ReleasePath string, tag string) {
 	// Trim trailing / if user provided
 	ReleasePath = strings.TrimSuffix(ReleasePath, "/")
-	r.publishPath = filepath.Join(ReleasePath, "repos", r.SourceIdentifier, r.org, r.project, tag)
+	r.PublishPath = filepath.Join(ReleasePath, "repos", r.SourceIdentifier, r.org, r.project, tag)
 }
 
 // getDataMap is a helper function to provide data to be used with templating
@@ -185,7 +185,7 @@ func (r *BinmanRelease) getDataMap() map[string]interface{} {
 	dataMap["org"] = r.org
 	dataMap["project"] = r.project
 	dataMap["artifactPath"] = r.artifactPath
-	dataMap["publishPath"] = r.publishPath
+	dataMap["publishPath"] = r.PublishPath
 	dataMap["linkPath"] = r.linkPath
 	dataMap["assetName"] = r.assetName
 	dataMap["createdAt"] = r.createdAtTime
@@ -209,17 +209,17 @@ func (r *BinmanRelease) setArtifactPath(ReleasePath, BinPath string, assetName s
 	// else if it's a tar/zip but we have specified the inside file via ExtractFileName. Use ExtractFileName for source and destination
 	// else we want default
 	if r.ReleaseFileName != "" {
-		r.artifactPath = filepath.Join(r.publishPath, templating.TemplateString(r.ReleaseFileName, r.getDataMap()))
+		r.artifactPath = filepath.Join(r.PublishPath, templating.TemplateString(r.ReleaseFileName, r.getDataMap()))
 		log.Debugf("ReleaseFileName set %s\n", r.artifactPath)
 	} else if r.ExtractFileName != "" {
-		r.artifactPath = filepath.Join(r.publishPath, r.ExtractFileName)
+		r.artifactPath = filepath.Join(r.PublishPath, r.ExtractFileName)
 		log.Debugf("Archive with Filename set %s\n", r.artifactPath)
 	} else if r.ExternalUrl != "" {
 		switch findfType(assetName) {
 		case "tar", "zip":
-			r.artifactPath = filepath.Join(r.publishPath, r.project)
+			r.artifactPath = filepath.Join(r.PublishPath, r.project)
 		default:
-			r.artifactPath = filepath.Join(r.publishPath, filepath.Base(r.ExternalUrl))
+			r.artifactPath = filepath.Join(r.PublishPath, filepath.Base(r.ExternalUrl))
 		}
 		log.Debugf("Archive with ExternalURL set %s\n", r.artifactPath)
 	} else {
@@ -227,9 +227,9 @@ func (r *BinmanRelease) setArtifactPath(ReleasePath, BinPath string, assetName s
 		// Else our default is a binary
 		switch findfType(assetName) {
 		case "tar", "zip":
-			r.artifactPath = filepath.Join(r.publishPath, r.project)
+			r.artifactPath = filepath.Join(r.PublishPath, r.project)
 		default:
-			r.artifactPath = filepath.Join(r.publishPath, assetName)
+			r.artifactPath = filepath.Join(r.PublishPath, assetName)
 		}
 		log.Debugf("Default Extraction %s\n", r.artifactPath)
 	}
@@ -237,5 +237,5 @@ func (r *BinmanRelease) setArtifactPath(ReleasePath, BinPath string, assetName s
 	r.linkPath = filepath.Join(BinPath, linkName)
 	log.Debugf("Artifact Path %s Link Path %s\n", r.artifactPath, r.project)
 
-	r.filepath = fmt.Sprintf("%s/%s", r.publishPath, r.assetName)
+	r.filepath = fmt.Sprintf("%s/%s", r.PublishPath, r.assetName)
 }

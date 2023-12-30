@@ -75,11 +75,10 @@ func TestCleanReleases(t *testing.T) {
 		t.Fatalf("failed to write test config to %s", configPath)
 	}
 
-	c := NewGHBMConfig(configPath)
-	c.cleanReleases()
+	c := NewBMConfig(configPath).SetConfig(true)
 
 	if len(c.Releases) != 2 {
-		t.Fatal("failed to dedeuplicate release array")
+		t.Fatalf("failed to dedeuplicate release array. %v", c.Releases)
 	}
 }
 
@@ -120,8 +119,7 @@ func TestSetDefaults(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to write test config to %s", configPath)
 		}
-		c := NewGHBMConfig(configPath)
-		c.SetDefaults()
+		c := NewBMConfig(configPath).SetConfig(true)
 
 		// test the defaults
 		if c.Defaults.Arch != test.expectedArch || c.Defaults.Os != test.expectedOs {
@@ -237,9 +235,9 @@ func TestPopulateReleases(t *testing.T) {
 		},
 	}
 
-	got := NewGHBMConfig(configPath)
+	got := NewBMConfig(configPath)
 
-	expected := &GHBMConfig{
+	expected := &BMConfig{
 		Config: BinmanConfig{
 
 			ReleasePath: filepath.Clean("/tmp/"),
@@ -254,7 +252,7 @@ func TestPopulateReleases(t *testing.T) {
 	}
 
 	got.SetDefaults()
-	got.populateReleases(nil, nil, nil)
+	got.populateReleases()
 
 	for k := range got.Releases {
 
