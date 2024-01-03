@@ -2,6 +2,7 @@ package binmandb
 
 import (
 	"fmt"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -30,6 +31,8 @@ func GetDB(dbPath string, o ...bolt.Options) *bolt.DB {
 		dbPath = fmt.Sprintf("%s/binman/binman.db", configPath)
 	}
 
+	createDBFileIfNotExists(dbPath)
+
 	db, err := bolt.Open(dbPath, 0700, &boltOptions)
 	if err != nil {
 		log.Fatalf("Unable to open DB - %s", err)
@@ -38,6 +41,22 @@ func GetDB(dbPath string, o ...bolt.Options) *bolt.DB {
 	log.Debugf("Opened db at %s", dbPath)
 
 	return db
+}
+
+func createDBFileIfNotExists(dbPath string) {
+	dir := filepath.Dir(dbPath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err = os.MkdirAll(dir, 0755); err != nil {
+			log.Fatalf("Unable to create directory %s - %s", dir, err)
+		}
+	}
+	file, err := os.OpenFile(dbPath, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatalf("Unable to create db file - %s", err)
+	}
+	if err = file.Close(); err != nil {
+		log.Fatalf("Unable to close db file - %s", err)
+	}
 }
 
 // DbConfig contains required chan/wg + config options
