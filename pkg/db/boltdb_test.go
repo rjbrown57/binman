@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"sync"
 	"testing"
@@ -27,6 +28,22 @@ func getTests() []dbTest {
 		{caseName: "complex", data: []byte(complexString), keyString: complexString},
 	}
 	return tests
+}
+
+func TestGetDBCreatesDirectoryIfNotExists(t *testing.T) {
+	testDBFilePath := "./tmp/binmantest/binman.db"
+
+	// Test that the file does not exist.
+	_, err := os.Stat(testDBFilePath)
+	assert.Error(t, err)
+	assert.True(t, os.IsNotExist(err))
+
+	// Getting the DB should create the directory and file while not panicking.
+	assert.NotPanics(t, func() {
+		GetDB(testDBFilePath)
+	})
+
+	assert.NoError(t, os.RemoveAll("./tmp"))
 }
 
 // TestRunDB will start the db routine and test reading/writing messages and deleting buckets
