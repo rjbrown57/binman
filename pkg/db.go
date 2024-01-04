@@ -144,7 +144,7 @@ func populateDB(dbOptions db.DbConfig, config string) error {
 		// scan for versions in the path
 		files, err := os.ReadDir(repoPath)
 		if err != nil {
-			log.Warnf("Unable to read dir %s %s", repoPath, err)
+			log.Debugf("Unable to read dir %s %s", repoPath, err)
 			continue
 		}
 
