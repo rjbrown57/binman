@@ -13,9 +13,6 @@ import (
 
 const timeout = 60 * time.Second
 
-var spinChan = make(chan string)
-var swg sync.WaitGroup
-
 // goSyncRepo executes all Actions required by a repo. Action are executed sequentially
 // Actions are executed in 4 phases
 // Pre -> Post -> Os -> Final
@@ -70,15 +67,12 @@ func Main(bm *BMConfig) error {
 
 	log.Debugf("binman config = %+v", bm.Config)
 
-	// Should we collapsed into a OutputOptions struct and added to BMConfig
-	go getSpinner(log.IsDebug())
-
 	// This should probably be moved to CollectData
-	// This should be done when ouput is refactored
+	// This should be done when output is refactored
 	relLength := len(bm.Releases)
 	log.Debugf("Process %v Releases", relLength)
-	swg.Add(1)
-	spinChan <- fmt.Sprintf("Processing %d repos", relLength)
+
+	bm.OutputOptions.SendSpin(fmt.Sprintf("Processing %d repos", relLength))
 
 	// This will populate the bm.Releases array + return the list of msgs
 	bm.CollectData()
@@ -113,10 +107,9 @@ func Main(bm *BMConfig) error {
 	// Close any channels used in the BMConfig
 	bm.BMClose()
 
-	swg.Add(1)
-	spinChan <- fmt.Sprintf("spinstop%s", setStopMessage(output))
-	close(spinChan)
-	swg.Wait()
+	bm.OutputOptions.SendSpin(fmt.Sprintf("spinstop%s", setStopMessage(output)))
+	close(bm.OutputOptions.spinChan)
+	bm.OutputOptions.swg.Wait()
 
 	if e := len(output["Error"]); e > 0 {
 		fmt.Printf("\nErrors(%d): \n", e)
@@ -125,10 +118,7 @@ func Main(bm *BMConfig) error {
 		}
 	}
 
-	// We should update BM config to contain an optional "OutPutConfig" by default it is unset
-	// it will contain the table, log level, jsonLog settings etc.
-	// We should then be able to call an output interface to get our expected stuff?
-	if true {
+	if bm.OutputOptions.Table {
 		OutputResults(output, log.IsDebug())
 	}
 

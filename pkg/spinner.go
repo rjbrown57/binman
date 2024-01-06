@@ -3,13 +3,14 @@ package binman
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/theckman/yacspin"
 )
 
-func getSpinner(debug bool) {
+func getSpinner(debug bool, spinChan chan (string), swg *sync.WaitGroup) {
 
 	cfg := yacspin.Config{
 		Frequency:       100 * time.Millisecond,

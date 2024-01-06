@@ -53,6 +53,7 @@ type BinmanRelease struct {
 	artifactPath     string // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
 	actions          []Action
 	versions         []string // Used during clean operations
+	output           *OutputOptions
 
 	watchExposeMetrics bool
 	watchSync          bool

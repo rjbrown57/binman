@@ -19,11 +19,12 @@ import (
 
 // Type that rolls up the above types into one happy family
 type BMConfig struct {
-	Config   BinmanConfig    `yaml:"config"`
-	Defaults BinmanDefaults  `yaml:"defaults,omitempty"`
-	Releases []BinmanRelease `yaml:"releases"`
-	Msgs     []BinmanMsg     // Output from execution
-	Watch    bool
+	Config        BinmanConfig    `yaml:"config"`
+	Defaults      BinmanDefaults  `yaml:"defaults,omitempty"`
+	Releases      []BinmanRelease `yaml:"releases"`
+	Msgs          []BinmanMsg     // Output from execution
+	Watch         bool
+	OutputOptions *OutputOptions
 
 	metrics    *prometheus.GaugeVec
 	configPath string
@@ -36,8 +37,8 @@ type BMConfig struct {
 }
 
 // For running the default sync
-func NewBMSync(configPath string) *BMConfig {
-	return NewBMConfig(configPath).WithDb().WithDownloader().SetConfig()
+func NewBMSync(configPath string, table bool) *BMConfig {
+	return NewBMConfig(configPath).WithDb().WithDownloader().WithOutput(table, true).SetConfig()
 }
 
 // For running the default sync
@@ -94,7 +95,6 @@ func (config *BMConfig) BMClose() {
 
 }
 
-// Add Sync / Get / Query helpers that change the execution patterns
 // Sync is the default run
 // Get is for binman get
 // Query is when being used a library?
@@ -168,6 +168,12 @@ func (config *BMConfig) WithWatch() *BMConfig {
 
 	return config
 
+}
+
+// WithOutput configures output for an operation
+func (config *BMConfig) WithOutput(table, spinner bool) *BMConfig {
+	config.OutputOptions = NewOutputOptions(table, spinner)
+	return config
 }
 
 // setConfig will create the appropriate BMConfig and merge if required
@@ -265,6 +271,9 @@ func (config *BMConfig) populateReleases() {
 
 			// set project/org variables
 			config.Releases[index].getOR()
+
+			// Set Output
+			config.Releases[index].output = config.OutputOptions
 
 			// If we are running in watch mode set metric and options
 			if config.Config.Watch.enabled {
@@ -464,4 +473,27 @@ func setDefaultSources(config *BMConfig) {
 		config.Config.Sources = append(config.Config.Sources, gitlabDefault)
 		config.Config.SourceMap[gitlabDefault.Name] = &config.Config.Sources[len(config.Config.Sources)-1]
 	}
+}
+
+type OutputOptions struct {
+	Table   bool
+	Spinner bool
+
+	spinChan chan string
+	swg      sync.WaitGroup
+}
+
+// Set table for Table based output after since, if a spinner is needed by the operation set Spinner
+func NewOutputOptions(table, spinner bool) *OutputOptions {
+	o := OutputOptions{Table: table, Spinner: spinner}
+	if o.Spinner {
+		o.spinChan = make(chan string)
+		go getSpinner(log.IsDebug(), o.spinChan, &o.swg)
+	}
+	return &o
+}
+
+func (o *OutputOptions) SendSpin(s string) {
+	o.swg.Add(1)
+	o.spinChan <- s
 }

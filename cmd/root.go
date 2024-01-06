@@ -23,8 +23,9 @@ var rootCmd = &cobra.Command{
 
 		// Set the logging options
 		log.ConfigureLog(jsonLog, debug)
-
-		binman.Main(binman.NewBMSync(config))
+		if err := binman.Main(binman.NewBMSync(config, table)); err != nil {
+			log.Fatalf("Binman run failed %s", err)
+		}
 	},
 }
 

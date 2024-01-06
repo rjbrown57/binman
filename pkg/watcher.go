@@ -34,8 +34,6 @@ func StartWatch(bm *BMConfig) {
 
 	log.Debugf("watch config = %+v", bm.Config.Watch)
 
-	go getSpinner(true)
-
 	go func() {
 		for {
 
