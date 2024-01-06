@@ -32,9 +32,6 @@ func watchServe(config Watch, releasePath string) {
 // Start watch command to expose metrics and sync on a schedule
 func StartWatch(bm *BMConfig) {
 
-	// Watch mode always uses json style logging
-	log.ConfigureLog(true, 0)
-
 	log.Debugf("watch config = %+v", bm.Config.Watch)
 
 	go getSpinner(true)
@@ -43,7 +40,6 @@ func StartWatch(bm *BMConfig) {
 		for {
 
 			c := make(chan BinmanMsg)
-			output := make(map[string][]BinmanMsg)
 			var wg sync.WaitGroup
 
 			log.Infof("Binman watch sync start of %d releases", len(bm.Releases))
@@ -62,16 +58,17 @@ func StartWatch(bm *BMConfig) {
 			for msg := range c {
 
 				if msg.err == nil {
-					output["Synced"] = append(output["Synced"], msg)
+					log.Infof("%s synced new release %s", msg.rel.Repo, msg.rel.Version)
 					continue
 				}
 
 				if msg.err.Error() == "Noupdate" {
-					output["Up to Date"] = append(output["Up to Date"], msg)
+					log.Infof("%s - %s is up to date", msg.rel.Repo, msg.rel.Version)
 					continue
 				}
 
-				output["Error"] = append(output["Error"], msg)
+				log.Infof("Issue syncing %s - %s", msg.rel.Repo, msg.err)
+
 				if msg.rel.cleanupOnFailure {
 					err := os.RemoveAll(msg.rel.PublishPath)
 					if err != nil {
