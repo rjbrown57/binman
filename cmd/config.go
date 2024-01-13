@@ -39,10 +39,13 @@ var configAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add a repo to your binman config",
 	Long:  `Add a repo to your binman config`,
-	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		validateRepo(args[0])
-		Add(binman.NewBMConfig(config).SetConfig(false), args[0])
+		for _, repo := range args {
+			validateRepo(repo)
+		}
+		if err := Add(binman.NewBMConfig(config).SetConfig(false), args); err != nil {
+			log.Fatalf("issue adding %s %s", repo, err)
+		}
 	},
 }
 
@@ -83,33 +86,35 @@ func getEditor() string {
 	return e
 }
 
-func Add(c *binman.BMConfig, repo string) {
+func Add(c *binman.BMConfig, repos []string) error {
 
-	// todo fix this hack
-	tag, err := gh.CheckRepo(gh.GetGHCLient(constants.DefaultGHBaseURL, c.Config.SourceMap["github.com"].Tokenvar), repo)
-	if err != nil {
-		log.Fatalf("%v", err)
+	for _, repo := range repos {
+		// todo fix this hack
+		tag, err := gh.CheckRepo(gh.GetGHCLient(constants.DefaultGHBaseURL, c.Config.SourceMap["github.com"].Tokenvar), repo)
+		if err != nil {
+			return err
+		}
+
+		// Verify release is not present
+		if _, err := c.GetRelease(repo); !errors.Is(err, binman.ErrReleaseNotFound) {
+			return err
+		}
+
+		log.Infof("Adding %s to %s. Latest version is %s", repo, c.ConfigPath, tag)
+		c.Releases = append(c.Releases, binman.BinmanRelease{Repo: repo})
 	}
-
-	// Verify release is not present
-	if _, err := c.GetRelease(repo); !errors.Is(err, binman.ErrReleaseNotFound) {
-		log.Fatalf("%s is already present in %s", repo, c.ConfigPath)
-	}
-
-	c.Releases = append(c.Releases, binman.BinmanRelease{Repo: repo})
 
 	newConfig, err := yaml.Marshal(&c)
 	if err != nil {
 		log.Fatalf("Unable to marshal new config %s", err)
 	}
 
-	log.Infof("Adding %s to %s. Latest version is %s", repo, c.ConfigPath, tag)
-
 	// Write back
 	err = binman.WriteStringtoFile(c.ConfigPath, string(newConfig))
 	if err != nil {
-		log.Fatalf("Unable to update config file %s", err)
+		return err
 	}
+	return nil
 }
 
 func Get(c *binman.BMConfig) {

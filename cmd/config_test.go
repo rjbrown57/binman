@@ -40,7 +40,7 @@ func TestAdd(t *testing.T) {
 		t.Fatalf("failed to write test config to %s", configPath)
 	}
 
-	Add(binman.NewBMConfig(configPath).SetConfig(false), testRepo)
+	Add(binman.NewBMConfig(configPath).SetConfig(false), []string{testRepo})
 
 	c := binman.NewBMConfig(configPath).SetConfig(false)
 	if _, err := c.GetRelease(testRepo); errors.Is(err, binman.ErrReleaseNotFound) {
