@@ -56,7 +56,7 @@ func BuildOciImage(config, repo, targetImageName, baseImage, imagePath string) e
 		return err
 	}
 
-	c := NewBMConfig(config).SetConfig()
+	c := NewBMConfig(config).SetConfig(false)
 
 	switch repo {
 	case "":

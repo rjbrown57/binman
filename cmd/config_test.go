@@ -1,6 +1,7 @@
-package config
+package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -14,30 +15,6 @@ func getTestDir(t *testing.T) string {
 		t.Fatalf("unable to make temp dir %s", d)
 	}
 	return d
-}
-
-// See if repo is already in config
-func TestReleasesContains(t *testing.T) {
-
-	var r = []binman.BinmanRelease{
-		{Repo: "rjbrown57/binextractor"},
-		{Repo: "rjbrown57/binman"},
-	}
-
-	var tests = []struct {
-		testRepo string
-		expected bool
-	}{
-		{testRepo: "rjbrown57/binman", expected: true},
-		{testRepo: "rjbrown57/notreal", expected: false},
-	}
-
-	for _, test := range tests {
-		got := releasesContains(r, test.testRepo)
-		if test.expected != got {
-			t.Fatalf("%s got %v expected %v", test.testRepo, test.expected, got)
-		}
-	}
 }
 
 const testConfig = `
@@ -55,7 +32,7 @@ func TestAdd(t *testing.T) {
 	var testRepo = "rjbrown57/lp"
 
 	d := getTestDir(t)
-	defer os.Remove(d)
+	t.Cleanup(func() { os.Remove(d) })
 
 	configPath := fmt.Sprintf("%s/config", d)
 	err := binman.WriteStringtoFile(configPath, testConfig)
@@ -63,10 +40,10 @@ func TestAdd(t *testing.T) {
 		t.Fatalf("failed to write test config to %s", configPath)
 	}
 
-	Add(configPath, testRepo)
+	Add(binman.NewBMConfig(configPath).SetConfig(false), testRepo)
 
-	c := binman.NewBMConfig(configPath).SetConfig()
-	if !releasesContains(c.Releases, testRepo) {
+	c := binman.NewBMConfig(configPath).SetConfig(false)
+	if _, err := c.GetRelease(testRepo); errors.Is(err, binman.ErrReleaseNotFound) {
 		t.Fatalf("%s not added to config properly", testRepo)
 	}
 }

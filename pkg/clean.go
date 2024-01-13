@@ -43,7 +43,7 @@ func Clean(dryrun, scan bool, threshold int, dbPath, config string) error {
 	bdb := db.GetDB(dbPath, bolt.Options{Timeout: 1 * time.Second, ReadOnly: false})
 
 	// Check here later and see if using dbOptions instead of defaults makes sense
-	c := NewBMConfig(config).SetConfig().WithDb(dbOptions)
+	c := NewBMConfig(config).SetConfig(false)
 
 	for _, rel := range c.Releases {
 		// Collect All Versions

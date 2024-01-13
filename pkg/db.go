@@ -130,7 +130,7 @@ func OutputDbStatus() error {
 func populateDB(dbOptions db.DbConfig, config string) error {
 
 	// Create config object.
-	c := NewBMConfig(config).SetConfig().WithDb(dbOptions)
+	c := NewBMConfig(config).SetConfig(false).WithDb(dbOptions)
 
 	log.Debugf("Updating binman db from filesystem")
 

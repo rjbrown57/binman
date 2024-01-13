@@ -26,7 +26,7 @@ func TestLibrary(t *testing.T) {
 	}
 
 	c := NewBMConfig(cf)
-	c.SetConfig()
+	c.SetConfig(false)
 	c.CollectData()
 
 	for _, x := range c.Msgs {

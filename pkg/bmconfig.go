@@ -20,14 +20,13 @@ import (
 // Type that rolls up the above types into one happy family
 type BMConfig struct {
 	Config        BinmanConfig    `yaml:"config"`
+	ConfigPath    string          `yaml:",omitempty"`
 	Defaults      BinmanDefaults  `yaml:"defaults,omitempty"`
 	Releases      []BinmanRelease `yaml:"releases"`
-	Msgs          []BinmanMsg     // Output from execution
-	Watch         bool
-	OutputOptions *OutputOptions
+	Msgs          []BinmanMsg     `yaml:",omitempty"` // Output from execution
+	OutputOptions *OutputOptions  `yaml:",omitempty"`
 
-	metrics    *prometheus.GaugeVec
-	configPath string
+	metrics *prometheus.GaugeVec
 
 	// DB Ops
 	dbOptions    db.DbConfig
@@ -38,12 +37,12 @@ type BMConfig struct {
 
 // For running the default sync
 func NewBMSync(configPath string, table bool) *BMConfig {
-	return NewBMConfig(configPath).WithDb().WithDownloader().WithOutput(table, true).SetConfig()
+	return NewBMConfig(configPath).WithDb().WithDownloader().WithOutput(table, true).SetConfig(true)
 }
 
 // For running the default sync
 func NewBMWatch(configPath string) *BMConfig {
-	return NewBMConfig(configPath).WithDb().WithDownloader().WithWatch().SetConfig()
+	return NewBMConfig(configPath).WithDb().WithDownloader().WithWatch().SetConfig(false)
 }
 
 // For running the get command
@@ -73,7 +72,7 @@ func NewQuery(r ...BinmanRelease) *BMConfig {
 func NewBMConfig(configPath string) *BMConfig {
 
 	config := &BMConfig{}
-	config.configPath = SetBaseConfig(configPath)
+	config.ConfigPath = SetBaseConfig(configPath)
 
 	return config
 }
@@ -92,12 +91,7 @@ func (config *BMConfig) BMClose() {
 		config.dbOptions.Dwg.Wait()
 		close(config.dbOptions.DbChan)
 	}
-
 }
-
-// Sync is the default run
-// Get is for binman get
-// Query is when being used a library?
 
 func (config *BMConfig) WithDb(dbConfig ...db.DbConfig) *BMConfig {
 
@@ -118,7 +112,7 @@ func (config *BMConfig) WithDb(dbConfig ...db.DbConfig) *BMConfig {
 	// Initialize the DB if required
 	if checkNewDb("") {
 		log.Debugf("Initializing DB")
-		populateDB(config.dbOptions, config.configPath)
+		populateDB(config.dbOptions, config.ConfigPath)
 		// populateDB will close the channel when done, so we need to open a new one.
 		config.dbOptions.DbChan = make(chan db.DbMsg)
 	}
@@ -177,13 +171,13 @@ func (config *BMConfig) WithOutput(table, spinner bool) *BMConfig {
 }
 
 // setConfig will create the appropriate BMConfig and merge if required
-func (config *BMConfig) SetConfig() *BMConfig {
+func (config *BMConfig) SetConfig(merge bool) *BMConfig {
 
-	mustUnmarshalYaml(config.configPath, config)
+	mustUnmarshalYaml(config.ConfigPath, config)
 
 	// If ${repoDir}/.binMan.yaml exists we merge it's releases with our main config
 	cfg, cfgBool := detectRepoConfig()
-	if cfgBool {
+	if cfgBool && merge {
 		log.Debugf("Found %s merging with main config", cfg)
 		tc := NewBMConfig(cfg)
 		// append releases from the contextual config
