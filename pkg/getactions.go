@@ -69,9 +69,8 @@ func (action *GetGLReleaseAction) execute() error {
 	switch action.r.QueryType {
 	case "release":
 		log.Debugf("Querying gitlab api for latest release of %s", action.r.Repo)
-		action.r.Version = gl.GLGetLatestTag(action.glClient, action.r.Repo)
-		if action.r.Version == "" {
-			err = fmt.Errorf("Unable to find latest tag for %s", action.r.Repo)
+		action.r.Version, err = gl.GLGetLatestTag(action.glClient, action.r.Repo)
+		if err != nil {
 			return err
 		}
 		log.Debugf("Latest release of %s == %s", action.r.Repo, action.r.Version)

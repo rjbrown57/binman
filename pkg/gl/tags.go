@@ -13,11 +13,11 @@ func GLGetLatestTag(glClient *gitlab.Client, repo string) (string, error) {
 
 	tags, _, err := glClient.Tags.ListTags(repo, &gitlab.ListTagsOptions{OrderBy: &OrderBy, Sort: &SortBy})
 	if err == nil {
-		return tags[0].Name
+		return tags[0].Name, nil
 	}
 
 	log.Debugf("Error listing tags for %s - %v", tags, err)
-	return ""
+	return "", err
 
 }
 
