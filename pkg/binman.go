@@ -34,16 +34,16 @@ func goSyncRepo(rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 		if err = rel.runActions(); err != nil {
 			switch err.Error() {
 			case "Noupdate":
-				c <- BinmanMsg{rel: rel, err: err}
+				c <- BinmanMsg{Rel: rel, Err: err}
 				return
 			default:
-				c <- BinmanMsg{rel: rel, err: err}
+				c <- BinmanMsg{Rel: rel, Err: err}
 				return
 			}
 		}
 	}
 
-	c <- BinmanMsg{rel: rel, err: nil}
+	c <- BinmanMsg{Rel: rel, Err: nil}
 }
 
 func OutputResults(out map[string][]BinmanMsg, debug bool) {
@@ -56,7 +56,7 @@ func OutputResults(out map[string][]BinmanMsg, debug bool) {
 
 	for key, msgSlice := range out {
 		for _, msg := range msgSlice {
-			upToDateTable.AddRow(msg.rel.Repo, msg.rel.Version, key)
+			upToDateTable.AddRow(msg.Rel.Repo, msg.Rel.Version, key)
 		}
 	}
 
@@ -89,24 +89,24 @@ func Main(bm *BMConfig) error {
 
 	for _, msg := range bm.Msgs {
 
-		if msg.err == nil {
+		if msg.Err == nil {
 			output["Synced"] = append(output["Synced"], msg)
 			continue
 		}
 
-		if msg.err.Error() == "Noupdate" {
+		if msg.Err.Error() == "Noupdate" {
 			output["Up to Date"] = append(output["Up to Date"], msg)
 			continue
 		}
 
 		output["Error"] = append(output["Error"], msg)
-		if msg.rel.cleanupOnFailure {
-			err := os.RemoveAll(msg.rel.PublishPath)
+		if msg.Rel.cleanupOnFailure {
+			err := os.RemoveAll(msg.Rel.PublishPath)
 			if err != nil {
-				log.Debugf("Unable to clean up %s - %s", msg.rel.PublishPath, err)
+				log.Debugf("Unable to clean up %s - %s", msg.Rel.PublishPath, err)
 			}
-			log.Debugf("cleaned %s\n", msg.rel.PublishPath)
-			log.Debugf("Final release data  %+v\n", msg.rel)
+			log.Debugf("cleaned %s\n", msg.Rel.PublishPath)
+			log.Debugf("Final release data  %+v\n", msg.Rel)
 		}
 	}
 
@@ -121,7 +121,7 @@ func Main(bm *BMConfig) error {
 	if e := len(output["Error"]); e > 0 {
 		fmt.Printf("\nErrors(%d): \n", e)
 		for _, msg := range output["Error"] {
-			fmt.Printf("%s : error = %v\n", msg.rel.Repo, msg.err)
+			fmt.Printf("%s : error = %v\n", msg.Rel.Repo, msg.Err)
 		}
 	}
 

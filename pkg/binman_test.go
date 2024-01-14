@@ -33,7 +33,7 @@ func TestLibrary(t *testing.T) {
 		log.Infof("%+v", x)
 	}
 
-	data := c.Msgs[0].rel.relData.(*github.RepositoryRelease)
+	data := c.Msgs[0].Rel.relData.(*github.RepositoryRelease)
 
 	log.Infof("%s - %s", c.Releases[0].Repo, data.GetTagName())
 }

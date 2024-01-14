@@ -57,25 +57,25 @@ func StartWatch(bm *BMConfig) {
 			// Process results
 			for msg := range c {
 
-				if msg.err == nil {
-					log.Infof("%s synced new release %s", msg.rel.Repo, msg.rel.Version)
+				if msg.Err == nil {
+					log.Infof("%s synced new release %s", msg.Rel.Repo, msg.Rel.Version)
 					continue
 				}
 
-				if msg.err.Error() == "Noupdate" {
-					log.Infof("%s - %s is up to date", msg.rel.Repo, msg.rel.Version)
+				if msg.Err.Error() == "Noupdate" {
+					log.Infof("%s - %s is up to date", msg.Rel.Repo, msg.Rel.Version)
 					continue
 				}
 
-				log.Infof("Issue syncing %s - %s", msg.rel.Repo, msg.err)
+				log.Infof("Issue syncing %s - %s", msg.Rel.Repo, msg.Err)
 
-				if msg.rel.cleanupOnFailure {
-					err := os.RemoveAll(msg.rel.PublishPath)
+				if msg.Rel.cleanupOnFailure {
+					err := os.RemoveAll(msg.Rel.PublishPath)
 					if err != nil {
-						log.Debugf("Unable to clean up %s - %s", msg.rel.PublishPath, err)
+						log.Debugf("Unable to clean up %s - %s", msg.Rel.PublishPath, err)
 					}
-					log.Debugf("cleaned %s\n", msg.rel.PublishPath)
-					log.Debugf("Final release data  %+v\n", msg.rel)
+					log.Debugf("cleaned %s\n", msg.Rel.PublishPath)
+					log.Debugf("Final release data  %+v\n", msg.Rel)
 				}
 			}
 

@@ -51,7 +51,7 @@ func repoList(bmsg []BinmanMsg) []string {
 	var a []string
 
 	for _, msg := range bmsg {
-		a = append(a, msg.rel.Repo)
+		a = append(a, msg.Rel.Repo)
 	}
 
 	return a

@@ -10,8 +10,8 @@ var (
 
 // BinmanMsg contains return messages for binman's concurrent workers
 type BinmanMsg struct {
-	err error
-	rel BinmanRelease
+	Err error
+	Rel BinmanRelease
 }
 
 type UpxConfig struct {
