@@ -81,8 +81,8 @@ func (r *BinmanRelease) getOR() {
 	r.project = n[length-1]
 }
 
-// setSource will set the source for a release, it will also trim the source prefix from repo if used
-func (r *BinmanRelease) setSource(sourceMap map[string]*Source) {
+// SetSource will set the source for a release, it will also trim the source prefix from repo if used
+func (r *BinmanRelease) SetSource(sourceMap map[string]*Source) {
 
 	repoSlice := strings.Split(r.Repo, "/")
 

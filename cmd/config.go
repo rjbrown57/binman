@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -10,6 +11,7 @@ import (
 
 	"github.com/rjbrown57/binman/pkg/constants"
 	gh "github.com/rjbrown57/binman/pkg/gh"
+	"github.com/rjbrown57/binman/pkg/gl"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"gopkg.in/yaml.v3"
 )
@@ -44,7 +46,7 @@ var configAddCmd = &cobra.Command{
 			validateRepo(repo)
 		}
 		if err := Add(binman.NewBMConfig(config).SetConfig(false), args); err != nil {
-			log.Fatalf("issue adding %s %s", repo, err)
+			log.Fatalf("issue adding %s %s", args, err)
 		}
 	},
 }
@@ -89,18 +91,29 @@ func getEditor() string {
 func Add(c *binman.BMConfig, repos []string) error {
 
 	for _, repo := range repos {
-		// todo fix this hack
-		tag, err := gh.CheckRepo(gh.GetGHCLient(constants.DefaultGHBaseURL, c.Config.SourceMap["github.com"].Tokenvar), repo)
-		if err != nil {
-			return err
+
+		r, err := c.GetRelease(repo)
+		// A nil error means the repo is already in the config
+		if err == nil {
+			return errors.New(fmt.Sprintf("%s is already present in config", repo))
 		}
 
-		// Verify release is not present
-		if _, err := c.GetRelease(repo); !errors.Is(err, binman.ErrReleaseNotFound) {
-			return err
+		r.SetSource(c.Config.SourceMap)
+
+		switch r.SourceIdentifier {
+		case "github.com":
+			r.Version, err = gh.CheckRepo(gh.GetGHCLient(constants.DefaultGHBaseURL, c.Config.SourceMap["github.com"].Tokenvar), r.Repo)
+			if err != nil {
+				return err
+			}
+		case "gitlab.com":
+			r.Version, err = gl.GLGetLatestTag(gl.GetGLClient(constants.DefaultGLBaseURL, c.Config.SourceMap["gitlab.com"].Tokenvar), r.Repo)
+			if err != nil {
+				return err
+			}
 		}
 
-		log.Infof("Adding %s to %s. Latest version is %s", repo, c.ConfigPath, tag)
+		log.Infof("Adding %s to %s. Latest version is %s", repo, c.ConfigPath, r.Version)
 		c.Releases = append(c.Releases, binman.BinmanRelease{Repo: repo})
 	}
 

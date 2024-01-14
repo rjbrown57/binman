@@ -73,7 +73,7 @@ func TestSetSource(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test.rel.setSource(sourceMap)
+		test.rel.SetSource(sourceMap)
 		if test.expectedReponame != test.rel.Repo {
 			t.Fatalf("excpected %s : got %s", test.expectedReponame, test.rel.Repo)
 		}

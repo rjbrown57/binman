@@ -261,7 +261,7 @@ func (config *BMConfig) populateReleases() {
 			config.Releases[index].downloadChan = config.downloadChan
 
 			// set sources
-			config.Releases[index].setSource(config.Config.SourceMap)
+			config.Releases[index].SetSource(config.Config.SourceMap)
 
 			// set project/org variables
 			config.Releases[index].getOR()
@@ -352,7 +352,7 @@ func (config *BMConfig) GetRelease(repo string) (BinmanRelease, error) {
 			return r, nil
 		}
 	}
-	return BinmanRelease{}, ErrReleaseNotFound
+	return BinmanRelease{Repo: repo}, ErrReleaseNotFound
 }
 
 // SetDefaults will populate defaults, and required values
