@@ -130,7 +130,10 @@ func OutputDbStatus() error {
 func populateDB(dbOptions db.DbConfig, config string) error {
 
 	// Create config object.
-	c := NewBMConfig(config).SetConfig(false).WithDb(dbOptions)
+	c := NewBMConfig(config).SetConfig(false)
+
+	// Start the DB direct. If we use WithDB we will create recursively loops of populateDB calls
+	go db.RunDB(dbOptions)
 
 	log.Debugf("Updating binman db from filesystem")
 
@@ -158,7 +161,7 @@ func populateDB(dbOptions db.DbConfig, config string) error {
 		for _, v := range versions {
 			rel.Version = v
 			rel.setpublishPath(rel.ReleasePath, rel.Version)
-			c.dbOptions.Dwg.Add(1)
+			dbOptions.Dwg.Add(1)
 			var rwg sync.WaitGroup
 			rwg.Add(1)
 
@@ -170,7 +173,7 @@ func populateDB(dbOptions db.DbConfig, config string) error {
 				Data:       dataToBytes(rel.getDataMap()),
 			}
 
-			c.dbOptions.DbChan <- msg
+			dbOptions.DbChan <- msg
 			rwg.Wait()
 
 			close(msg.ReturnChan)
@@ -181,7 +184,9 @@ func populateDB(dbOptions db.DbConfig, config string) error {
 
 		}
 	}
-	c.dbOptions.Dwg.Wait()
-	c.BMClose()
+
+	close(dbOptions.DbChan)
+
+	log.Debugf("DB Update complete")
 	return nil
 }

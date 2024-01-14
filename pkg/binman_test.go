@@ -25,8 +25,7 @@ func TestLibrary(t *testing.T) {
 		t.Fatalf("Unable to write test config")
 	}
 
-	c := NewBMConfig(cf)
-	c.SetConfig(false)
+	c := NewBMConfig(cf).SetConfig(false)
 	c.CollectData()
 
 	for _, x := range c.Msgs {

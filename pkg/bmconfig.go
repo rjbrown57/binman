@@ -110,7 +110,7 @@ func (config *BMConfig) WithDb(dbConfig ...db.DbConfig) *BMConfig {
 	}
 
 	// Initialize the DB if required
-	if checkNewDb("") {
+	if checkNewDb(config.dbOptions.Path) {
 		log.Debugf("Initializing DB")
 		populateDB(config.dbOptions, config.ConfigPath)
 		// populateDB will close the channel when done, so we need to open a new one.
