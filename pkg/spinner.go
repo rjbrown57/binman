@@ -59,7 +59,7 @@ func repoList(bmsg []BinmanMsg) []string {
 }
 
 // Set the stop message based on work completed
-func setStopMessage(out map[string][]BinmanMsg) string {
+func SetStopMessage(out map[string][]BinmanMsg) string {
 	var stopMsg string
 
 	// Get lengths

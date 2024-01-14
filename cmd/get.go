@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/rjbrown57/binman/internal"
 	binman "github.com/rjbrown57/binman/pkg"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/spf13/cobra"
@@ -17,11 +18,15 @@ var getCmd = &cobra.Command{
 		validateRepo(args[0])
 		log.ConfigureLog(jsonLog, debug)
 
-		binman.Main(binman.NewGet(binman.BinmanRelease{
+		r := binman.BinmanRelease{
 			Repo:         args[0],
 			Version:      version,
 			PublishPath:  path,
 			DownloadOnly: true,
-		}))
+		}
+
+		if err := internal.Main(binman.NewGet(r)); err != nil {
+			log.Fatalf("Failed to get %s", r.Repo)
+		}
 	},
 }

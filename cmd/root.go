@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	binman "github.com/rjbrown57/binman/pkg"
+	"github.com/rjbrown57/binman/internal"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/spf13/cobra"
 )
@@ -23,7 +24,7 @@ var rootCmd = &cobra.Command{
 
 		// Set the logging options
 		log.ConfigureLog(jsonLog, debug)
-		if err := binman.Main(binman.NewBMSync(config, table)); err != nil {
+		if err := internal.Main(binman.NewBMSync(config, table)); err != nil {
 			log.Fatalf("Binman run failed %s", err)
 		}
 	},
