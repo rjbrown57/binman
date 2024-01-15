@@ -3,10 +3,7 @@ package binman
 import (
 	"fmt"
 	"os"
-	"sync"
 
-	db "github.com/rjbrown57/binman/pkg/db"
-	"github.com/rjbrown57/binman/pkg/downloader"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -44,12 +41,7 @@ releases:
 
 // setupConfig will create ~/.config/binman and populate ~/.config/binman/config as needed
 func setupConfigDir(configPath string) error {
-
-	err := os.MkdirAll(configPath, 0750)
-	if err != nil {
-		return err
-	}
-	return nil
+	return os.MkdirAll(configPath, 0750)
 }
 
 // setBaseConfig will check for each of the possible config locations and return the correct value
@@ -59,7 +51,7 @@ func SetBaseConfig(configArg string) string {
 
 	// Precedence order is -c supplied config, then env var, then binman default path
 	switch configArg {
-	case "noConfig", "":
+	case "":
 		cfgEnv, cfgBool := os.LookupEnv("BINMAN_CONFIG")
 		if cfgBool {
 			log.Debugf("BINMAN_CONFIG is set to %s. Using as our config", cfgEnv)
@@ -73,27 +65,6 @@ func SetBaseConfig(configArg string) string {
 	}
 
 	return cfg
-}
-
-// setConfig will create the appropriate GHBMConfig and merge if required
-func SetConfig(suppliedConfig string, dwg *sync.WaitGroup, dbChan chan db.DbMsg, downloadChan chan downloader.DlMsg) *GHBMConfig {
-
-	// create the base config
-	binMancfg := NewGHBMConfig(suppliedConfig)
-
-	// If ${repoDir}/.binMan.yaml exists we merge it's releases with our main config
-	cfg, cfgBool := detectRepoConfig()
-	if cfgBool {
-		log.Debugf("Found %s merging with main config", cfg)
-		tc := NewGHBMConfig(cfg)
-		// append releases from the contextual config
-		binMancfg.Releases = append(binMancfg.Releases, tc.Releases...)
-	}
-
-	binMancfg.SetDefaults()
-	binMancfg.cleanReleases()
-	binMancfg.populateReleases(dwg,dbChan,downloadChan)
-	return binMancfg
 }
 
 // detectRepoConfig will check for a directory specific binman config file. Return the path if found + a boolean.

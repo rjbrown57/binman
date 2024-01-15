@@ -3,13 +3,14 @@ package binman
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/theckman/yacspin"
 )
 
-func getSpinner(debug bool) {
+func getSpinner(debug bool, spinChan chan (string), swg *sync.WaitGroup) {
 
 	cfg := yacspin.Config{
 		Frequency:       100 * time.Millisecond,
@@ -51,14 +52,14 @@ func repoList(bmsg []BinmanMsg) []string {
 	var a []string
 
 	for _, msg := range bmsg {
-		a = append(a, msg.rel.Repo)
+		a = append(a, msg.Rel.Repo)
 	}
 
 	return a
 }
 
 // Set the stop message based on work completed
-func setStopMessage(out map[string][]BinmanMsg) string {
+func SetStopMessage(out map[string][]BinmanMsg) string {
 	var stopMsg string
 
 	// Get lengths

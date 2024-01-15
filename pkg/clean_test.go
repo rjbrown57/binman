@@ -73,7 +73,10 @@ func TestClean(t *testing.T) {
 			log.Fatalf("Issue populating DB %s", err)
 		}
 
-		Clean(false, true, test.threshold, dbPath, testConfig)
+		err = Clean(false, true, test.threshold, dbPath, testConfig)
+		if err != nil {
+			t.Fatalf("Failed to run clean %s", err)
+		}
 
 		testDb := db.GetDB(dbPath)
 

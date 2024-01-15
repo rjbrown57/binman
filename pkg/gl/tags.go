@@ -6,14 +6,18 @@ import (
 )
 
 // Return the Latest Tag for a gitlab repo
-func GLGetLatestTag(glClient *gitlab.Client, repo string) string {
-	tags, _, err := glClient.Tags.ListTags(repo, &gitlab.ListTagsOptions{OrderBy: gitlab.String("updated"), Sort: gitlab.String("desc")})
+func GLGetLatestTag(glClient *gitlab.Client, repo string) (string, error) {
+
+	OrderBy := "updated"
+	SortBy := "desc"
+
+	tags, _, err := glClient.Tags.ListTags(repo, &gitlab.ListTagsOptions{OrderBy: &OrderBy, Sort: &SortBy})
 	if err == nil {
-		return tags[0].Name
+		return tags[0].Name, nil
 	}
 
 	log.Debugf("Error listing tags for %s - %v", tags, err)
-	return ""
+	return "", err
 
 }
 

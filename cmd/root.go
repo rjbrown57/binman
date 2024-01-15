@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	binman "github.com/rjbrown57/binman/pkg"
+	"github.com/rjbrown57/binman/internal"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/spf13/cobra"
 )
@@ -20,23 +21,12 @@ var rootCmd = &cobra.Command{
 	Short: "GitHub Binary Manager",
 	Long:  `Github Binary Manager will grab binaries from github for you!`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if config == "" && repo == "" {
-			err := cmd.Root().Help()
-			if err != nil {
-				os.Exit(1)
-			}
-			os.Exit(1)
-		}
-
-		m := make(map[string]string)
-		m["configFile"] = config
-		m["repo"] = repo
-		m["version"] = version
 
 		// Set the logging options
 		log.ConfigureLog(jsonLog, debug)
-
-		binman.Main(m, table, "config")
+		if err := internal.Main(binman.NewBMSync(config, table)); err != nil {
+			log.Fatalf("Binman run failed %s", err)
+		}
 	},
 }
 
@@ -104,7 +94,7 @@ func init() {
 
 	addSubcommands()
 
-	rootCmd.PersistentFlags().StringVarP(&config, "config", "c", "noConfig", "path to config file. Can be set with ${BINMAN_CONFIG} env var")
+	rootCmd.PersistentFlags().StringVarP(&config, "config", "c", "", "path to config file. Can be set with ${BINMAN_CONFIG} env var")
 	rootCmd.PersistentFlags().CountVarP(&debug, "debug", "d", "enable debug logging. Set multiple times to increase log level")
 	rootCmd.PersistentFlags().BoolVarP(&jsonLog, "json", "j", false, "enable json style logging")
 	rootCmd.PersistentFlags().BoolVarP(&table, "table", "t", false, "Output table after sync completion")

@@ -24,8 +24,6 @@ func (r *BinmanRelease) AddDownloadAction() Action {
 }
 
 func (action *DownloadAction) execute() error {
-	swg.Add(1)
-
 	// Created a buffered channel since we will not run a recieving goroutine
 	// size will always be 1
 	confirmChan := make(chan error, 1)
@@ -33,20 +31,18 @@ func (action *DownloadAction) execute() error {
 
 	rWg.Add(1)
 	action.r.downloadChan <- downloader.DlMsg{Url: action.r.dlUrl, Filepath: action.r.filepath, Wg: &rWg, ConfirmChan: confirmChan}
-	spinChan <- fmt.Sprintf("Downloading %s(%s)", action.r.Repo, action.r.Version)
+	action.r.output.SendSpin(fmt.Sprintf("Downloading %s(%s)", action.r.Repo, action.r.Version))
 	rWg.Wait()
 	close(confirmChan)
 
 	err := <-confirmChan
 
 	if err != nil {
-		swg.Add(1)
-		spinChan <- fmt.Sprintf("Error Downloading %s(%s)", action.r.Repo, action.r.Version)
+		action.r.output.SendSpin(fmt.Sprintf("Error Downloading %s(%s)", action.r.Repo, action.r.Version))
 		return err
-	} else {
-		swg.Add(1)
-		spinChan <- fmt.Sprintf("Download of %s(%s) finished", action.r.Repo, action.r.Version)
 	}
+
+	action.r.output.SendSpin(fmt.Sprintf("Download of %s(%s) finished", action.r.Repo, action.r.Version))
 
 	return nil
 }
@@ -110,7 +106,7 @@ func (r *BinmanRelease) AddWriteRelNotesAction() Action {
 
 func (action *WriteRelNotesAction) execute() error {
 	if action.r.relNotes != "" {
-		notePath := filepath.Join(action.r.publishPath, "releaseNotes.txt")
+		notePath := filepath.Join(action.r.PublishPath, "releaseNotes.txt")
 		log.Debugf("Notes written to %s", notePath)
 		return WriteStringtoFile(notePath, action.r.relNotes)
 	}
@@ -133,14 +129,14 @@ func (action *ExtractAction) execute() error {
 	switch findfType(action.r.filepath) {
 	case "tar":
 		log.Debugf("tar extract start")
-		err := handleTar(action.r.publishPath, action.r.filepath)
+		err := handleTar(action.r.PublishPath, action.r.filepath)
 		if err != nil {
 			log.Debugf("Failed to extract tar file: %v", err)
 			return err
 		}
 	case "zip":
 		log.Debugf("zip extract start")
-		err := handleZip(action.r.publishPath, action.r.filepath)
+		err := handleZip(action.r.PublishPath, action.r.filepath)
 		if err != nil {
 			log.Debugf("Failed to extract zip file: %v", err)
 			return err

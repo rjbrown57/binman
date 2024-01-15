@@ -17,7 +17,7 @@ func TestGetOr(t *testing.T) {
 
 func TestCheckRepo(t *testing.T) {
 
-	// We use NewGHBMConfig here to avoid grabbing contextual configs
+	// We use NewBMConfig here to avoid grabbing contextual configs
 
 	var tests = []struct {
 		Expected error

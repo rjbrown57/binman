@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/rjbrown57/binman/pkg/constants"
+	binmandb "github.com/rjbrown57/binman/pkg/db"
+	"github.com/rjbrown57/binman/pkg/downloader"
 )
 
 func TestRunActions(t *testing.T) {
@@ -23,49 +25,64 @@ func TestRunActions(t *testing.T) {
 
 func TestSetPreActions(t *testing.T) {
 
+	dbChan := make(chan binmandb.DbMsg)
+	dlChan := make(chan downloader.DlMsg)
+
 	githubSource := Source{Name: "github.com", URL: constants.DefaultGHBaseURL, Apitype: "github", Tokenvar: "none"}
 	gitlabSource := Source{Name: "gitlab.com", URL: constants.DefaultGLBaseURL, Apitype: "gitlab", Tokenvar: "none"}
 
 	relWithOutPublish := BinmanRelease{
-		Repo:      "rjbrown57/binman",
-		QueryType: "release",
-		source:    &githubSource,
+		Repo:         "rjbrown57/binman",
+		QueryType:    "release",
+		source:       &githubSource,
+		dbChan:       dbChan,
+		downloadChan: dlChan,
 	}
 
 	relWithPublish := BinmanRelease{
-		Repo:        "rjbrown57/binman",
-		publishPath: "binman",
-		QueryType:   "release",
-		source:      &githubSource,
+		Repo:         "rjbrown57/binman",
+		PublishPath:  "binman",
+		QueryType:    "release",
+		source:       &githubSource,
+		dbChan:       dbChan,
+		downloadChan: dlChan,
 	}
 
 	relQueryByTag := BinmanRelease{
-		Repo:        "rjbrown57/binman",
-		publishPath: "binman",
-		QueryType:   "releasebytag",
-		source:      &githubSource,
+		Repo:         "rjbrown57/binman",
+		PublishPath:  "binman",
+		QueryType:    "releasebytag",
+		source:       &githubSource,
+		dbChan:       dbChan,
+		downloadChan: dlChan,
 	}
 
 	relPostOnly := BinmanRelease{
-		Repo:        "rjbrown57/binman",
-		publishPath: "binman",
-		QueryType:   "release",
-		PostOnly:    true,
-		source:      &githubSource,
+		Repo:         "rjbrown57/binman",
+		PublishPath:  "binman",
+		QueryType:    "release",
+		PostOnly:     true,
+		source:       &githubSource,
+		dbChan:       dbChan,
+		downloadChan: dlChan,
 	}
 
 	relExternalUrl := BinmanRelease{
-		Repo:        "rjbrown57/binman",
-		QueryType:   "release",
-		PostOnly:    false,
-		ExternalUrl: "https://avaluehere.com",
-		source:      &githubSource,
+		Repo:         "rjbrown57/binman",
+		QueryType:    "release",
+		PostOnly:     false,
+		ExternalUrl:  "https://avaluehere.com",
+		source:       &githubSource,
+		dbChan:       dbChan,
+		downloadChan: dlChan,
 	}
 
 	relGLBasic := BinmanRelease{
-		Repo:      "rjbrown57/binman",
-		QueryType: "release",
-		source:    &gitlabSource,
+		Repo:         "rjbrown57/binman",
+		QueryType:    "release",
+		source:       &gitlabSource,
+		dbChan:       dbChan,
+		downloadChan: dlChan,
 	}
 
 	var tests = []struct {
@@ -107,6 +124,7 @@ func TestSetPreActions(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		t.Logf("Case %s", test.name)
 		t.Logf("returned actions == %s", test.ReturnedActions)
 		for k := range test.ReturnedActions {
 			if reflect.TypeOf(test.ReturnedActions[k]).String() != test.ExpectedActions[k] {
@@ -205,14 +223,14 @@ func TestSetOsActions(t *testing.T) {
 
 	relWithUpx := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		publishPath:  "binman",
+		PublishPath:  "binman",
 		artifactPath: "path",
 		UpxConfig:    testUpxConfig,
 	}
 
 	relWithUpxandPostCommands := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		publishPath:  "binman",
+		PublishPath:  "binman",
 		PostCommands: testPostCommands,
 	}
 

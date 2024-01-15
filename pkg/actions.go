@@ -64,9 +64,16 @@ func (r *BinmanRelease) setPreActions(releasePath string, binPath string) []Acti
 		actions = append(actions, r.AddGetGHReleaseAction(ghClient))
 	}
 
+	// If we have a nil DbChan + downloadChan then we will only populate
+	// then we are likely being used as a library to get data from GH/GL.
+	// So we populate []BimanRelease array and end early
+	if r.dbChan == nil && r.downloadChan == nil {
+		return append(actions, r.AddEndWorkAction())
+	}
+
 	// If publishPath is already set we are doing a direct repo download and don't need to set a release path
 	// Direct repo actions should be moved to their own command
-	if r.publishPath == "" {
+	if r.PublishPath == "" {
 		actions = append(actions, r.AddReleaseStatusAction(releasePath))
 	}
 

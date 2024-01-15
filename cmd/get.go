@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/rjbrown57/binman/internal"
 	binman "github.com/rjbrown57/binman/pkg"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/spf13/cobra"
@@ -15,15 +16,17 @@ var getCmd = &cobra.Command{
 	Long:    `get a single repo with binman. Useful with CI/docker`,
 	Run: func(cmd *cobra.Command, args []string) {
 		validateRepo(args[0])
-		m := make(map[string]string)
-		m["configFile"] = config
-		m["repo"] = args[0]
-		m["version"] = version
-		m["path"] = path
-
-		// Set the logging options
 		log.ConfigureLog(jsonLog, debug)
 
-		binman.Main(m, table, "get")
+		r := binman.BinmanRelease{
+			Repo:         args[0],
+			Version:      version,
+			PublishPath:  path,
+			DownloadOnly: true,
+		}
+
+		if err := internal.Main(binman.NewGet(r)); err != nil {
+			log.Fatalf("Failed to get %s", r.Repo)
+		}
 	},
 }
