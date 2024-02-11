@@ -294,3 +294,25 @@ func mustUnmarshalYaml(configPath string, v interface{}) {
 		os.Exit(1)
 	}
 }
+
+// TODO add test
+// GetVersionFromPath will return a list of all synced versions in a directory path
+func GetVersionFromPath(repoPath string) []string {
+
+	// scan for versions in the path
+	files, err := os.ReadDir(repoPath)
+	if err != nil {
+		log.Warnf("Unable to read dir %s %s", repoPath, err)
+	}
+
+	versions := make([]string, 0)
+
+	for _, f := range files {
+		if f.IsDir() {
+			versions = append(versions, f.Name())
+		}
+	}
+
+	log.Debugf("Versions %s for %s found", versions, repoPath)
+	return versions
+}

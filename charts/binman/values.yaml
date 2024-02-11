@@ -34,6 +34,16 @@ binmanConfig:
   configPath: /config
   configName: config.yaml
 
+
+# Prep secret with kubectl create secret generic binmangh --from-literal=value='secrethere'
+auth:
+  enabled: true
+  secrets:
+  - name: binmangh
+    envVar: GH_TOKEN
+    key: value
+
+
 service:
   port: 9091
 

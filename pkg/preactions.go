@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/google/go-github/v50/github"
@@ -45,6 +46,7 @@ func (action *ReleaseStatusAction) execute() error {
 	// Default to capture any other error cases
 	switch err {
 	case nil:
+		// TODO: Use a pre-defined error variable here
 		return fmt.Errorf("%s", "Noupdate")
 	default:
 		if errors.Is(err, fs.ErrNotExist) {
@@ -98,6 +100,11 @@ func (action *SetUrlAction) execute() error {
 			log.Debugf("Attempt to find gitlab asset for %s\n", action.r.project)
 			action.r.assetName, action.r.dlUrl = selectAsset(action.r.Arch, action.r.Os, action.r.Version, action.r.project, gl.GLGetAssetData(data))
 		}
+	// TODO should we use a pointer here like the above from better devs than myself?
+	case BinmanQueryResponse:
+		action.r.dlUrl = data.DlUrl
+		action.r.assetName = path.Base(data.DlUrl)
+		action.r.Version = data.Version
 	}
 
 	// If at this point dlUrl is not set we have an issue

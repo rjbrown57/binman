@@ -2,6 +2,8 @@ package internal
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/fatih/color"
@@ -85,4 +87,59 @@ func Main(bm *BMConfig) error {
 
 	log.Debugf("binman finished!")
 	return nil
+}
+
+// Start watch command to expose metrics and sync on a schedule
+func StartWatch(bm *BMConfig) {
+
+	log.Debugf("watch config = %+v", bm.Config.Watch)
+
+	bm.Config.Watch.LatestVersionMap = PopulateLatestMap(bm)
+
+	// Start webserver
+	go WatchServe(bm)
+
+	go func() {
+		for {
+
+			bm.CollectData()
+
+			// Process results
+			for _, msg := range bm.Msgs {
+
+				if msg.Err == nil {
+					log.Infof("%s synced new release %s", msg.Rel.Repo, msg.Rel.Version)
+					bm.Config.Watch.LatestVersionMap[msg.Rel.Repo] = msg.Rel
+					continue
+				}
+
+				if msg.Err.Error() == "Noupdate" {
+					log.Infof("%s - %s is up to date", msg.Rel.Repo, msg.Rel.Version)
+					continue
+				}
+
+				log.Infof("Issue syncing %s - %s", msg.Rel.Repo, msg.Err)
+			}
+
+			log.Infof("Binman watch iteration complete")
+			time.Sleep(time.Duration(bm.Config.Watch.Frequency) * time.Second)
+
+			// Adding context here, this is reset, because if we initially added v0.0.0 of a repo
+			// Then on a next sync we add v0.0.1 we would contain both in our metric output
+			// Since the goal is to expose what is the latest of a repo this doesn't make sense
+			// There is likely a better way to do this, where we don't reset, just update
+			// I could do this by storing a metric per Rel, but then I would have lifespan issues I think
+			bm.Metrics.Reset()
+		}
+	}()
+
+	// Set up channel on which to send signal notifications.
+	// We must use a buffered channel or risk missing the signal
+	// if we're not ready to receive when the signal is sent.
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt)
+
+	// Block until a signal is received.
+	sig := <-sigs
+	log.Infof("Terimnating binman on %s", sig)
 }

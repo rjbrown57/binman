@@ -63,11 +63,11 @@ func TestLinkFileAction(t *testing.T) {
 
 	rel := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		artifactPath: filePath,
+		ArtifactPath: filePath,
 		linkPath:     linkPath,
 	}
 
-	WriteStringtoFile(rel.artifactPath, content)
+	WriteStringtoFile(rel.ArtifactPath, content)
 
 	// Add the link task twice, to confirm link is updated successfully
 	actions = append(actions, rel.AddLinkFileAction())
@@ -117,10 +117,10 @@ func TestMakeExecuteableAction(t *testing.T) {
 
 	rel := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		artifactPath: filePath,
+		ArtifactPath: filePath,
 	}
 
-	WriteStringtoFile(rel.artifactPath, content)
+	WriteStringtoFile(rel.ArtifactPath, content)
 
 	actions = append(actions, rel.AddMakeExecuteableAction())
 
@@ -128,7 +128,7 @@ func TestMakeExecuteableAction(t *testing.T) {
 		t.Fatal("Unable to create make file executable")
 	}
 
-	if f, err := os.Stat(rel.artifactPath); err == nil {
+	if f, err := os.Stat(rel.ArtifactPath); err == nil {
 		if f.Mode().Perm() != testMode.Perm() {
 			t.Fatalf("Expected %o got %o", testMode, f.Mode())
 		}

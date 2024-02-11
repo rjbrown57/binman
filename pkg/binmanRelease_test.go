@@ -146,7 +146,7 @@ func TestFindTarget(t *testing.T) {
 
 	rel := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		artifactPath: "binman",
+		ArtifactPath: "binman",
 		PublishPath:  d,
 		Os:           "linux",
 		Arch:         "amd64",
@@ -156,8 +156,8 @@ func TestFindTarget(t *testing.T) {
 	rel.findTarget()
 
 	// We should find our file in the subdir
-	if afp != rel.artifactPath {
-		t.Fatalf("Expected %s got %s", afp, rel.artifactPath)
+	if afp != rel.ArtifactPath {
+		t.Fatalf("Expected %s got %s", afp, rel.ArtifactPath)
 	}
 
 	err = os.Remove(afp)
@@ -168,19 +168,19 @@ func TestFindTarget(t *testing.T) {
 	rel.findTarget()
 
 	// we should detect the executable file
-	if executablefilematch != rel.artifactPath {
-		t.Fatalf("Expected %s got %s", executablefilematch, rel.artifactPath)
+	if executablefilematch != rel.ArtifactPath {
+		t.Fatalf("Expected %s got %s", executablefilematch, rel.ArtifactPath)
 	}
 
 	// Test we can detect .exe
 	wfp := fmt.Sprintf("%s/%s.exe", td, testFileName)
 	WriteStringtoFile(wfp, "test-test-test")
-	rel.artifactPath = "binman"
+	rel.ArtifactPath = "binman"
 	rel.Os = "windows"
 	rel.findTarget()
 
-	if wfp != rel.artifactPath {
-		t.Fatalf("Expected %s got %s", wfp, rel.artifactPath)
+	if wfp != rel.ArtifactPath {
+		t.Fatalf("Expected %s got %s", wfp, rel.ArtifactPath)
 	}
 }
 
@@ -191,7 +191,7 @@ func TestSetartifactPath(t *testing.T) {
 	// A release where we have set a specific target with releasefilename
 	relWithRelFilename := BinmanRelease{
 		Repo:            "rjbrown57/binman",
-		artifactPath:    "binman",
+		ArtifactPath:    "binman",
 		PublishPath:     "/tmp/",
 		ReleaseFileName: "binman",
 		project:         "binmanz",
@@ -207,7 +207,7 @@ func TestSetartifactPath(t *testing.T) {
 	// A release where the asset is a tar/tgz/zip and we have specified a path internally
 	relWithExtractFilename := BinmanRelease{
 		Repo:            "rjbrown57/binman",
-		artifactPath:    "binman",
+		ArtifactPath:    "binman",
 		PublishPath:     "/tmp/",
 		ExtractFileName: "extractbinman",
 		project:         "binman",
@@ -223,7 +223,7 @@ func TestSetartifactPath(t *testing.T) {
 	// A release with an external url that is a binary
 	relWithUrlNonTar := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		artifactPath: "binman",
+		ArtifactPath: "binman",
 		PublishPath:  "/tmp/",
 		ExternalUrl:  "extractbinman",
 		project:      "binman",
@@ -239,7 +239,7 @@ func TestSetartifactPath(t *testing.T) {
 	// A release with an external url that is a tar/tgz/zip
 	relWithUrlTar := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		artifactPath: "binman",
+		ArtifactPath: "binman",
 		PublishPath:  "/tmp/",
 		ExternalUrl:  "extractbinman.tar.gz",
 		project:      "binman",
@@ -255,7 +255,7 @@ func TestSetartifactPath(t *testing.T) {
 	// A basic release we use multiple times
 	relBasic := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		artifactPath: "binman",
+		ArtifactPath: "binman",
 		PublishPath:  "/tmp/",
 		LinkName:     "",
 		project:      "binman",
@@ -270,7 +270,7 @@ func TestSetartifactPath(t *testing.T) {
 	// A release with the link name set
 	relWithLinkName := BinmanRelease{
 		Repo:         "rjbrown57/binman",
-		artifactPath: "binman",
+		ArtifactPath: "binman",
 		PublishPath:  "/tmp/",
 		project:      "binman",
 		LinkName:     "none",
@@ -307,8 +307,8 @@ func TestSetartifactPath(t *testing.T) {
 			t.Fatalf("Link Path expected %s, got %s", test.expectedLinkPath, test.rel.linkPath)
 		}
 
-		if test.rel.artifactPath != test.exectedartifactPath {
-			t.Fatalf("Artifact Path expected %s, got %s", test.exectedartifactPath, test.rel.artifactPath)
+		if test.rel.ArtifactPath != test.exectedartifactPath {
+			t.Fatalf("Artifact Path expected %s, got %s", test.exectedartifactPath, test.rel.ArtifactPath)
 		}
 	}
 }
@@ -326,7 +326,7 @@ func TestGetDataMap(t *testing.T) {
 		Arch:          arch,
 		Version:       version,
 		createdAtTime: int64(0),
-		artifactPath:  "test",
+		ArtifactPath:  "test",
 		linkPath:      "test",
 		PublishPath:   "test",
 		assetName:     "test",

@@ -62,6 +62,8 @@ func (r *BinmanRelease) setPreActions(releasePath string, binPath string) []Acti
 		}
 
 		actions = append(actions, r.AddGetGHReleaseAction(ghClient))
+	case "binman":
+		actions = append(actions, r.AddGetBinmanReleaseAction())
 	}
 
 	// If we have a nil DbChan + downloadChan then we will only populate
@@ -180,7 +182,7 @@ func (r *BinmanRelease) setOsCommands() []Action {
 
 	if r.UpxConfig.Enabled == "true" {
 		// Merge any user args with upx
-		args := []string{r.artifactPath}
+		args := []string{r.ArtifactPath}
 		args = append(args, r.UpxConfig.Args...)
 
 		UpxCommand := PostCommand{
