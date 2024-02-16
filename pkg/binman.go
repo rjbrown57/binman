@@ -83,7 +83,7 @@ func NewBMSync(configPath string, table bool) *BMConfig {
 
 // For running the default sync
 func NewBMWatch(configPath string) *BMConfig {
-	return NewBMConfig(configPath).WithDb().WithDownloader().WithWatch().SetConfig(false)
+	return NewBMConfig(configPath).WithDb().WithDownloader().WithWatch().WithOutput(false, false).SetConfig(false)
 }
 
 // For running the get command
