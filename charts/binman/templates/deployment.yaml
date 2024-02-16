@@ -51,6 +51,8 @@ spec:
               name: binmanconfig
             - mountPath: {{ .Values.binmanConfig.releasePath }}
               name: binmandata
+            - mountPath: "/.config/"
+              name: binmandb
       volumes:
       - configMap:
           name: binmanconfig
@@ -59,9 +61,15 @@ spec:
       - name: binmandata
         persistentVolumeClaim:
           claimName: {{ include "binman.fullname" . }}-pvc
+      - name: binmandb
+        persistentVolumeClaim:
+          claimName: {{ include "binman.fullname" . }}-db-pvc
       {{- else }}
       - emptyDir:
           medium: Memory
         name: binmandata
+      - emptyDir:
+          medium: Memory
+        name: binmandb
       {{- end }}
      
