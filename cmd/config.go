@@ -38,10 +38,14 @@ var configEditCmd = &cobra.Command{
 
 // Config add sub command
 var configAddCmd = &cobra.Command{
-	Use:   "add",
-	Short: "Add a repo to your binman config",
-	Long:  `Add a repo to your binman config`,
+	Use:     "add",
+	Short:   "Add a repo to your binman config",
+	Long:    `Add a repo to your binman config`,
+	Example: "binman config add cli/cli",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			cmd.Help()
+		}
 		for _, repo := range args {
 			validateRepo(repo)
 		}
@@ -51,7 +55,7 @@ var configAddCmd = &cobra.Command{
 	},
 }
 
-// Config add sub command
+// Config get sub command
 var configGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "View current config",
