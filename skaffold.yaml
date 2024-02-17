@@ -1,0 +1,20 @@
+apiVersion: skaffold/v4beta9
+kind: Config
+metadata:
+  name: binman
+build:
+  artifacts:
+    - image: ghcr.io/rjbrown57/binman
+      ko: {}
+      #docker:
+      #  dockerfile: Dockerfile
+deploy:
+  helm:
+    releases:
+      - name: binman
+        chartPath: charts/binman
+        valuesFiles:
+          - charts/binman/values.yaml
+        version: 0.1.0
+        setValueTemplates:
+          image.tag: "{{.IMAGE_TAG_ghcr_io_rjbrown57_binman}}"
