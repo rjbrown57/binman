@@ -75,6 +75,18 @@ type DbMsg struct {
 	ReturnWg   *sync.WaitGroup
 }
 
+func (dbMsg *DbMsg) Send(dbChan chan DbMsg) DBResponse {
+	dbMsg.ReturnWg.Add(1)
+
+	dbChan <- *dbMsg
+
+	dbMsg.ReturnWg.Wait()
+
+	close(dbMsg.ReturnChan)
+	d := <-dbMsg.ReturnChan
+	return d
+}
+
 type DBResponse struct {
 	Err  error
 	Data []byte

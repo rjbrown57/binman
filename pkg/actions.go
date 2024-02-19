@@ -253,13 +253,7 @@ func (action *UpdateDbAction) execute() error {
 		Data:       dataToBytes(action.r.getDataMap()),
 	}
 
-	dbMsg.ReturnWg.Add(1)
-
-	action.r.dbChan <- dbMsg
-
-	dbMsg.ReturnWg.Wait()
-	close(dbMsg.ReturnChan)
-	m := <-dbMsg.ReturnChan
+	m := dbMsg.Send(action.r.dbChan)
 	return m.Err
 }
 
