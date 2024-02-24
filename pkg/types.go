@@ -30,7 +30,7 @@ type BinmanConfig struct {
 	Sources        []Source  `yaml:"sources,omitempty"`      // Sources to query. By default gitlab and github
 	Watch          Watch     `yaml:"watch,omitempty"`        // Watch config object
 
-	SourceMap map[string]*Source // map of names to struct pointers for sources
+	SourceMap map[string]*Source `yaml:"-"` // map of names to struct pointers for sources
 }
 
 type Watch struct {
