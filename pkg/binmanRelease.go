@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"sync"
@@ -292,4 +293,15 @@ func (r *BinmanRelease) FetchReleaseData(versions ...string) error {
 	r.Arch = m["arch"].(string)
 
 	return err
+}
+
+func (r *BinmanRelease) displayActions(actions *[]Action) []string {
+
+	var currentActions []string
+
+	for _, action := range *actions {
+		currentActions = append(currentActions, reflect.TypeOf(action).String())
+	}
+
+	return currentActions
 }

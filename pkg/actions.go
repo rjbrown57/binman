@@ -98,7 +98,7 @@ func (r *BinmanRelease) setPreActions(releasePath string, binPath string) []Acti
 		r.AddSetPostActions(),
 	)
 
-	log.Debugf("Performing %d pre actions for %s", len(actions), r.Repo)
+	log.Debugf("Performing %s pre actions for %s", r.displayActions(&actions), r.Repo)
 
 	return actions
 
@@ -155,7 +155,7 @@ func (r *BinmanRelease) setPostActions() []Action {
 
 	actions = append(actions, r.AddSetOsActions())
 
-	log.Debugf("Performing %d Post actions for %s", len(actions), r.Repo)
+	log.Debugf("Performing %s Post actions for %s", r.displayActions(&actions), r.Repo)
 
 	return actions
 
@@ -200,7 +200,7 @@ func (r *BinmanRelease) setOsCommands() []Action {
 
 	actions = append(actions, r.AddSetFinalActions())
 
-	log.Debugf("Performing %d OS commands for %s", len(actions), r.Repo)
+	log.Debugf("Performing %s OS commands for %s", r.displayActions(&actions), r.Repo)
 	return actions
 }
 
