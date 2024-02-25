@@ -34,8 +34,13 @@ func GetDownloader(downloadChan chan DlMsg, id int) {
 func DownloadFile(url string, path string) error {
 	log.Debugf("Downloading %s", url)
 	resp, err := http.Get(url)
-	if err != nil || resp.StatusCode > 200 {
-		return fmt.Errorf("failed to download from %s - %v , %d", url, err, resp.StatusCode)
+	if err != nil {
+		log.Debugf("%+v %v", resp, err)
+		return fmt.Errorf("failed to download from %s - %v", url, err)
+	}
+
+	if resp.StatusCode > 200 {
+		return fmt.Errorf("failed to download from %s , %d", url, resp.StatusCode)
 	}
 
 	defer resp.Body.Close()
