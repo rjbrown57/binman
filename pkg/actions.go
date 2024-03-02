@@ -56,6 +56,7 @@ func (r *BinmanRelease) setPreActions(releasePath string, binPath string) []Acti
 		actions = append(actions, r.AddGetGLReleaseAction(glClient))
 	case "github":
 		ghClient := gh.GetGHCLient(r.source.URL, r.source.Tokenvar)
+		// TODO checking limits over and over is not optimal
 		gh.ShowLimits(ghClient)
 		if err := gh.CheckLimits(ghClient); err != nil {
 			log.Fatalf("Unable to check limits against GH api")

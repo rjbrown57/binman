@@ -461,6 +461,14 @@ func (config *BMConfig) SetDefaults() {
 		config.Defaults.Os = runtime.GOOS
 	}
 
+	// If the config does not set a default source, we will set it to github.com
+	// If the user does set one, then we mark that as the default
+	if config.Defaults.Source == "" {
+		config.Defaults.Source = config.Config.SourceMap["github.com"].Name
+		config.Config.SourceMap["default"] = config.Config.SourceMap["github.com"]
+	} else {
+		config.Config.SourceMap["default"] = config.Config.SourceMap[config.Defaults.Source]
+	}
 }
 
 // setDefaultSources will handle merging defaults and user sources

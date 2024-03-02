@@ -90,27 +90,41 @@ func (r *BinmanRelease) getOR() {
 // SetSource will set the source for a release, it will also trim the source prefix from repo if used
 func (r *BinmanRelease) SetSource(sourceMap map[string]*Source) {
 
+	var sourceId string = "github.com"
+
 	repoSlice := strings.Split(r.Repo, "/")
 
 	// Test if user supplied "sourceIdentifier/project/repo" format
 	if source, exists := sourceMap[repoSlice[0]]; exists {
-		// assign sourceIdentifer
-		r.SourceIdentifier = source.Name
+
+		// assign sourceIdentifer only if type is not binman
+		// Since binman source relies on knowing the upstream source
+		if source.Apitype != "binman" {
+			sourceId = source.Name
+		}
 
 		// trimIdentifier from Reponame
 		repoName := strings.TrimPrefix(r.Repo, repoSlice[0]+"/")
 		r.Repo = repoName
 		log.Debugf("source %s detected in repo name. Updating repo name to %s", repoSlice[0], r.Repo)
-
 	}
 
-	// github.com is default for an unspecified source
-	if r.SourceIdentifier == "" {
-		r.SourceIdentifier = "github.com"
+	switch r.SourceIdentifier {
+	// If the SourceIdentifier is set to binman then we need to know the sourceID by repo name since binman is a "downstream" source
+	case "binman":
+		r.source = sourceMap[r.SourceIdentifier]
+		r.SourceIdentifier = sourceId
+	case "":
+		r.SourceIdentifier = sourceId
+		fallthrough
+	default:
+		r.source = sourceMap[r.SourceIdentifier]
 	}
 
-	// assign pointer to source info for this release
-	r.source = sourceMap[r.SourceIdentifier]
+	// If default is set to binman then everything will use binman queries
+	if sourceMap["default"].Apitype == "binman" {
+		r.source = sourceMap["default"]
+	}
 }
 
 func (r *BinmanRelease) findTarget() {

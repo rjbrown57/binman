@@ -53,6 +53,7 @@ type Source struct {
 // BinmanDefaults contains default config options. If a value is unset in releases array these will be used.
 // This should just be collapsed into BinmanConfig and this struct should be removed
 type BinmanDefaults struct {
-	Os   string `yaml:"os,omitempty"`   //OS architechrue to look for
-	Arch string `yaml:"arch,omitempty"` //OS architechrue to look for
+	Os     string `yaml:"os,omitempty"`     //OS to look for
+	Arch   string `yaml:"arch,omitempty"`   //architecture to look for
+	Source string `yaml:"source,omitempty"` //Set to binman to override all
 }

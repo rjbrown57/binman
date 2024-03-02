@@ -109,7 +109,7 @@ func (action *GetBinmanReleaseAction) execute() error {
 	q := BinmanQuery{
 		Architechure: action.r.Arch,
 		Repo:         action.r.Repo,
-		Source:       "github.com", // TODO this is a problem. Hardcoding for now until I find a solution.
+		Source:       action.r.SourceIdentifier,
 		Version:      action.r.Version,
 	}
 
