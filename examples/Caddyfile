@@ -1,0 +1,4 @@
+mybinman.binman.org:443 {
+  tls internal
+  reverse_proxy binman:9091
+}
