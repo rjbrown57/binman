@@ -295,7 +295,6 @@ func mustUnmarshalYaml(configPath string, v interface{}) {
 	}
 }
 
-// TODO add test
 // GetVersionFromPath will return a list of all synced versions in a directory path
 func GetVersionFromPath(repoPath string) []string {
 
