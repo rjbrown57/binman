@@ -1,11 +1,13 @@
 package constants
 
 // Common regexes
-const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$)`
+const TarRegEx = `(\.tar$|\.tar\.gz$|\.tgz$|\.tar\.xz$|\.txz$)`
 const ZipRegEx = `(\.zip$)`
 const ExeRegex = `.*\.exe$`
 const X86RegEx = `(amd64|x86_64)`
 const MacOsRx = `(darwin|macos|apple)`
+const GzipRegEx = `(\.tar\.gz$|\.tgz$)`
+const XzipRegEx = `(\.tar\.xz$|\.txz$)`
 
 // Url defaults
 // must have /
