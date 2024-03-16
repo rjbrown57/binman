@@ -27,9 +27,6 @@ config:
   releasepath:  #path to keep fetched releases. $HOME/binMan is the default
   cleanup: true # remove downloaded archive
   maxdownloads: 1 # number of concurrent downloads allowed. Default is 3
-  upx: #Compress binaries with upx
-    enabled: false
-    args: [] # arrary of args for upx
   sources:
    - name: gitlab.com
      #tokenvar: GL_TOKEN # environment variable that contains gitlab token
@@ -39,13 +36,8 @@ config:
      apitype: github
 releases:
   - repo: rjbrown57/binman
-    linkname: mybinman
-    downloadonly: false
-    cleanup: true
-    upx:
-      args: [] #["-k","-v"]
   # syncing from gitlab
-  #- repo: gitlab.com/gitlab-org/cli
+  - repo: gitlab.com/gitlab-org/cli
 ```
 
 If you find a new binary you would like to add to your config file add it via your editor of choice with `binman config edit`, or take a shortcut with `binman config add therepo/project`.
