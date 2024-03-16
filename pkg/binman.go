@@ -67,7 +67,7 @@ type BMConfig struct {
 	Msgs          []BinmanMsg     `yaml:",omitempty"` // Output from execution
 	OutputOptions *OutputOptions  `yaml:",omitempty"`
 
-	metrics *prometheus.GaugeVec
+	Metrics *prometheus.GaugeVec
 
 	// DB Ops
 	dbOptions    db.DbConfig
@@ -83,7 +83,7 @@ func NewBMSync(configPath string, table bool) *BMConfig {
 
 // For running the default sync
 func NewBMWatch(configPath string) *BMConfig {
-	return NewBMConfig(configPath).WithDb().WithDownloader().WithWatch().WithOutput(false, false).SetConfig(false)
+	return NewBMConfig(configPath).WithWatch().WithDb().WithDownloader().WithOutput(false, false).SetConfig(false)
 }
 
 // For running the get command
@@ -204,10 +204,7 @@ func (config *BMConfig) WithWatch() *BMConfig {
 		config.Config.Watch.Frequency = 60
 	}
 
-	config.metrics = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "binman_release"}, []string{"latest", "source", "repo", "version"})
-
-	// Start watch mode http
-	go watchServe(config.Config.Watch, config.Config.ReleasePath)
+	config.Metrics = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "binman_release"}, []string{"latest", "source", "repo", "version"})
 
 	return config
 
@@ -297,6 +294,7 @@ func (config *BMConfig) populateReleases() {
 
 	var wg sync.WaitGroup
 
+	// This too complex and needs to be simplified
 	for k := range config.Releases {
 		wg.Add(1)
 		go func(index int) {
@@ -320,7 +318,7 @@ func (config *BMConfig) populateReleases() {
 
 			// If we are running in watch mode set metric and options
 			if config.Config.Watch.enabled {
-				config.Releases[index].metric = config.metrics
+				config.Releases[index].metric = config.Metrics
 				config.Releases[index].watchSync = config.Config.Watch.Sync
 				config.Releases[index].watchExposeMetrics = true
 			}
@@ -341,7 +339,7 @@ func (config *BMConfig) populateReleases() {
 			}
 
 			// If the user has not supplied an external url check against our map of known external urls
-			if config.Releases[index].ExternalUrl == "" {
+			if config.Releases[index].ExternalUrl == "" && config.Releases[index].source.Apitype != "binman" {
 				config.Releases[index].knownUrlCheck()
 			}
 
@@ -463,6 +461,14 @@ func (config *BMConfig) SetDefaults() {
 		config.Defaults.Os = runtime.GOOS
 	}
 
+	// If the config does not set a default source, we will set it to github.com
+	// If the user does set one, then we mark that as the default
+	if config.Defaults.Source == "" {
+		config.Defaults.Source = config.Config.SourceMap["github.com"].Name
+		config.Config.SourceMap["default"] = config.Config.SourceMap["github.com"]
+	} else {
+		config.Config.SourceMap["default"] = config.Config.SourceMap[config.Defaults.Source]
+	}
 }
 
 // setDefaultSources will handle merging defaults and user sources
@@ -477,9 +483,9 @@ func setDefaultSources(config *BMConfig) {
 	for index, source := range config.Config.Sources {
 
 		switch source.Apitype {
-		case "gitlab", "github":
+		case "gitlab", "github", "binman":
 		default:
-			log.Fatalf("Source %s apitype %s must equal github or gitlab", source.Name, source.Apitype)
+			log.Fatalf("Source %s apitype %s must equal github/gitlab or binman", source.Name, source.Apitype)
 		}
 
 		// assign to sourceMap

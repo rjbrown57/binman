@@ -12,6 +12,9 @@ config:
      apitype: gitlab
    - name: github.com
      apitype: github
+   - name: binmank8s
+     apitype: binman
+     url: http://binman.default.svc.cluster.local:9091
 releases:
   - repo: rjbrown57/binman
   - repo: anchore/syft

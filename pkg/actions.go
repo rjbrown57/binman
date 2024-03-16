@@ -56,12 +56,15 @@ func (r *BinmanRelease) setPreActions(releasePath string, binPath string) []Acti
 		actions = append(actions, r.AddGetGLReleaseAction(glClient))
 	case "github":
 		ghClient := gh.GetGHCLient(r.source.URL, r.source.Tokenvar)
+		// TODO checking limits over and over is not optimal
 		gh.ShowLimits(ghClient)
 		if err := gh.CheckLimits(ghClient); err != nil {
 			log.Fatalf("Unable to check limits against GH api")
 		}
 
 		actions = append(actions, r.AddGetGHReleaseAction(ghClient))
+	case "binman":
+		actions = append(actions, r.AddGetBinmanReleaseAction())
 	}
 
 	// If we have a nil DbChan + downloadChan then we will only populate
@@ -96,7 +99,7 @@ func (r *BinmanRelease) setPreActions(releasePath string, binPath string) []Acti
 		r.AddSetPostActions(),
 	)
 
-	log.Debugf("Performing %d pre actions for %s", len(actions), r.Repo)
+	log.Debugf("Performing %s pre actions for %s", r.displayActions(&actions), r.Repo)
 
 	return actions
 
@@ -153,7 +156,7 @@ func (r *BinmanRelease) setPostActions() []Action {
 
 	actions = append(actions, r.AddSetOsActions())
 
-	log.Debugf("Performing %d Post actions for %s", len(actions), r.Repo)
+	log.Debugf("Performing %s Post actions for %s", r.displayActions(&actions), r.Repo)
 
 	return actions
 
@@ -180,7 +183,7 @@ func (r *BinmanRelease) setOsCommands() []Action {
 
 	if r.UpxConfig.Enabled == "true" {
 		// Merge any user args with upx
-		args := []string{r.artifactPath}
+		args := []string{r.ArtifactPath}
 		args = append(args, r.UpxConfig.Args...)
 
 		UpxCommand := PostCommand{
@@ -198,7 +201,7 @@ func (r *BinmanRelease) setOsCommands() []Action {
 
 	actions = append(actions, r.AddSetFinalActions())
 
-	log.Debugf("Performing %d OS commands for %s", len(actions), r.Repo)
+	log.Debugf("Performing %s OS commands for %s", r.displayActions(&actions), r.Repo)
 	return actions
 }
 
@@ -253,13 +256,7 @@ func (action *UpdateDbAction) execute() error {
 		Data:       dataToBytes(action.r.getDataMap()),
 	}
 
-	dbMsg.ReturnWg.Add(1)
-
-	action.r.dbChan <- dbMsg
-
-	dbMsg.ReturnWg.Wait()
-	close(dbMsg.ReturnChan)
-	m := <-dbMsg.ReturnChan
+	m := dbMsg.Send(action.r.dbChan)
 	return m.Err
 }
 

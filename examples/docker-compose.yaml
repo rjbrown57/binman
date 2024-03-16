@@ -1,0 +1,29 @@
+services:
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - 2019:2019
+      - 443:443
+      - 80:80
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      binman:
+        condition: service_started
+  binman:
+    image: ghcr.io/rjbrown57/binman:latest 
+    container_name: binman
+    command: binman server -c /config
+    ports:
+      - "9091:9091"
+    volumes:
+      - ./charts/binman/configMap/config.yaml:/config
+      - binman_data:/data
+    restart: always
+    environment:
+      - GH_TOKEN=${GH_TOKEN}
+
+volumes:
+  binman_data:

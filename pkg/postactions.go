@@ -60,7 +60,7 @@ func (r *BinmanRelease) AddLinkFileAction() Action {
 }
 
 func (action *LinkFileAction) execute() error {
-	return createLink(action.r.artifactPath, action.r.linkPath)
+	return createLink(action.r.ArtifactPath, action.r.linkPath)
 }
 
 // Remove downloaded archive after extraction
@@ -90,7 +90,7 @@ func (r *BinmanRelease) AddMakeExecuteableAction() Action {
 }
 
 func (action *MakeExecuteableAction) execute() error {
-	return MakeExecuteable(action.r.artifactPath)
+	return MakeExecuteable(action.r.ArtifactPath)
 }
 
 // WriteReleaseNotes
@@ -161,14 +161,14 @@ func (r *BinmanRelease) AddFindTargetAction() Action {
 func (action *FindTargetAction) execute() error {
 	// If the file still doesn't exist, attempt to find it in sub-directories
 
-	if f, err := os.Stat(action.r.artifactPath); errors.Is(err, os.ErrNotExist) || f.IsDir() {
+	if f, err := os.Stat(action.r.ArtifactPath); errors.Is(err, os.ErrNotExist) || f.IsDir() {
 		log.Debugf("Wasn't able to find the artifact at %s, walking the directory to see if we can find it",
-			action.r.artifactPath)
+			action.r.ArtifactPath)
 
 		// Walk the directory looking for the file. If found artifact path will be updated
 		action.r.findTarget()
 
-		if _, err := os.Stat(action.r.artifactPath); errors.Is(err, os.ErrNotExist) {
+		if _, err := os.Stat(action.r.ArtifactPath); errors.Is(err, os.ErrNotExist) {
 			err := fmt.Errorf("unable to find a matching file for %s anywhere in the release archive", action.r.Repo)
 			return err
 		}

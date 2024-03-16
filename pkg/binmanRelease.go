@@ -1,9 +1,11 @@
 package binman
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"sync"
@@ -14,6 +16,10 @@ import (
 	"github.com/rjbrown57/binman/pkg/downloader"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/rjbrown57/binman/pkg/templating"
+)
+
+var (
+	ErrNoVersionsFound = errors.New("No Versions detected for release")
 )
 
 // BinmanRelease contains info on specifc releases to hunt for
@@ -37,6 +43,7 @@ type BinmanRelease struct {
 	BinPath          string        `yaml:"binpath,omitempty"`
 	SourceIdentifier string        `yaml:"source,omitempty"`      // Allow setting of source individually
 	PublishPath      string        `yaml:"publishpath,omitempty"` // Path Release will be set up at. Typically only set by set commands or library use.
+	ArtifactPath     string        `yaml:"-"`                     // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
 
 	createdAtTime    int64 // Unix time that release was created at
 	metric           *prometheus.GaugeVec
@@ -50,7 +57,6 @@ type BinmanRelease struct {
 	org              string // Will be provided by constuctor
 	project          string // Will be provided by constuctor
 	linkPath         string // Will be set by BinmanRelease.setPaths
-	artifactPath     string // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
 	actions          []Action
 	versions         []string // Used during clean operations
 	output           *OutputOptions
@@ -84,32 +90,46 @@ func (r *BinmanRelease) getOR() {
 // SetSource will set the source for a release, it will also trim the source prefix from repo if used
 func (r *BinmanRelease) SetSource(sourceMap map[string]*Source) {
 
+	var sourceId string = "github.com"
+
 	repoSlice := strings.Split(r.Repo, "/")
 
 	// Test if user supplied "sourceIdentifier/project/repo" format
 	if source, exists := sourceMap[repoSlice[0]]; exists {
-		// assign sourceIdentifer
-		r.SourceIdentifier = source.Name
+
+		// assign sourceIdentifer only if type is not binman
+		// Since binman source relies on knowing the upstream source
+		if source.Apitype != "binman" {
+			sourceId = source.Name
+		}
 
 		// trimIdentifier from Reponame
 		repoName := strings.TrimPrefix(r.Repo, repoSlice[0]+"/")
 		r.Repo = repoName
 		log.Debugf("source %s detected in repo name. Updating repo name to %s", repoSlice[0], r.Repo)
-
 	}
 
-	// github.com is default for an unspecified source
-	if r.SourceIdentifier == "" {
-		r.SourceIdentifier = "github.com"
+	switch r.SourceIdentifier {
+	// If the SourceIdentifier is set to binman then we need to know the sourceID by repo name since binman is a "downstream" source
+	case "binman":
+		r.source = sourceMap[r.SourceIdentifier]
+		r.SourceIdentifier = sourceId
+	case "":
+		r.SourceIdentifier = sourceId
+		fallthrough
+	default:
+		r.source = sourceMap[r.SourceIdentifier]
 	}
 
-	// assign pointer to source info for this release
-	r.source = sourceMap[r.SourceIdentifier]
+	// If default is set to binman then everything will use binman queries
+	if sourceMap["default"].Apitype == "binman" {
+		r.source = sourceMap["default"]
+	}
 }
 
 func (r *BinmanRelease) findTarget() {
 
-	targetFileName := templating.TemplateString((filepath.Base(r.artifactPath)), r.getDataMap())
+	targetFileName := templating.TemplateString((filepath.Base(r.ArtifactPath)), r.getDataMap())
 
 	if r.Os == "windows" {
 		targetFileName = targetFileName + ".exe"
@@ -131,7 +151,7 @@ func (r *BinmanRelease) findTarget() {
 		if targetFileName == d.Name() {
 			log.Debugf("Found exact match! Using %s as the new artifact path.", path)
 
-			r.artifactPath = path
+			r.ArtifactPath = path
 			return fmt.Errorf("search complete")
 		}
 
@@ -144,17 +164,17 @@ func (r *BinmanRelease) findTarget() {
 		log.Debugf("checking %s perms %o are 755", d.Name(), f.Mode())
 		if mode := f.Mode(); mode&os.ModePerm == 0755 {
 			log.Debugf("Possible match found(executable file)! Setting %s as the new artifact path and continuing search for exact match.", path)
-			r.artifactPath = path
+			r.ArtifactPath = path
 		}
 
 		return nil
 	})
 
 	// If we have selected a different asset internally than what is specified by r.LinkPath we need to update
-	if filepath.Base(r.artifactPath) != r.LinkName && r.LinkName != r.Repo {
+	if filepath.Base(r.ArtifactPath) != r.LinkName && r.LinkName != r.Repo {
 		// If the user has not specified a LinkName we should set a default here
 		if r.LinkName == "" {
-			r.LinkName = filepath.Base(r.artifactPath)
+			r.LinkName = filepath.Base(r.ArtifactPath)
 		}
 		r.linkPath = fmt.Sprintf("%s/%s", filepath.Dir(r.linkPath), r.LinkName)
 	}
@@ -185,7 +205,7 @@ func (r *BinmanRelease) getDataMap() map[string]interface{} {
 	dataMap["repo"] = r.Repo
 	dataMap["org"] = r.org
 	dataMap["project"] = r.project
-	dataMap["artifactPath"] = r.artifactPath
+	dataMap["artifactPath"] = r.ArtifactPath
 	dataMap["publishPath"] = r.PublishPath
 	dataMap["linkPath"] = r.linkPath
 	dataMap["assetName"] = r.assetName
@@ -210,33 +230,92 @@ func (r *BinmanRelease) setArtifactPath(ReleasePath, BinPath string, assetName s
 	// else if it's a tar/zip but we have specified the inside file via ExtractFileName. Use ExtractFileName for source and destination
 	// else we want default
 	if r.ReleaseFileName != "" {
-		r.artifactPath = filepath.Join(r.PublishPath, templating.TemplateString(r.ReleaseFileName, r.getDataMap()))
-		log.Debugf("ReleaseFileName set %s\n", r.artifactPath)
+		r.ArtifactPath = filepath.Join(r.PublishPath, templating.TemplateString(r.ReleaseFileName, r.getDataMap()))
+		log.Debugf("ReleaseFileName set %s\n", r.ArtifactPath)
 	} else if r.ExtractFileName != "" {
-		r.artifactPath = filepath.Join(r.PublishPath, r.ExtractFileName)
-		log.Debugf("Archive with Filename set %s\n", r.artifactPath)
+		r.ArtifactPath = filepath.Join(r.PublishPath, r.ExtractFileName)
+		log.Debugf("Archive with Filename set %s\n", r.ArtifactPath)
 	} else if r.ExternalUrl != "" {
 		switch findfType(assetName) {
 		case "tar", "zip":
-			r.artifactPath = filepath.Join(r.PublishPath, r.project)
+			r.ArtifactPath = filepath.Join(r.PublishPath, r.project)
 		default:
-			r.artifactPath = filepath.Join(r.PublishPath, filepath.Base(r.ExternalUrl))
+			r.ArtifactPath = filepath.Join(r.PublishPath, filepath.Base(r.ExternalUrl))
 		}
-		log.Debugf("Archive with ExternalURL set %s\n", r.artifactPath)
+		log.Debugf("Archive with ExternalURL set %s\n", r.ArtifactPath)
 	} else {
 		// If we find a tar/zip in the assetName assume the name of the binary within the tar
 		// Else our default is a binary
 		switch findfType(assetName) {
 		case "tar", "zip":
-			r.artifactPath = filepath.Join(r.PublishPath, r.project)
+			r.ArtifactPath = filepath.Join(r.PublishPath, r.project)
 		default:
-			r.artifactPath = filepath.Join(r.PublishPath, assetName)
+			r.ArtifactPath = filepath.Join(r.PublishPath, assetName)
 		}
-		log.Debugf("Default Extraction %s\n", r.artifactPath)
+		log.Debugf("Default Extraction %s\n", r.ArtifactPath)
 	}
 
 	r.linkPath = filepath.Join(BinPath, linkName)
-	log.Debugf("Artifact Path %s Link Path %s\n", r.artifactPath, r.project)
+	log.Debugf("Artifact Path %s Link Path %s\n", r.ArtifactPath, r.project)
 
 	r.filepath = fmt.Sprintf("%s/%s", r.PublishPath, r.assetName)
+}
+
+// FetchReleaseData will query the DB
+func (r *BinmanRelease) FetchReleaseData(versions ...string) error {
+
+	var err error = nil
+	// If no versions supplied populate from filesystem
+	if len(versions) == 0 {
+		repoPath := fmt.Sprintf("%s/repos/%s/%s", r.ReleasePath, r.SourceIdentifier, r.Repo)
+		log.Debugf("Scanning %s", repoPath)
+
+		versions, err = sortSemvers(GetVersionFromPath(repoPath))
+		if err != nil {
+			log.Warnf("Error sorting %s %s", r.Repo, err)
+			return err
+		}
+
+		if len(versions) == 0 {
+			return ErrNoVersionsFound
+		}
+	}
+
+	r.Version = versions[len(versions)-1]
+
+	r.dwg.Add(1)
+
+	var rwg sync.WaitGroup
+
+	dbMsg := db.DbMsg{
+		Operation:  "read",
+		Key:        fmt.Sprintf("%s/%s/%s/data", r.SourceIdentifier, r.Repo, r.Version),
+		ReturnChan: make(chan db.DBResponse, 1),
+		ReturnWg:   &rwg,
+	}
+
+	d := dbMsg.Send(r.dbChan)
+
+	if d.Err != nil {
+		log.Warnf("failed reading %s from db %s %s", r.Repo, r.Version, d.Err)
+		return d.Err
+	}
+
+	m := bytesToData(d.Data)
+
+	r.ArtifactPath = m["artifactPath"].(string)
+	r.Arch = m["arch"].(string)
+
+	return err
+}
+
+func (r *BinmanRelease) displayActions(actions *[]Action) []string {
+
+	var currentActions []string
+
+	for _, action := range *actions {
+		currentActions = append(currentActions, reflect.TypeOf(action).String())
+	}
+
+	return currentActions
 }

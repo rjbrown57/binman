@@ -127,6 +127,7 @@ func OutputDbStatus() error {
 }
 
 // populateDB is used to populate the db with data required for clean up
+// TODO update with db version info
 func populateDB(dbOptions db.DbConfig, config string) error {
 
 	// Create config object.
@@ -138,24 +139,9 @@ func populateDB(dbOptions db.DbConfig, config string) error {
 	log.Debugf("Updating binman db from filesystem")
 
 	for _, rel := range c.Releases {
-		repoPath := fmt.Sprintf("%s/repos/%s/%s", rel.ReleasePath, rel.SourceIdentifier, rel.Repo)
 
-		// scan for versions in the path
-		files, err := os.ReadDir(repoPath)
-		if err != nil {
-			log.Debugf("Unable to read dir %s %s", repoPath, err)
-			continue
-		}
-
-		versions := make([]string, 0)
-
-		for _, f := range files {
-			if f.IsDir() {
-				versions = append(versions, f.Name())
-			}
-		}
-
-		log.Debugf("Versions %s for %s found", versions, repoPath)
+		// Collect all versions from filesystem
+		versions := GetVersionFromPath(fmt.Sprintf("%s/repos/%s/%s", rel.ReleasePath, rel.SourceIdentifier, rel.Repo))
 
 		// for each version get the path that we should add to the DB
 		for _, v := range versions {

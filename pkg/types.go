@@ -30,15 +30,17 @@ type BinmanConfig struct {
 	Sources        []Source  `yaml:"sources,omitempty"`      // Sources to query. By default gitlab and github
 	Watch          Watch     `yaml:"watch,omitempty"`        // Watch config object
 
-	SourceMap map[string]*Source // map of names to struct pointers for sources
+	SourceMap map[string]*Source `yaml:"-"` // map of names to struct pointers for sources
 }
 
 type Watch struct {
-	Sync       bool   `yaml:"sync,omitempty"`       // set to true if you want to also pull down releases
-	Frequency  int    `yaml:"frequency,omitempty"`  // how often to query for new releases
-	Port       string `yaml:"port,omitempty"`       // port to expose prometheus metrics on
-	FileServer bool   `yaml:"fileserver,omitempty"` // Start file server of configured release path, must be used in conjunction with sync
-	enabled    bool   // private boolean to enable watch mode when invoked by watch subcommand
+	Sync             bool   `yaml:"sync,omitempty"`       // set to true if you want to also pull down releases
+	Frequency        int    `yaml:"frequency,omitempty"`  // how often to query for new releases
+	Port             string `yaml:"port,omitempty"`       // port to expose server mode on
+	FileServer       bool   `yaml:"fileserver,omitempty"` // Start file server of configured release path, must be used in conjunction with sync
+	LatestVersionMap map[string]BinmanRelease
+
+	enabled bool // TODO: Is this still necessary? private boolean to enable watch mode when invoked by watch subcommand
 }
 
 type Source struct {
@@ -51,6 +53,7 @@ type Source struct {
 // BinmanDefaults contains default config options. If a value is unset in releases array these will be used.
 // This should just be collapsed into BinmanConfig and this struct should be removed
 type BinmanDefaults struct {
-	Os   string `yaml:"os,omitempty"`   //OS architechrue to look for
-	Arch string `yaml:"arch,omitempty"` //OS architechrue to look for
+	Os     string `yaml:"os,omitempty"`     //OS to look for
+	Arch   string `yaml:"arch,omitempty"`   //architecture to look for
+	Source string `yaml:"source,omitempty"` //Set to binman to override all
 }

@@ -53,6 +53,16 @@ spec:
               name: binmandata
             - mountPath: "/.config/"
               name: binmandb
+          {{- if .Values.auth.enabled }}
+          env:
+          {{- range .Values.auth.secrets }}
+          - name: {{ .envVar }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .name }}
+                key: {{ .key }}
+          {{- end }}
+          {{- end }}    
       volumes:
       - configMap:
           name: binmanconfig

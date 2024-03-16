@@ -224,7 +224,7 @@ func TestSetOsActions(t *testing.T) {
 	relWithUpx := BinmanRelease{
 		Repo:         "rjbrown57/binman",
 		PublishPath:  "binman",
-		artifactPath: "path",
+		ArtifactPath: "path",
 		UpxConfig:    testUpxConfig,
 	}
 

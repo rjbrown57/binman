@@ -93,3 +93,32 @@ func (action *GetGLReleaseAction) execute() error {
 
 	return err
 }
+
+type GetBinmanReleaseAction struct {
+	r *BinmanRelease
+}
+
+func (r *BinmanRelease) AddGetBinmanReleaseAction() Action {
+	return &GetBinmanReleaseAction{
+		r,
+	}
+}
+
+func (action *GetBinmanReleaseAction) execute() error {
+
+	q := BinmanQuery{
+		Architechure: action.r.Arch,
+		Repo:         action.r.Repo,
+		Source:       action.r.SourceIdentifier,
+		Version:      action.r.Version,
+	}
+
+	resp, err := q.SendQuery(action.r.source.URL)
+	if err != nil {
+		return err
+	}
+
+	action.r.relData = resp
+
+	return nil
+}

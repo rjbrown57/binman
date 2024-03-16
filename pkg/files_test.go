@@ -233,3 +233,25 @@ func TestSelectAsset(t *testing.T) {
 		t.Fatalf("SelectAsset nil test failed. Name = %s and should be empty!", name)
 	}
 }
+
+func TestGetVersionFromPath(t *testing.T) {
+
+	d := fmt.Sprintf("%s/%s/%s", os.TempDir(), "repos", "repo")
+	CreateDirectory(d)
+	defer os.RemoveAll(d)
+
+	expectedVersions := []string{"1.0.0", "2.0.0", "2.1.1"}
+	for _, v := range expectedVersions {
+		err := CreateDirectory(fmt.Sprintf("%s/%s", d, v))
+		if err != nil {
+			t.Fatalf("Unable to create test dir %s/%s", d, v)
+		}
+	}
+
+	gotVersions := GetVersionFromPath(d)
+	for i, _ := range gotVersions {
+		if expectedVersions[i] != gotVersions[i] {
+			t.Fatalf("Expected %s, Got %s", expectedVersions[i], gotVersions[i])
+		}
+	}
+}
