@@ -13,6 +13,7 @@ import (
 
 	"github.com/rjbrown57/binman/pkg/constants"
 	log "github.com/rjbrown57/binman/pkg/logging"
+	"github.com/ulikunitz/xz"
 
 	"gopkg.in/yaml.v3"
 )
@@ -173,10 +174,20 @@ func handleTar(publishDir string, tarpath string) error {
 
 	// Unzip and then handle tar
 	// need to detect if this is necessary?
-	tar := tar.NewReader(GunZipFile(f))
+	gzRx := regexp.MustCompile(constants.GzipRegEx)
+	xzRx := regexp.MustCompile(constants.XzipRegEx)
+	var tr *tar.Reader
+	switch {
+	case gzRx.MatchString(tarpath):
+		tr = tar.NewReader(GunZipFile(f))
+	case xzRx.MatchString(tarpath):
+		tr = tar.NewReader(XunZipFile(f))
+	default:
+		tr = tar.NewReader(f)
+	}
 
 	for {
-		file, err := tar.Next()
+		file, err := tr.Next()
 		switch err {
 		case io.EOF:
 			return nil
@@ -212,7 +223,7 @@ func handleTar(publishDir string, tarpath string) error {
 		}
 
 		log.Debugf("tar extract file %s", publishPath)
-		_, err = io.Copy(wf, tar)
+		_, err = io.Copy(wf, tr)
 		if err != nil {
 			log.Debugf("Unable to write file %s", publishPath)
 			return err
@@ -251,6 +262,16 @@ func GunZipFile(gzipFile io.Reader) *gzip.Reader {
 	uncompressedStream, err := gzip.NewReader(gzipFile)
 	if err != nil {
 		log.Fatalf("ExtractTarGz: NewReader failed - %s", err)
+	}
+
+	return uncompressedStream
+}
+
+// unzip xzip file
+func XunZipFile(xzipFile io.Reader) *xz.Reader {
+	uncompressedStream, err := xz.NewReader(xzipFile)
+	if err != nil {
+		log.Fatalf("ExtractTarXz: NewReader failed - %s", err)
 	}
 
 	return uncompressedStream
