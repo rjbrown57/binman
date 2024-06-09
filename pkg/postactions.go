@@ -30,7 +30,14 @@ func (action *DownloadAction) execute() error {
 	var rWg sync.WaitGroup
 
 	rWg.Add(1)
-	action.r.downloadChan <- downloader.DlMsg{Url: action.r.dlUrl, Filepath: action.r.filepath, Wg: &rWg, ConfirmChan: confirmChan}
+
+	action.r.downloadChan <- downloader.DlMsg{Url: action.r.dlUrl,
+		Filepath:    action.r.filepath,
+		Wg:          &rWg,
+		ConfirmChan: confirmChan,
+		DlAuth:      &downloader.DlAuth{Token: action.r.source.Tokenvar, Header: "Authorization"},
+	}
+
 	action.r.output.SendSpin(fmt.Sprintf("Downloading %s(%s)", action.r.Repo, action.r.Version))
 	rWg.Wait()
 	close(confirmChan)
