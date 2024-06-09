@@ -19,7 +19,7 @@ func GetGHCLient(baseUrl string, tokenvar string) *github.Client {
 	}
 
 	// No auth client if user does not supply envvar
-	if tokenvar == "none" {
+	if tokenvar == "none" || tokenvar == "" {
 		log.Tracef("Returning github client without auth")
 		gh := github.NewClient(nil)
 		gh.BaseURL = ghUrl

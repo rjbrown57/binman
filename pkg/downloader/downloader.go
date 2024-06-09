@@ -17,35 +17,36 @@ type DlMsg struct {
 	Filepath    string
 	Wg          *sync.WaitGroup
 	ConfirmChan chan error
+	DlAuth      *DlAuth
 }
 
-func GetDownloader(downloadChan chan DlMsg, id int) {
-	log.Tracef("Downloader %d started", id)
-	for msg := range downloadChan {
-		log.Debugf("downloader %d is handling %s\n", id, msg.Url)
-		err := DownloadFile(msg.Url, msg.Filepath)
-		msg.ConfirmChan <- err
-		msg.Wg.Done()
+func (d *DlMsg) DownloadFile() error {
+	log.Debugf("Downloading %s", d.Url)
+
+	c := http.Client{}
+
+	r, err := http.NewRequest(http.MethodGet, d.Url, nil)
+	if err != nil {
+		log.Debugf("%s", err)
 	}
-	log.Tracef("Downloader %d finished", id)
 
-}
+	if d.DlAuth != nil {
+		r.Header.Set(d.DlAuth.Header, fmt.Sprintf("Bearer %s", d.DlAuth.Token))
+	}
 
-func DownloadFile(url string, path string) error {
-	log.Debugf("Downloading %s", url)
-	resp, err := http.Get(url)
+	resp, err := c.Do(r)
 	if err != nil {
 		log.Debugf("%+v %v", resp, err)
-		return fmt.Errorf("failed to download from %s - %v", url, err)
+		return fmt.Errorf("failed to download from %s - %v", d.Url, err)
 	}
 
 	if resp.StatusCode > 200 {
-		return fmt.Errorf("failed to download from %s , %d", url, resp.StatusCode)
+		return fmt.Errorf("failed to download from %s , %d", d.Url, resp.StatusCode)
 	}
 
 	defer resp.Body.Close()
 
-	out, err := os.Create(filepath.Clean(path))
+	out, err := os.Create(filepath.Clean(d.Filepath))
 	if err != nil {
 		return err
 	}
@@ -57,6 +58,38 @@ func DownloadFile(url string, path string) error {
 		return err
 	}
 
-	log.Debugf("Download %s complete", url)
+	log.Debugf("Download %s complete", d.Url)
 	return nil
+}
+
+type DlAuth struct {
+	Token  string
+	Header string
+}
+
+// NewDlAauth will return a bearer token auth header if token is not nil
+func NewDlAuth(token, header string) *DlAuth {
+
+	if token == "" {
+		return nil
+	}
+
+	d := DlAuth{
+		Token:  token,
+		Header: http.CanonicalHeaderKey(header),
+	}
+
+	return &d
+}
+
+func GetDownloader(downloadChan chan DlMsg, id int) {
+	log.Tracef("Downloader %d started", id)
+	for msg := range downloadChan {
+		log.Debugf("downloader %d is handling %s\n", id, msg.Url)
+		err := msg.DownloadFile()
+		msg.ConfirmChan <- err
+		msg.Wg.Done()
+	}
+	log.Tracef("Downloader %d finished", id)
+
 }
