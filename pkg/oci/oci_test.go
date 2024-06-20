@@ -70,21 +70,26 @@ func StartReg(ctx context.Context, t *testing.T) (*regContainer, error) {
 func prepFiles(t *testing.T, testPath string) []string {
 
 	var binPaths []string
-	var downloadFiles = []string{
-		"https://github.com/rjbrown57/binman/releases/download/v0.10.0/binman_linux_amd64",
-		"https://github.com/rjbrown57/lp/releases/download/v0.0.4/lp_0.0.4_linux_amd64",
+	var downloadFiles = []downloader.DlMsg{
+		downloader.DlMsg{
+			Url: "https://github.com/rjbrown57/binman/releases/download/v0.10.0/binman_linux_amd64",
+		},
+		downloader.DlMsg{
+			Url: "https://github.com/rjbrown57/lp/releases/download/v0.0.4/lp_0.0.4_linux_amd64",
+		},
 	}
 
 	for _, file := range downloadFiles {
-		fileName := filepath.Base(file)
-		binPath := fmt.Sprintf("%s/%s", testPath, fileName)
-		err := downloader.DownloadFile(file, binPath)
+
+		fileName := filepath.Base(file.Url)
+		file.Filepath = fmt.Sprintf("%s/%s", testPath, fileName)
+		err := file.DownloadFile()
 		if err != nil {
 			t.Fatalf("Unable to download test file %s", err)
 		}
-		log.Tracef("File Dowloaded to %s", binPath)
+		log.Tracef("File Dowloaded to %s", file.Filepath)
 
-		binPaths = append(binPaths, binPath)
+		binPaths = append(binPaths, file.Filepath)
 	}
 
 	return binPaths

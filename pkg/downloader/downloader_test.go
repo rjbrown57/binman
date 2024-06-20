@@ -3,6 +3,7 @@ package downloader
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -17,7 +18,9 @@ func TestDownloadFile(t *testing.T) {
 	defer os.RemoveAll(d)
 
 	writePath := fmt.Sprintf("%s/testString", d)
-	err = DownloadFile(url, writePath)
+	dlMsg := DlMsg{Url: url, Filepath: writePath}
+
+	err = dlMsg.DownloadFile()
 	if err != nil {
 		t.Fatalf("Issue downloading %s - %s", url, err)
 	}
@@ -31,4 +34,26 @@ func TestDownloadFile(t *testing.T) {
 		t.Fatalf("Exected string 'binman' not found in %s", writePath)
 	}
 
+}
+
+func TestNewDlAuth(t *testing.T) {
+	var tests = []struct {
+		Expected *DlAuth
+		Got      *DlAuth
+		Token    string
+		Header   string
+	}{
+		{Expected: nil, Token: "", Header: "Authorization"},
+		{Expected: nil, Token: "asdf", Header: "Authorization"},
+	}
+
+	for _, test := range tests {
+		test.Got = NewDlAuth(test.Token, test.Header)
+		if test.Got != nil && test.Expected != nil {
+			if reflect.DeepEqual(*test.Got, *test.Expected) {
+				t.Fatalf("%s does not = %s", test.Got, test.Expected)
+			}
+		}
+
+	}
 }
