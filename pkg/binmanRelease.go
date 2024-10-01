@@ -22,6 +22,24 @@ var (
 	ErrNoVersionsFound = errors.New("No Versions detected for release")
 )
 
+type NoUpdateError struct {
+	RepoName string
+	Version  string
+}
+
+func (e *NoUpdateError) Error() string {
+	return fmt.Sprintf("%s is already at %s version, nothing to do here", e.RepoName, e.Version)
+}
+
+type ExcludeError struct {
+	RepoName string
+	Criteria string
+}
+
+func (e *ExcludeError) Error() string {
+	return fmt.Sprintf("%s was excluded from consideration because: %s", e.RepoName, e.Criteria)
+}
+
 // BinmanRelease contains info on specifc releases to hunt for
 type BinmanRelease struct {
 	Os               string        `yaml:"os,omitempty"`
@@ -44,6 +62,7 @@ type BinmanRelease struct {
 	SourceIdentifier string        `yaml:"source,omitempty"`      // Allow setting of source individually
 	PublishPath      string        `yaml:"publishpath,omitempty"` // Path Release will be set up at. Typically only set by set commands or library use.
 	ArtifactPath     string        `yaml:"-"`                     // Will be set by BinmanRelease.setPaths. This is the source path for the link aka the executable binary
+	ExcludeOs        []string      `yaml:"excludeos,omitempty"`   // Allows excluding certain OS's because we know that we'll never have releases for this OS
 
 	createdAtTime    int64 // Unix time that release was created at
 	metric           *prometheus.GaugeVec

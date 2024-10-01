@@ -93,33 +93,33 @@ func TestSetPreActions(t *testing.T) {
 		{
 			"relwithoutpublish",
 			relWithOutPublish.setPreActions("/tmp/", "/tmp/"),
-			[]string{"*binman.GetGHReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.ReleaseExcludeAction", "*binman.GetGHReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
 			// this release has a preset publish path this means it's a binman get and we don't need to use releasestatusaction
 			"relWithPublish",
 			relWithPublish.setPreActions("/tmp/", "/tmp/"),
-			[]string{"*binman.GetGHReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.ReleaseExcludeAction", "*binman.GetGHReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
 			"relQueryByTag",
 			relQueryByTag.setPreActions("/tmp/", "/tmp/"),
-			[]string{"*binman.GetGHReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.ReleaseExcludeAction", "*binman.GetGHReleaseAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
 			"relPostOnly",
 			relPostOnly.setPreActions("/tmp/", "/tmp/"),
-			[]string{"*binman.GetGHReleaseAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.ReleaseExcludeAction", "*binman.GetGHReleaseAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
 			"relExternalUrl",
 			relExternalUrl.setPreActions("/tmp/", "/tmp/"),
-			[]string{"*binman.GetGHReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.ReleaseExcludeAction", "*binman.GetGHReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 		{
 			"relGLBasic",
 			relGLBasic.setPreActions("/tmp/", "/tmp"),
-			[]string{"*binman.GetGLReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
+			[]string{"*binman.ReleaseExcludeAction", "*binman.GetGLReleaseAction", "*binman.ReleaseStatusAction", "*binman.SetUrlAction", "*binman.SetArtifactPathAction", "*binman.SetPostActions"},
 		},
 	}
 

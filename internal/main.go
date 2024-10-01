@@ -61,12 +61,16 @@ func Main(bm *BMConfig) error {
 			continue
 		}
 
-		// Todo create an error here and use errors.Is
-		if msg.Err.Error() == "Noupdate" {
+		switch msg.Err.(type) {
+		case *NoUpdateError:
 			output["Up to Date"] = append(output["Up to Date"], msg)
 			continue
+		case *ExcludeError:
+			continue
+		default:
+			// Todo create an error here and use errors.Is
+			output["Error"] = append(output["Error"], msg)
 		}
-		output["Error"] = append(output["Error"], msg)
 	}
 
 	bm.OutputOptions.SendSpin(fmt.Sprintf("spinstop%s", SetStopMessage(output)))

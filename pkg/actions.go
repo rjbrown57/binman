@@ -3,6 +3,7 @@ package binman
 import (
 	"fmt"
 	"reflect"
+	"runtime"
 	"sync"
 
 	db "github.com/rjbrown57/binman/pkg/db"
@@ -33,12 +34,18 @@ func (r *BinmanRelease) runActions() error {
 	for _, task := range r.actions {
 		log.Debugf("Executing %s for %s", reflect.TypeOf(task), r.Repo)
 		err = task.execute()
-		if err != nil && err.Error() == "Noupdate" {
-			log.Debugf("%s(%s) is up to date", r.Repo, r.Version)
-			return err
-		} else if err != nil {
-			log.Debugf("Unable to complete action %s : %v", reflect.TypeOf(task), err)
-			return err
+		if err != nil {
+			switch err.(type) {
+			case *ExcludeError:
+				log.Debugf("%s is excluded for OS (%s), skipping", r.Repo, runtime.GOOS)
+				return err
+			case *NoUpdateError:
+				log.Debugf("%s(%s) is up to date", r.Repo, r.Version)
+				return err
+			default:
+				log.Debugf("Unable to complete action %s : %v", reflect.TypeOf(task), err)
+				return err
+			}
 		}
 	}
 
@@ -49,6 +56,8 @@ func (r *BinmanRelease) runActions() error {
 func (r *BinmanRelease) setPreActions(releasePath string, binPath string) []Action {
 
 	var actions []Action
+
+	actions = append(actions, r.AddReleaseExcludeAction())
 
 	switch r.source.Apitype {
 	case "gitlab":

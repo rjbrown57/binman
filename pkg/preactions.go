@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 
 	"github.com/google/go-github/v50/github"
 	"github.com/rjbrown57/binman/pkg/gh"
@@ -15,6 +16,30 @@ import (
 	"github.com/rjbrown57/binman/pkg/templating"
 	"github.com/xanzy/go-gitlab"
 )
+
+type ReleaseExcludeAction struct {
+	r *BinmanRelease
+}
+
+func (r *BinmanRelease) AddReleaseExcludeAction() Action {
+	return &ReleaseExcludeAction{
+		r,
+	}
+}
+
+func (action *ReleaseExcludeAction) execute() error {
+	if len(action.r.ExcludeOs) > 0 {
+		for _, os := range action.r.ExcludeOs {
+			if os == runtime.GOOS {
+				return &ExcludeError{
+					RepoName: action.r.Repo,
+					Criteria: fmt.Sprintf("OS %s matches an excluded OS", os),
+				}
+			}
+		}
+	}
+	return nil
+}
 
 type ReleaseStatusAction struct {
 	r           *BinmanRelease
@@ -47,7 +72,10 @@ func (action *ReleaseStatusAction) execute() error {
 	switch err {
 	case nil:
 		// TODO: Use a pre-defined error variable here
-		return fmt.Errorf("%s", "Noupdate")
+		return &NoUpdateError{
+			RepoName: action.r.Repo,
+			Version:  action.r.Version,
+		}
 	default:
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil
