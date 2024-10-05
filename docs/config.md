@@ -60,6 +60,7 @@ These options can be set per release
 | version | pin to a specific release version |
 | postcommands | see [post commands](../docs/postcommands.md)|
 | postonly | only run [post commands](../docs/postcommands.md) after we have checked for new versions. This allows binman to trigger apt/yum/brew or something like that |
+| excludeos | list of Operating Systems to exclude this release from, useful when you know there are certain OS's that a specific repo doesn't support so you don't get an error |
 
 ## Binman Config subcommand
 

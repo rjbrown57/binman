@@ -1,6 +1,7 @@
 package binman
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -45,7 +46,8 @@ func TestReleaseStatusAction(t *testing.T) {
 		t.Fatalf("Expected no error, got %s", err)
 	}
 
-	if err = rNoUpdate.AddReleaseStatusAction(d).execute(); err != nil && err.Error() != "Noupdate" {
+	noUpErr := &NoUpdateError{}
+	if err = rNoUpdate.AddReleaseStatusAction(d).execute(); err != nil && !errors.As(err, &noUpErr) {
 		t.Fatalf("Expected no error, got %s", err)
 	}
 

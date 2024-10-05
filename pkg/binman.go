@@ -36,8 +36,11 @@ func goSyncRepo(rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
 
 	for rel.actions != nil {
 		if err = rel.runActions(); err != nil {
-			switch err.Error() {
-			case "Noupdate":
+			switch err.(type) {
+			case *NoUpdateError:
+				c <- BinmanMsg{Rel: rel, Err: err}
+				return
+			case *ExcludeError:
 				c <- BinmanMsg{Rel: rel, Err: err}
 				return
 			default:
