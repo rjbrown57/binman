@@ -47,12 +47,12 @@ These options can be set per release
 
 | key      | Description |
 | ----------- | ----------- |
-| arch   | target architecture |
+| arch   | target architecture (can be templated similar to [externalurl](../docs/external_urls.md)) |
 | cleanup   | Remove .zip/.tar files after we have extracted something. Useful in container builds / CI |
 | downloadonly   | default `false`. Set to true if you don't want binman to try to extract and link the asset |
 | externalurl | see [externalurl support](../docs/external_urls.md) |
 | linkname | by default binman will create a symlink matching the project name. This can be overridden with linkname set per release |
-| os | target OS  |
+| os | target OS (can be templated similar to [externalurl](../docs/external_urls.md)) |
 | releasefilename | in some cases project publish assets that have different names than the github project. For example [cilium-cli](github.com/cilium/cilium-cli) publishes a cli `cilium`. We would set `cilium` here so binman knows what to look for |
 | releasepath | Alternate releasepath from what is set in the main config |
 | source | git source to get release from. By default set to "github.com". Must match the name key of a configured source. See [config-sources](#config-sources)

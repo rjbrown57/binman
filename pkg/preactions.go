@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 
 	"github.com/google/go-github/v50/github"
 	"github.com/rjbrown57/binman/pkg/gh"
@@ -75,6 +76,23 @@ func (action *SetUrlAction) execute() error {
 		action.r.dlUrl = templating.TemplateString(action.r.ExternalUrl, action.r.getDataMap())
 		action.r.assetName = filepath.Base(action.r.dlUrl)
 		return nil
+	}
+
+	// Attempt to apply templating to os and arch as well. Since we're looking to template these fields we can't rely on
+	// getting them directly from action.r.getDataMap() as it may return a templated string instead of what we expect.
+	// Instead we rely on setting the data map back to the defaults for the environment to allow the user to template
+	// them.
+	dataMapWithDefaults := action.r.getDataMap()
+	dataMapWithDefaults["os"] = runtime.GOOS
+	dataMapWithDefaults["arch"] = runtime.GOARCH
+	if action.r.Arch != "" {
+		action.r.Arch = templating.TemplateString(action.r.Arch, dataMapWithDefaults)
+		log.Debugf("Architecture set to: %s", action.r.Arch)
+	}
+	if action.r.Os != "" {
+		log.Debugf("OS before transition: %s", action.r.Os)
+		action.r.Os = templating.TemplateString(action.r.Os, dataMapWithDefaults)
+		log.Debugf("OS set to: %s", action.r.Os)
 	}
 
 	switch data := action.r.relData.(type) {
