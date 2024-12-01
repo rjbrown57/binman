@@ -23,10 +23,10 @@ func ConfigureLog(jsonLog bool, logLevel int) {
 
 	log.Out = os.Stdout
 
-	switch logLevel {
-	case 1:
+	switch {
+	case logLevel == 1:
 		log.Level = logrus.DebugLevel
-	case 2:
+	case logLevel >= 2:
 		log.Level = logrus.TraceLevel
 	default:
 		log.Level = logrus.InfoLevel
