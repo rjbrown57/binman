@@ -2,7 +2,7 @@ package gl
 
 import (
 	log "github.com/rjbrown57/binman/pkg/logging"
-	"github.com/xanzy/go-gitlab"
+	"gitlab.com/gitlab-org/api/client-go"
 )
 
 // Return the Latest Tag for a gitlab repo

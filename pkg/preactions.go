@@ -14,7 +14,7 @@ import (
 	"github.com/rjbrown57/binman/pkg/gl"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/rjbrown57/binman/pkg/templating"
-	"github.com/xanzy/go-gitlab"
+	"gitlab.com/gitlab-org/api/client-go"
 )
 
 type ReleaseExcludeAction struct {

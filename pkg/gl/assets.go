@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	log "github.com/rjbrown57/binman/pkg/logging"
-	"github.com/xanzy/go-gitlab"
+	"gitlab.com/gitlab-org/api/client-go"
 )
 
 func GLGetReleaseAssets(glClient *gitlab.Client, repo string, tag string) ([]*gitlab.ReleaseLink, int64) {

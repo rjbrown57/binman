@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-github/v50/github"
 	"github.com/rjbrown57/binman/pkg/gl"
 	log "github.com/rjbrown57/binman/pkg/logging"
-	"github.com/xanzy/go-gitlab"
+	"gitlab.com/gitlab-org/api/client-go"
 )
 
 type GetGHReleaseAction struct {

@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	log "github.com/rjbrown57/binman/pkg/logging"
-	"github.com/xanzy/go-gitlab"
+	"gitlab.com/gitlab-org/api/client-go"
 )
 
 func GetGLClient(baseUrl string, tokenvar string) *gitlab.Client {

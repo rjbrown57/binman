@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/xanzy/go-gitlab"
+	"gitlab.com/gitlab-org/api/client-go"
 )
 
 var e1 = "https://what.ami"
