@@ -355,7 +355,7 @@ func TestGetDataMap(t *testing.T) {
 
 	rel.getOR()
 
-	testdataMap := make(map[string]interface{})
+	testdataMap := make(map[string]any)
 	testdataMap["version"] = version
 	testdataMap["os"] = os
 	testdataMap["arch"] = arch

@@ -10,7 +10,7 @@ import (
 )
 
 // Format strings for processing. Currently used by releaseFileName and DlUrl
-func TemplateString(templateString string, dataMap map[string]interface{}) string {
+func TemplateString(templateString string, dataMap map[string]any) string {
 
 	// For compatability with previous binman versions update %s to {{.}}
 	templateString = strings.Replace(templateString, "%s", "{{.version}}", -1)

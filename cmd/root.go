@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	binman "github.com/rjbrown57/binman/pkg"
 	"github.com/rjbrown57/binman/internal"
+	binman "github.com/rjbrown57/binman/pkg"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/spf13/cobra"
 )

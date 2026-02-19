@@ -66,7 +66,7 @@ type BinmanRelease struct {
 
 	createdAtTime    int64 // Unix time that release was created at
 	metric           *prometheus.GaugeVec
-	relData          interface{} // Data gathered from source
+	relData          any // Data gathered from source
 	relNotes         string
 	source           *Source
 	assetName        string // the target assetName
@@ -216,8 +216,8 @@ func (r *BinmanRelease) setpublishPath(ReleasePath string, tag string) {
 }
 
 // getDataMap is a helper function to provide data to be used with templating
-func (r *BinmanRelease) getDataMap() map[string]interface{} {
-	dataMap := make(map[string]interface{})
+func (r *BinmanRelease) getDataMap() map[string]any {
+	dataMap := make(map[string]any)
 	dataMap["version"] = r.Version
 	dataMap["os"] = r.Os
 	dataMap["arch"] = r.Arch

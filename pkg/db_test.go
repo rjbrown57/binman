@@ -32,7 +32,7 @@ func createTestDir(t *testing.T, testVersions []string, configTemplate string, t
 
 	var err error
 
-	dM := make(map[string]interface{})
+	dM := make(map[string]any)
 
 	dM["releasePath"], err = os.MkdirTemp(os.TempDir(), testCase)
 	if err != nil {

@@ -303,7 +303,7 @@ func WriteStringtoFile(path string, thestring string) error {
 }
 
 // mustUnmarshalYaml will Unmarshall from config to BMConfig
-func mustUnmarshalYaml(configPath string, v interface{}) {
+func mustUnmarshalYaml(configPath string, v any) {
 	yamlFile, err := os.ReadFile(filepath.Clean(configPath))
 	if err != nil {
 		log.Fatalf("err opening %s   #%v\n", configPath, err)
