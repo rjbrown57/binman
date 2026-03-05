@@ -124,7 +124,7 @@ func prepTestDir(path string, executablefilematch string) error {
 		return err
 	}
 
-	err = os.Chmod(fmt.Sprintf(executablefilematch), 0755)
+	err = os.Chmod(executablefilematch, 0755)
 	if err != nil {
 		return err
 	}
