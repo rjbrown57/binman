@@ -124,7 +124,7 @@ func prepTestDir(path string, executablefilematch string) error {
 		return err
 	}
 
-	err = os.Chmod(fmt.Sprintf(executablefilematch), 0755)
+	err = os.Chmod(executablefilematch, 0755)
 	if err != nil {
 		return err
 	}
@@ -355,7 +355,7 @@ func TestGetDataMap(t *testing.T) {
 
 	rel.getOR()
 
-	testdataMap := make(map[string]interface{})
+	testdataMap := make(map[string]any)
 	testdataMap["version"] = version
 	testdataMap["os"] = os
 	testdataMap["arch"] = arch

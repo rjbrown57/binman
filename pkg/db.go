@@ -18,7 +18,7 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-func dataToBytes(r map[string]interface{}) []byte {
+func dataToBytes(r map[string]any) []byte {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 	err := enc.Encode(r)
@@ -28,9 +28,9 @@ func dataToBytes(r map[string]interface{}) []byte {
 	return buf.Bytes()
 }
 
-func bytesToData(b []byte) map[string]interface{} {
+func bytesToData(b []byte) map[string]any {
 
-	dataMap := make(map[string]interface{})
+	dataMap := make(map[string]any)
 
 	decoder := gob.NewDecoder(bytes.NewBuffer(b))
 	err := decoder.Decode(&dataMap)

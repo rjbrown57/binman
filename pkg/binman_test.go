@@ -1,7 +1,6 @@
 package binman
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -20,7 +19,7 @@ func TestLibrary(t *testing.T) {
 	})
 
 	// Add a default config
-	cf := fmt.Sprintf(d + "/" + ".binMan.yaml")
+	cf := d + "/" + ".binMan.yaml"
 	if err := WriteStringtoFile(cf, dedupConfig); err != nil {
 		t.Fatalf("Unable to write test config")
 	}

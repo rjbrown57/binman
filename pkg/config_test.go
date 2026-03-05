@@ -118,7 +118,7 @@ func TestSetConfig(t *testing.T) {
 	}
 
 	// Add a default config
-	cf := fmt.Sprintf(d + "/" + ".binMan.yaml")
+	cf := d + "/" + ".binMan.yaml"
 	WriteStringtoFile(cf, mergeConfig)
 
 	mergedConfig := SetConfig(SetBaseConfig("noConfig"), nil, nil, nil)
@@ -152,7 +152,7 @@ func TestDetectRepoConfig(t *testing.T) {
 	}
 
 	// Add a default config
-	cf := fmt.Sprintf(d + "/" + ".binMan.yaml")
+	cf := d + "/" + ".binMan.yaml"
 	WriteStringtoFile(cf, defaultConfig)
 
 	// We should detect a .binMan.yaml this time
