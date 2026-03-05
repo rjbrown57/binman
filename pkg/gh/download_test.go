@@ -19,12 +19,10 @@ func TestGHAssetDownload(t *testing.T) {
 		t.Fatalf("failed to get repo data %v %s", resp.StatusCode, err)
 	}
 
-	out, url, err := client.Repositories.DownloadReleaseAsset(context.TODO(), "rjbrown57", "binman", *data.Assets[0].ID, http.DefaultClient)
+	out, _, err := client.Repositories.DownloadReleaseAsset(context.TODO(), "rjbrown57", "binman", *data.Assets[0].ID, http.DefaultClient)
 	if err != nil {
 		t.Fatalf("Failed to download asset %s", err)
 	}
 
 	out.Close()
-	t.Fatalf("%s", url)
-
 }
