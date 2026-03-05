@@ -3,11 +3,15 @@ package gh
 import (
 	"context"
 	"net/http"
+	"os"
 	"testing"
 )
 
 func TestGHAssetDownload(t *testing.T) {
 
+	if os.Getenv("GH_TOKEN") == "" {
+		t.SkipNow()
+	}
 	client := GetGHCLient(defaultGHBaseURL, "GH_TOKEN")
 
 	data, resp, err := client.Repositories.GetLatestRelease(context.Background(), "rjbrown57", "binman-private")
