@@ -45,6 +45,7 @@ func Clean(dryrun, scan bool, threshold int, dbPath, config string) error {
 	// Check here later and see if using dbOptions instead of defaults makes sense
 	c := NewBMConfig(config).SetConfig(false)
 
+	var cleanErrs []error
 	for _, rel := range c.Releases {
 		// Collect All Versions
 		err := rel.getVersions(bdb)
@@ -68,12 +69,17 @@ func Clean(dryrun, scan bool, threshold int, dbPath, config string) error {
 		err = rel.cleanOldReleases(dryrun, threshold, bdb)
 		if err != nil {
 			log.Warnf("Issue cleaning %s %s", rel.Repo, err)
+			cleanErrs = append(cleanErrs, fmt.Errorf("%s: %w", rel.Repo, err))
 		}
 	}
 
 	err := bdb.Close()
 	if err != nil {
 		log.Fatalf("Unable to close db %s", err)
+	}
+
+	if len(cleanErrs) != 0 {
+		return errors.Join(cleanErrs...)
 	}
 
 	log.Infof("Clean complete")
@@ -148,21 +154,25 @@ func (r *BinmanRelease) cleanOldReleases(dryrun bool, threshold int, bdb *bolt.D
 
 		byteData, err := db.GetData(fmt.Sprintf("%s/%s/%s/data", r.SourceIdentifier, r.Repo, toDelete), bdb)
 		if err != nil {
-			log.Warnf("Issue getting data for %s/%s", r.Repo, toDelete)
+			return fmt.Errorf("issue getting data for %s/%s: %w", r.Repo, toDelete, err)
 		}
 
 		d := bytesToData(byteData)
+		publishPath, ok := d["publishPath"].(string)
+		if !ok || publishPath == "" {
+			return fmt.Errorf("missing publishPath for %s/%s", r.Repo, toDelete)
+		}
 
-		log.Infof("%s(%s): %s will be deleted", d["repo"], d["version"], d["publishPath"])
+		log.Infof("%s(%s): %s will be deleted", d["repo"], d["version"], publishPath)
 
 		if dryrun {
 			continue
 		}
 
 		// If path does not exist err value is nil
-		err = os.RemoveAll(d["publishPath"].(string))
+		err = os.RemoveAll(publishPath)
 		if err != nil {
-			log.Fatalf("Error deleting %s", d["publishPath"])
+			log.Fatalf("Error deleting %s", publishPath)
 		}
 
 		// Delete the version bucket

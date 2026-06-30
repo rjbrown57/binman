@@ -62,28 +62,35 @@ func checkNewDb(path string) bool {
 	return false
 }
 
-func getVersionBuckets(tx *bolt.Tx) []*bolt.Bucket {
+func getVersionBuckets(tx *bolt.Tx) ([]*bolt.Bucket, error) {
 
 	var buckets []*bolt.Bucket
 
-	tx.ForEach(func(name []byte, b *bolt.Bucket) error {
+	err := tx.ForEach(func(name []byte, b *bolt.Bucket) error {
 		log.Debugf("scanning source = %s", name)
-		b.ForEachBucket(func(orgKey []byte) error {
+		return b.ForEachBucket(func(orgKey []byte) error {
 			b2 := b.Bucket(orgKey)
-			b2.ForEachBucket(func(projKey []byte) error {
+			if b2 == nil {
+				return fmt.Errorf("missing org bucket %s/%s", name, orgKey)
+			}
+			return b2.ForEachBucket(func(projKey []byte) error {
 				b3 := b2.Bucket(projKey)
-				b3.ForEachBucket(func(versionKey []byte) error {
-					buckets = append(buckets, b3.Bucket(versionKey))
+				if b3 == nil {
+					return fmt.Errorf("missing project bucket %s/%s/%s", name, orgKey, projKey)
+				}
+				return b3.ForEachBucket(func(versionKey []byte) error {
+					versionBucket := b3.Bucket(versionKey)
+					if versionBucket == nil {
+						return fmt.Errorf("missing version bucket %s/%s/%s/%s", name, orgKey, projKey, versionKey)
+					}
+					buckets = append(buckets, versionBucket)
 					return nil
 				})
-				return nil
 			})
-			return nil
 		})
-		return nil
 	})
 
-	return buckets
+	return buckets, err
 }
 
 // OutputDbStatus will output all keys and values
@@ -99,26 +106,43 @@ func OutputDbStatus() error {
 		log.Fatalf("DB has not been initialized yet. Run `binman` first")
 	}
 
-	db := db.GetDB("", bolt.Options{Timeout: 1 * time.Second, ReadOnly: true})
+	bdb := db.GetDB("", bolt.Options{Timeout: 1 * time.Second, ReadOnly: true})
 
-	db.View(func(tx *bolt.Tx) error {
-		for _, bucket := range getVersionBuckets(tx) {
-			dataMap := bytesToData(bucket.Get([]byte("data")))
+	viewErr := bdb.View(func(tx *bolt.Tx) error {
+		buckets, err := getVersionBuckets(tx)
+		if err != nil {
+			return err
+		}
+		for _, bucket := range buckets {
+			if bucket == nil {
+				log.Warnf("Skipping nil version bucket")
+				continue
+			}
+			data := bucket.Get([]byte("data"))
+			if data == nil {
+				log.Warnf("Skipping version bucket with no data")
+				continue
+			}
+			dataMap := bytesToData(data)
 			// Releases added via populate will not have createdAt/artifactPath populated
 			// This will show us as 1969 unless we handle the like this
-			if dataMap["createdAt"].(int64) == 0 {
+			createdAt, ok := dataMap["createdAt"].(int64)
+			if !ok || createdAt == 0 {
 				upToDateTable.AddRow(dataMap["repo"], dataMap["version"], "-")
 				continue
 			}
-			t := time.Unix(dataMap["createdAt"].(int64), 0)
+			t := time.Unix(createdAt, 0)
 			upToDateTable.AddRow(dataMap["repo"], dataMap["version"], t.Format(time.DateTime))
 		}
 		return nil
 	})
 
-	err := db.Close()
+	err := bdb.Close()
 	if err != nil {
 		log.Fatalf("unable to close db - %s", err)
+	}
+	if viewErr != nil {
+		return viewErr
 	}
 
 	upToDateTable.Print()
