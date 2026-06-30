@@ -29,16 +29,23 @@ func getAssets(r []BinmanRelease) ([]string, error) {
 			log.Warnf("Unable to sort semvers for %s %s", rel.Repo, err)
 			continue
 		}
+		if len(rel.versions) == 0 {
+			return nil, fmt.Errorf("no versions found for %s", rel.Repo)
+		}
 
 		byteData, err := db.GetData(fmt.Sprintf("%s/%s/%s/data", rel.SourceIdentifier, rel.Repo, rel.versions[0]), bdb)
 		if err != nil {
-			log.Warnf("Issue getting data for %s/%s", rel.Repo, rel.versions[0])
+			return nil, fmt.Errorf("issue getting data for %s/%s: %w", rel.Repo, rel.versions[0], err)
 		}
 
 		d := bytesToData(byteData)
+		linkPath, ok := d["linkPath"].(string)
+		if !ok || linkPath == "" {
+			return nil, fmt.Errorf("missing linkPath for %s/%s", rel.Repo, rel.versions[0])
+		}
 
-		log.Debugf("Adding %s to image", d["linkPath"].(string))
-		assets = append(assets, d["linkPath"].(string))
+		log.Debugf("Adding %s to image", linkPath)
+		assets = append(assets, linkPath)
 	}
 
 	err := bdb.Close()
