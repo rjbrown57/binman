@@ -148,21 +148,25 @@ func (r *BinmanRelease) cleanOldReleases(dryrun bool, threshold int, bdb *bolt.D
 
 		byteData, err := db.GetData(fmt.Sprintf("%s/%s/%s/data", r.SourceIdentifier, r.Repo, toDelete), bdb)
 		if err != nil {
-			log.Warnf("Issue getting data for %s/%s", r.Repo, toDelete)
+			return fmt.Errorf("issue getting data for %s/%s: %w", r.Repo, toDelete, err)
 		}
 
 		d := bytesToData(byteData)
+		publishPath, ok := d["publishPath"].(string)
+		if !ok || publishPath == "" {
+			return fmt.Errorf("missing publishPath for %s/%s", r.Repo, toDelete)
+		}
 
-		log.Infof("%s(%s): %s will be deleted", d["repo"], d["version"], d["publishPath"])
+		log.Infof("%s(%s): %s will be deleted", d["repo"], d["version"], publishPath)
 
 		if dryrun {
 			continue
 		}
 
 		// If path does not exist err value is nil
-		err = os.RemoveAll(d["publishPath"].(string))
+		err = os.RemoveAll(publishPath)
 		if err != nil {
-			log.Fatalf("Error deleting %s", d["publishPath"])
+			log.Fatalf("Error deleting %s", publishPath)
 		}
 
 		// Delete the version bucket
