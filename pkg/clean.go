@@ -116,8 +116,17 @@ func sortSemvers(versions []string) ([]string, error) {
 func (r *BinmanRelease) getVersions(bdb *bolt.DB) error {
 	return bdb.View(func(tx *bolt.Tx) error {
 		sourceBucket := tx.Bucket([]byte(r.SourceIdentifier))
+		if sourceBucket == nil {
+			return fmt.Errorf("no versions stored for source %s", r.SourceIdentifier)
+		}
 		orgBucket := sourceBucket.Bucket([]byte(r.org))
+		if orgBucket == nil {
+			return fmt.Errorf("no versions stored for org %s/%s", r.SourceIdentifier, r.org)
+		}
 		projBucket := orgBucket.Bucket([]byte(r.project))
+		if projBucket == nil {
+			return fmt.Errorf("no versions stored for %s/%s/%s", r.SourceIdentifier, r.org, r.project)
+		}
 		projBucket.ForEachBucket(func(k []byte) error {
 			version := string(k)
 			_, err := semver.NewVersion(version)
