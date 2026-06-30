@@ -103,14 +103,24 @@ func OutputDbStatus() error {
 
 	db.View(func(tx *bolt.Tx) error {
 		for _, bucket := range getVersionBuckets(tx) {
-			dataMap := bytesToData(bucket.Get([]byte("data")))
+			if bucket == nil {
+				log.Warnf("Skipping nil version bucket")
+				continue
+			}
+			data := bucket.Get([]byte("data"))
+			if data == nil {
+				log.Warnf("Skipping version bucket with no data")
+				continue
+			}
+			dataMap := bytesToData(data)
 			// Releases added via populate will not have createdAt/artifactPath populated
 			// This will show us as 1969 unless we handle the like this
-			if dataMap["createdAt"].(int64) == 0 {
+			createdAt, ok := dataMap["createdAt"].(int64)
+			if !ok || createdAt == 0 {
 				upToDateTable.AddRow(dataMap["repo"], dataMap["version"], "-")
 				continue
 			}
-			t := time.Unix(dataMap["createdAt"].(int64), 0)
+			t := time.Unix(createdAt, 0)
 			upToDateTable.AddRow(dataMap["repo"], dataMap["version"], t.Format(time.DateTime))
 		}
 		return nil
