@@ -105,3 +105,39 @@ func TestClean(t *testing.T) {
 		log.Debugf("%s Passed", test.caseName)
 	}
 }
+
+func TestCleanReturnsErrorForMissingVersionData(t *testing.T) {
+	log.ConfigureLog(true, 2)
+
+	testDir, testConfig := createTestDir(t, []string{
+		"github.com/org1/repo1/v0.0.0",
+		"github.com/org1/repo1/v0.0.1",
+	}, testCleanConfig, "MissingVersionData")
+	defer os.RemoveAll(testDir)
+
+	dbPath := fmt.Sprintf("%s/binman.db", testDir)
+	var dwg sync.WaitGroup
+	err := populateDB(db.DbConfig{
+		Path:   dbPath,
+		Dwg:    &dwg,
+		DbChan: make(chan db.DbMsg),
+	}, testConfig)
+	if err != nil {
+		t.Fatalf("Issue populating DB %s", err)
+	}
+
+	testDb := db.GetDB(dbPath)
+	err = db.DeleteData("github.com/org1/repo1/v0.0.0/data", testDb)
+	if err != nil {
+		t.Fatalf("Unable to remove data key from old version: %s", err)
+	}
+	err = testDb.Close()
+	if err != nil {
+		t.Fatalf("Unable to close db")
+	}
+
+	err = Clean(false, false, 1, dbPath, testConfig)
+	if err == nil {
+		t.Fatalf("Expected clean to return an error for missing version data")
+	}
+}

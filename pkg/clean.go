@@ -45,6 +45,7 @@ func Clean(dryrun, scan bool, threshold int, dbPath, config string) error {
 	// Check here later and see if using dbOptions instead of defaults makes sense
 	c := NewBMConfig(config).SetConfig(false)
 
+	var cleanErrs []error
 	for _, rel := range c.Releases {
 		// Collect All Versions
 		err := rel.getVersions(bdb)
@@ -68,12 +69,17 @@ func Clean(dryrun, scan bool, threshold int, dbPath, config string) error {
 		err = rel.cleanOldReleases(dryrun, threshold, bdb)
 		if err != nil {
 			log.Warnf("Issue cleaning %s %s", rel.Repo, err)
+			cleanErrs = append(cleanErrs, fmt.Errorf("%s: %w", rel.Repo, err))
 		}
 	}
 
 	err := bdb.Close()
 	if err != nil {
 		log.Fatalf("Unable to close db %s", err)
+	}
+
+	if len(cleanErrs) != 0 {
+		return errors.Join(cleanErrs...)
 	}
 
 	log.Infof("Clean complete")
