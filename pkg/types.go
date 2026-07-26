@@ -25,7 +25,8 @@ type BinmanConfig struct {
 	ReleasePath    string    `yaml:"releasepath,omitempty"`  // path to download/link releases from github
 	BinPath        string    `yaml:"binpath,omitempty"`      // path to download/link binaries from github
 	TokenVar       string    `yaml:"tokenvar,omitempty"`     // Github Auth Token
-	NumWorkers     int       `yaml:"maxdownloads,omitempty"` // maximum number of concurrent downloads the user will allow
+	NumWorkers     int       `yaml:"maxdownloads,omitempty"`  // maximum number of concurrent downloads the user will allow
+	NumAPIWorkers  int       `yaml:"maxapiqueries,omitempty"` // maximum number of concurrent api queries, shares maxdownloads if unset
 	UpxConfig      UpxConfig `yaml:"upx,omitempty"`          // Allow upx to shrink extracted
 	Sources        []Source  `yaml:"sources,omitempty"`      // Sources to query. By default gitlab and github
 	Watch          Watch     `yaml:"watch,omitempty"`        // Watch config object

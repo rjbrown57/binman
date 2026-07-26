@@ -2,6 +2,7 @@ package gh
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/go-github/v50/github"
 	log "github.com/rjbrown57/binman/pkg/logging"
@@ -32,17 +33,23 @@ func ShowLimits(ghClient *github.Client) error {
 	return nil
 }
 
-// CheckLimits will verify you have not exceeded your quota
-func CheckLimits(ghClient *github.Client) error {
+// GetRateLimit returns the remaining and total core API quota for the client's
+// token. Hitting this endpoint does not count against the primary rate limit,
+// so we use it for a cheap, non-fatal pre-flight check.
+func GetRateLimit(ghClient *github.Client) (remaining int, limit int, err error) {
 
 	limits, err := getLimits(ghClient)
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 
-	if limits.Core.Remaining == 0 {
-		log.Fatalf("Github API limits exceeded. %s", limits.Core.String())
-	}
+	return limits.Core.Remaining, limits.Core.Limit, nil
+}
 
-	return nil
+// IsRateLimited reports whether err is a GitHub primary or secondary rate limit
+// error, so that callers can surface a clear message instead of a generic one.
+func IsRateLimited(err error) bool {
+	var rlErr *github.RateLimitError
+	var abErr *github.AbuseRateLimitError
+	return errors.As(err, &rlErr) || errors.As(err, &abErr)
 }

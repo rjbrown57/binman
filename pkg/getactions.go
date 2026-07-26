@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/go-github/v50/github"
+	"github.com/rjbrown57/binman/pkg/gh"
 	"github.com/rjbrown57/binman/pkg/gl"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"gitlab.com/gitlab-org/api/client-go"
@@ -45,6 +46,12 @@ func (action *GetGHReleaseAction) execute() error {
 	}
 
 	action.r.relData = ghd
+
+	// A rate limit error is expected when quota is exhausted, so we surface a
+	// clear message instead of a generic API error, but still non-fatally.
+	if gh.IsRateLimited(err) {
+		return fmt.Errorf("github API rate limit reached while querying %s (quota resets hourly): %w", action.r.Repo, err)
+	}
 
 	return err
 }

@@ -10,12 +10,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/google/go-github/v50/github"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rjbrown57/binman/pkg/constants"
 	db "github.com/rjbrown57/binman/pkg/db"
 	"github.com/rjbrown57/binman/pkg/downloader"
 	log "github.com/rjbrown57/binman/pkg/logging"
 	"github.com/rjbrown57/binman/pkg/templating"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 var (
@@ -69,13 +71,15 @@ type BinmanRelease struct {
 	relData          any // Data gathered from source
 	relNotes         string
 	source           *Source
-	assetName        string // the target assetName
-	cleanupOnFailure bool   // mark true if we need to clean up on failure
-	dlUrl            string // the final donwload url
-	filepath         string // the target filepath for download
-	org              string // Will be provided by constuctor
-	project          string // Will be provided by constuctor
-	linkPath         string // Will be set by BinmanRelease.setPaths
+	ghClient         *github.Client // Shared per-source client, assigned by CollectData
+	glClient         *gitlab.Client // Shared per-source client, assigned by CollectData
+	assetName        string         // the target assetName
+	cleanupOnFailure bool           // mark true if we need to clean up on failure
+	dlUrl            string         // the final donwload url
+	filepath         string         // the target filepath for download
+	org              string         // Will be provided by constuctor
+	project          string         // Will be provided by constuctor
+	linkPath         string         // Will be set by BinmanRelease.setPaths
 	actions          []Action
 	versions         []string // Used during clean operations
 	output           *OutputOptions

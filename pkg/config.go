@@ -12,7 +12,8 @@ const defaultConfig = `
 config:
   releasepath:  #path to keep fetched releases. $HOME/binMan is the default
   cleanup: true # remove downloaded archive
-  maxdownloads: 1 # number of concurrent downloads allowed. Default is 3
+  maxdownloads: 1 # number of concurrent downloads allowed. Defaults to the number of configured releases
+  #maxapiqueries: 10 # number of concurrent api queries allowed. Defaults to maxdownloads
   upx: #Compress binaries with upx
     enabled: false
     args: [] # arrary of args for upx

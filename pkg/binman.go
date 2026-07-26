@@ -10,12 +10,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/go-github/v50/github"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rjbrown57/binman/pkg/constants"
 	db "github.com/rjbrown57/binman/pkg/db"
 	"github.com/rjbrown57/binman/pkg/downloader"
+	"github.com/rjbrown57/binman/pkg/gh"
+	"github.com/rjbrown57/binman/pkg/gl"
 	log "github.com/rjbrown57/binman/pkg/logging"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 const timeout = 60 * time.Second
@@ -25,8 +29,7 @@ const timeout = 60 * time.Second
 // Pre -> Post -> Os -> Final
 // The last action of each phase sets the actions for the next phase
 // The Final actions is to set rel.actions = nil and conclude the loop
-func goSyncRepo(rel BinmanRelease, c chan<- BinmanMsg, wg *sync.WaitGroup) {
-	defer wg.Done()
+func goSyncRepo(rel BinmanRelease, c chan<- BinmanMsg) {
 
 	var err error
 
@@ -77,6 +80,11 @@ type BMConfig struct {
 	msgChan      chan BinmanMsg
 	downloadChan chan downloader.DlMsg
 	wg           sync.WaitGroup
+
+	// Shared per-source API clients, keyed by source name. Built once so we
+	// stop minting a fresh client per repo.
+	ghClients map[string]*github.Client
+	glClients map[string]*gitlab.Client
 }
 
 // For running the default sync
@@ -100,6 +108,7 @@ func NewGet(r ...BinmanRelease) *BMConfig {
 	c = c.WithDownloader().WithOutput(false, true)
 	c.SetDefaults()
 	c.populateReleases()
+	c.startDownloaders()
 
 	return c
 }
@@ -177,18 +186,31 @@ func (config *BMConfig) WithDb(dbConfig ...db.DbConfig) *BMConfig {
 
 func (config *BMConfig) WithDownloader() *BMConfig {
 	config.downloadChan = make(chan downloader.DlMsg)
+	return config
+}
 
-	if config.Config.NumWorkers == 0 {
-		config.Config.NumWorkers = 1
+// startDownloaders spawns the download worker pool. This must run after the
+// config has been parsed, because WithDownloader is chained before SetConfig
+// and NumWorkers only holds the user's maxdownloads once the yaml is read.
+// Spawning here instead of in WithDownloader is what lets the pool actually
+// honor maxdownloads.
+func (config *BMConfig) startDownloaders() {
+
+	// Callers like NewQuery never attach a downloader, so there is no pool to start
+	if config.downloadChan == nil {
+		return
 	}
 
-	log.Debugf("launching %d download workers", config.Config.NumWorkers)
+	workers := config.Config.NumWorkers
+	if workers < 1 {
+		workers = 1
+	}
 
-	for worker := 1; worker <= config.Config.NumWorkers; worker++ {
+	log.Debugf("launching %d download workers", workers)
+
+	for worker := 1; worker <= workers; worker++ {
 		go downloader.GetDownloader(config.downloadChan, worker)
 	}
-
-	return config
 }
 
 // setWatchConfig sets config/releases for watch subcommand
@@ -237,20 +259,125 @@ func (config *BMConfig) SetConfig(merge bool) *BMConfig {
 	config.cleanReleases()
 	config.populateReleases()
 
+	// SetDefaults has finalized NumWorkers by this point, so the pool is sized correctly
+	config.startDownloaders()
+
 	return config
+}
+
+// setupClients builds one shared API client per configured source. Clients are
+// safe for concurrent use, so we build them once and share them across all repos
+// rather than constructing a new client for every release.
+func (config *BMConfig) setupClients() {
+
+	if config.ghClients == nil {
+		config.ghClients = make(map[string]*github.Client)
+	}
+	if config.glClients == nil {
+		config.glClients = make(map[string]*gitlab.Client)
+	}
+
+	for name, source := range config.Config.SourceMap {
+		switch source.Apitype {
+		case "github":
+			if _, ok := config.ghClients[name]; !ok {
+				config.ghClients[name] = gh.GetGHCLient(source.URL, source.Tokenvar)
+			}
+		case "gitlab":
+			if _, ok := config.glClients[name]; !ok {
+				config.glClients[name] = gl.GetGLClient(source.URL, source.Tokenvar)
+			}
+		}
+	}
+}
+
+// checkQuota does a single, non-fatal pre-flight check comparing the number of
+// configured github repos against the token's remaining API quota. We only warn:
+// the real release calls surface actual rate-limit errors on their own, and the
+// /rate_limit endpoint itself can be flaky, so it must never abort the run.
+func (config *BMConfig) checkQuota() {
+
+	ghClient, ok := config.ghClients[config.Config.SourceMap["github.com"].Name]
+	if !ok {
+		return
+	}
+
+	var ghRepos int
+	for i := range config.Releases {
+		if s := config.Releases[i].source; s != nil && s.Apitype == "github" {
+			ghRepos++
+		}
+	}
+
+	if ghRepos == 0 {
+		return
+	}
+
+	remaining, limit, err := gh.GetRateLimit(ghClient)
+	if err != nil {
+		log.Warnf("Unable to check GitHub API rate limits, continuing anyway: %v", err)
+		return
+	}
+
+	log.Debugf("GitHub API quota: %d/%d remaining", remaining, limit)
+
+	if ghRepos > remaining {
+		log.Warnf("%d github repos are configured but only %d GitHub API requests remain (quota resets hourly). Some repos may fail this run.", ghRepos, remaining)
+	}
 }
 
 // Execute will collect data and execute any requested steps
 func (config *BMConfig) CollectData() {
 
+	config.setupClients()
+
+	// Assign the shared per-source client to each release before we fan out.
+	for i := range config.Releases {
+		if s := config.Releases[i].source; s != nil {
+			config.Releases[i].ghClient = config.ghClients[s.Name]
+			config.Releases[i].glClient = config.glClients[s.Name]
+		}
+	}
+
+	config.checkQuota()
+
 	c := make(chan BinmanMsg)
 
 	var wg sync.WaitGroup
 
-	for _, rel := range config.Releases {
-		wg.Add(1)
-		go goSyncRepo(rel, c, &wg)
+	// Bound the get phase to NumAPIWorkers so we don't fire one unbounded API
+	// request per repo, which is what trips GitHub's rate and abuse limits.
+	// It falls back to NumWorkers so maxapiqueries stays optional, while users
+	// with many repos can widen the query fanout without widening downloads.
+	workers := config.Config.NumAPIWorkers
+	if workers < 1 {
+		workers = config.Config.NumWorkers
 	}
+	if workers < 1 {
+		workers = len(config.Releases)
+	}
+	if workers < 1 {
+		workers = 1
+	}
+
+	jobs := make(chan BinmanRelease)
+
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for rel := range jobs {
+				goSyncRepo(rel, c)
+			}
+		}()
+	}
+
+	go func() {
+		for _, rel := range config.Releases {
+			jobs <- rel
+		}
+		close(jobs)
+	}()
 
 	go func(c chan BinmanMsg, wg *sync.WaitGroup) {
 		wg.Wait()

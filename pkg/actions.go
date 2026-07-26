@@ -7,8 +7,6 @@ import (
 	"sync"
 
 	db "github.com/rjbrown57/binman/pkg/db"
-	"github.com/rjbrown57/binman/pkg/gh"
-	"github.com/rjbrown57/binman/pkg/gl"
 	log "github.com/rjbrown57/binman/pkg/logging"
 )
 
@@ -59,19 +57,13 @@ func (r *BinmanRelease) setPreActions(releasePath string, binPath string) []Acti
 
 	actions = append(actions, r.AddReleaseExcludeAction())
 
+	// Clients are shared per source and assigned in CollectData, so we no longer
+	// build one per repo.
 	switch r.source.Apitype {
 	case "gitlab":
-		glClient := gl.GetGLClient(r.source.URL, r.source.Tokenvar)
-		actions = append(actions, r.AddGetGLReleaseAction(glClient))
+		actions = append(actions, r.AddGetGLReleaseAction(r.glClient))
 	case "github":
-		ghClient := gh.GetGHCLient(r.source.URL, r.source.Tokenvar)
-		// TODO checking limits over and over is not optimal
-		gh.ShowLimits(ghClient)
-		if err := gh.CheckLimits(ghClient); err != nil {
-			log.Fatalf("Unable to check limits against GH api")
-		}
-
-		actions = append(actions, r.AddGetGHReleaseAction(ghClient))
+		actions = append(actions, r.AddGetGHReleaseAction(r.ghClient))
 	case "binman":
 		actions = append(actions, r.AddGetBinmanReleaseAction())
 	}

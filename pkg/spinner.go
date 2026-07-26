@@ -31,6 +31,8 @@ func getSpinner(debug bool, spinChan chan (string), swg *sync.WaitGroup) {
 		spinner.Start()
 	}
 
+	// No sleep here: SendSpin is a blocking send from each worker's critical
+	// path, so any delay in this loop throttles the whole worker pool
 	for msg := range spinChan {
 
 		if !strings.Contains(msg, "spinstop") {
@@ -39,7 +41,6 @@ func getSpinner(debug bool, spinChan chan (string), swg *sync.WaitGroup) {
 			spinner.StopMessage(strings.Trim(msg, "spinstop"))
 		}
 		swg.Done()
-		time.Sleep(time.Millisecond * 500)
 
 	}
 	spinner.Suffix("")
