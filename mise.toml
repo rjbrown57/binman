@@ -1,0 +1,32 @@
+[tasks.default]
+description = "List available tasks"
+run = "mise tasks ls"
+
+[tasks.fmt]
+description = "Format all Go code"
+run = "go fmt ./..."
+
+[tasks.tidy]
+description = "Tidy and verify Go module files"
+run = ["go mod tidy", "go mod verify"]
+
+[tasks.build]
+description = "Format code and build with GoReleaser (snapshot)"
+depends = ["fmt"]
+run = "goreleaser release --snapshot --clean"
+
+[tasks.test]
+description = "Run unit tests"
+run = "go test ./..."
+
+[tasks.test-submit]
+description = "Run tests for the /v1/submit endpoint"
+run = "go test ./... -run 'Test.*Submit'"
+
+[tasks.run]
+description = "Run binman locally"
+run = "go run ."
+
+[tasks.clean]
+description = "Remove local build artifacts"
+run = "rm -f ./binman"

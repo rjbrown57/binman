@@ -46,6 +46,10 @@ Binman can also run with a "contextual" config file. If a directory contains a f
 
 Binman has many config options. To read more about those check out the [config docs](docs/config.md)
 
+## Development
+
+Install [mise](https://mise.jdx.dev/) to run the project tasks. Use `mise tasks ls` to list them, then `mise run <task>` to run one. For example, `mise run test` runs the Go test suite and `mise run build` formats the code before creating a GoReleaser snapshot.
+
 ## Docs
 
 | Doc | Description |
