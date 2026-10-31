@@ -27,6 +27,10 @@ run = "go test ./... -run 'Test.*Submit'"
 description = "Run binman locally"
 run = "go run ."
 
+[tasks.install-skill]
+description = "Install the binman-tools Codex skill for the current user"
+run = "sh scripts/install-skill.sh"
+
 [tasks.clean]
 description = "Remove local build artifacts"
 run = "rm -f ./binman"
