@@ -12,6 +12,10 @@ Binman will attempt to find a release asset that matches your OS and architectur
 
 Just add the releasepath to your shell PATH var and you are good to go!
 
+## Tool catalog and agent skill
+
+See [Tool catalog and invocation](docs/tools.md) for managing installed tools and [Codex skill guide](docs/skill.md) for installing and using the agent skill.
+
 ## Config Sync
 
 To run binman effectively you need a config. 
@@ -55,6 +59,8 @@ Install [mise](https://mise.jdx.dev/) to run the project tasks. Use `mise tasks 
 | Doc | Description |
 |-----|------|
 | [Config Options](docs/config.md) | Details on the many config options for binman |
+| [Tool Catalog and Invocation](docs/tools.md) | Add and manage agent tools and invoke them through binman |
+| [Codex Skill](docs/skill.md) | Install and use the binman tools skill |
 | [Server SubCommand](docs/server.md) | Running in server mode. This allows you to point your binman client at an internal server and avoid gh/gl limits or external traffic |
 | [Clean Subcommand](docs/clean.md) | The clean subcommand is used to remove old releases |
 | [Build Subcommand](docs/build.md) | The build subcommand can be used to create OCI images of synced releases quickly |
