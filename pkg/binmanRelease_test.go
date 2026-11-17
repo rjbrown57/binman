@@ -257,6 +257,22 @@ func TestSetartifactPath(t *testing.T) {
 		Version:      version,
 	}
 
+	// A release with a templated external url that is a binary
+	relWithUrlTemplated := BinmanRelease{
+		Repo:         "rjbrown57/binman",
+		ArtifactPath: "binman",
+		PublishPath:  "/tmp/",
+		ExternalUrl:  "https://example.com/{{.version}}/binman-{{.version}}-{{.os}}-{{.arch}}",
+		project:      "binman",
+		LinkName:     "",
+		Os:           "linux",
+		Arch:         "amd64",
+		linkPath:     "path",
+		assetName:    "binman",
+		org:          "rjbrown57",
+		Version:      version,
+	}
+
 	// A release with an external url that is a tar/tgz/zip
 	relWithUrlTar := BinmanRelease{
 		Repo:         "rjbrown57/binman",
@@ -313,6 +329,7 @@ func TestSetartifactPath(t *testing.T) {
 	}{
 		{relWithRelFilename, "/tmp/binmanz", "/tmp/binman", "binman", "/tmp/", "/tmp/"},
 		{relWithUrlNonTar, "/tmp/binman", "/tmp/extractbinman", "testfile", "/tmp/", "/tmp/"},
+		{relWithUrlTemplated, "/tmp/binman", "/tmp/binman-v0.0.0-linux-amd64", "testfile", "/tmp/", "/tmp/"},
 		{relWithUrlTar, "/tmp/binman", "/tmp/extractbinman.tar.gz", "testfile", "/tmp/", "/tmp/"},
 		{relWithExtractFilename, "/tmp/binman", "/tmp/extractbinman", "testfile", "/tmp/", "/tmp/"},
 		{relWithLinkName, "/tmp/none", "/tmp/test", "test", "/tmp/", "/tmp/"},

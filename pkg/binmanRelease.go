@@ -263,7 +263,10 @@ func (r *BinmanRelease) setArtifactPath(ReleasePath, BinPath string, assetName s
 		case "tar", "zip":
 			r.ArtifactPath = filepath.Join(r.PublishPath, r.project)
 		default:
-			r.ArtifactPath = filepath.Join(r.PublishPath, filepath.Base(r.ExternalUrl))
+			// Template the url before taking the base name. Otherwise a url ending in
+			// something like kind-{{.os}}-{{.arch}} produces an artifact path that never exists
+			// and findTarget then renames the link after the file it finds.
+			r.ArtifactPath = filepath.Join(r.PublishPath, filepath.Base(templating.TemplateString(r.ExternalUrl, r.getDataMap())))
 		}
 		log.Debugf("Archive with ExternalURL set %s\n", r.ArtifactPath)
 	} else {
